@@ -27,9 +27,11 @@
   --f-osd: "VT323", "Courier New", monospace;
   --u: 6.5px;
   --case-h: 150px;
+  --face-h: 118px;
+  --shelf-pad: calc(var(--u) * 2.4);
 }
 @media (min-width: 960px) and (min-aspect-ratio: 4/3) {
-  :root { --u: 1vh; --case-h: 22.5vh; }
+  :root { --u: 1vh; --case-h: 20.8vh; --face-h: 13.3vh; }
 }
 html, body { height: 100%; }
 [hidden] { display: none !important; }
@@ -69,7 +71,7 @@ button { font: inherit; color: inherit; }
 .logo span { display: block; transform: skewX(8deg); font-family: var(--f-sign); line-height: .95; text-transform: uppercase; }
 .logo .l1 { font-size: 15px; letter-spacing: .08em; color: #ffe08a; }
 .logo .l2 { font-family: var(--f-wall); font-weight: 800; font-style: italic; font-size: 36px; letter-spacing: .01em; }
-.painted, .banner { display: none; }
+.painted, .banner, .wposter, .marquee { display: none; }
 
 /* CRT */
 .crt-mount { margin-top: 16px; padding-left: 16px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: 16px; padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-bottom: 16px; }
@@ -118,21 +120,24 @@ button { font: inherit; color: inherit; }
 /* aisle signs */
 .signs {
   display: flex; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none;
-  background: linear-gradient(#e6d8b8, #c3b08a);
-  border-top: 3px solid #f6ecd4; border-bottom: 4px solid #7e6a48;
+  background: linear-gradient(#3a2e22, #2a2018 40%, #3b2f22);
+  border-top: 3px solid #17110b; border-bottom: 3px solid #17110b;
   padding-top: 8px; padding-bottom: 8px;
   padding-left: 16px; padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: 16px; padding-right: max(16px, env(safe-area-inset-right, 0px));
 }
 .signs::-webkit-scrollbar { display: none; }
 .sign {
-  flex: 0 0 auto; margin-right: 8px; cursor: pointer;
+  flex: 0 0 auto; margin-right: 8px; cursor: pointer; position: relative; box-shadow: 0 4px 6px rgba(0,0,0,.45);
   background: var(--sign); color: var(--blue);
   border: 3px solid var(--blue); border-radius: 3px;
   font-family: var(--f-sign); font-size: 14px; text-transform: uppercase; letter-spacing: .03em;
   padding: 6px 12px 4px; white-space: nowrap;
 }
 .sign:focus { outline: none; }
+/* each board hangs from the rail on two wires */
+.sign::before, .sign::after { content: ""; position: absolute; top: -10px; width: 2px; height: 10px; background: #8d8576; }
+.sign::before { left: 16%; } .sign::after { right: 16%; }
 .sign.current { background: var(--blue); color: #fff; }
 .sign.focused { background: var(--red); border-color: var(--red); color: #fff; box-shadow: 0 0 0 3px #fff, 0 0 0 6px var(--red); }
 
@@ -155,16 +160,37 @@ button { font: inherit; color: inherit; }
     radial-gradient(ellipse 18% 100% at 85% 0, rgba(255,222,160,.4), rgba(255,222,160,0) 100%); }
 .shelf { position: relative; z-index: 1; }
 .shelf-wrap::after {
-  content: ""; display: block; height: calc(var(--u) * 1.6);
-  background: linear-gradient(#a8865a, var(--ledge) 45%, #45341f);
-  box-shadow: 0 6px 12px rgba(20,8,0,.45);
+  content: ""; display: block; height: calc(var(--u) * .45);
+  background: linear-gradient(#5a4429, #2e2214);
+  box-shadow: 0 6px 12px rgba(20,8,0,.5);
 }
+/* white price strip along the front edge of each shelf */
+.strip {
+  position: relative; z-index: 1; height: calc(var(--u) * 1.5); overflow: hidden; white-space: nowrap;
+  background: linear-gradient(#fbf8ef, #e2dccb); border-top: 1px solid #8a7656;
+  font-family: var(--f-ui); font-weight: 600; font-size: calc(var(--u) * 1.05); line-height: calc(var(--u) * 1.5);
+  letter-spacing: .12em; text-transform: uppercase; color: #1e3d93;
+}
+.strip span { display: inline-block; padding: 0 calc(var(--u) * 2.2); }
+.strip span b { color: var(--red); font-weight: 700; margin-left: .6em; }
 .shelf {
   display: flex; align-items: flex-end;
-  padding: calc(var(--u) * 2.4) 16px 0;
+  padding: var(--shelf-pad) 16px 0;
   overflow-x: auto; overflow-y: hidden; scrollbar-width: none;
-  height: calc(var(--case-h) + var(--u) * 2.4);
+  height: calc(var(--case-h) + var(--shelf-pad));
 }
+#wrap2 { display: none; }
+.fixture.faces #wrap2 { display: block; }
+.fixture.faces .shelf { --case-h: var(--face-h); --shelf-pad: calc(var(--u) * 1.4); }
+/* letter tiles across the top of the bays, like a store header */
+.tiles { display: flex; overflow: hidden; white-space: nowrap; height: calc(var(--u) * 3); margin: 0 0 calc(var(--u) * .6); padding: 0 calc(var(--u) * 1.5);
+  background: #2a2119; border-bottom: 2px solid #120d08; align-items: center; }
+.tiles i { flex: 0 0 auto; display: block; width: calc(var(--u) * 2.4); height: calc(var(--u) * 2.4); margin-right: 2px; text-align: center; font-style: normal;
+  background: linear-gradient(#ffffff, #e6e2d6); color: #1e3d93; font-family: var(--f-sign); font-size: calc(var(--u) * 1.75); line-height: calc(var(--u) * 2.5);
+  box-shadow: inset 0 -2px 0 rgba(0,0,0,.12); }
+.tiles i.sp { background: transparent; box-shadow: none; width: calc(var(--u) * 1.2); }
+.tiles i.st { color: var(--red); }
+.tiles i.gap { background: transparent; box-shadow: none; width: calc(var(--u) * 3); color: #ffd84d; }
 .shelf::-webkit-scrollbar { display: none; }
 .empty {
   height: var(--case-h); display: flex; align-items: center; padding: 0 24px;
@@ -207,11 +233,19 @@ button { font: inherit; color: inherit; }
 .tape.focused { width: calc(var(--case-h) * .58); transform: translateY(calc(var(--u) * -1.6)); z-index: 2; }
 .tape.focused .spine { opacity: 0; }
 .tape.focused .cover { opacity: 1; box-shadow: 0 0 0 3px #fff, 0 0 0 7px var(--red), 0 14px 24px rgba(0,0,0,.5); }
-.faceout .tape { width: calc(var(--case-h) * .58); margin-right: calc(var(--u) * 1.2); }
-.faceout .tape .spine { opacity: 0; }
-.faceout .tape .cover { opacity: 1; box-shadow: 0 6px 10px rgba(0,0,0,.35); }
-.faceout .tape.focused .cover { box-shadow: 0 0 0 3px #fff, 0 0 0 7px var(--red), 0 14px 24px rgba(0,0,0,.5); }
-.faceout .tape.focused { transform: translateY(calc(var(--u) * -1.6)) scale(1.06); }
+.faceout .tape { width: calc(var(--case-h) * .62); margin-right: calc(var(--u) * 1.3); z-index: 0; }
+.faceout .tape .cover { opacity: 1; box-shadow: 0 7px 9px rgba(10,4,0,.55), 0 1px 0 rgba(255,255,255,.2) inset; }
+.faceout .tape.focused { width: calc(var(--case-h) * .62); transform: translateY(calc(var(--u) * -1)) scale(1.1); z-index: 2; }
+.faceout .tape.focused .cover { box-shadow: 0 0 0 3px #fff, 0 0 0 7px var(--red), 0 14px 24px rgba(0,0,0,.6); }
+/* extra copies of a hit stacked behind the front one */
+.faceout .tape[data-copies]::before, .faceout .tape[data-copies="3"]::after {
+  content: ""; position: absolute; z-index: -1; left: 0; top: 0; right: 0; bottom: 0; border-radius: 2px;
+  background: linear-gradient(90deg, #26262e, #121217); border: 1px solid #3a3a44; transform: translate(5px, -5px); }
+.faceout .tape[data-copies="3"]::after { z-index: -2; transform: translate(10px, -10px); background: #0d0d11; }
+.faceout .tape.focused::before, .faceout .tape.focused::after { display: none; }
+/* small shelves of face-out covers: no tiny print on the posters */
+.faceout .cover.has-poster .meta { display: none; }
+.faceout .cover .band { font-size: calc(var(--case-h) * .07); padding: 1px 5px; }
 
 .cover {
   background: radial-gradient(ellipse at 30% 20%, var(--c2), transparent 62%), var(--c1);
@@ -234,6 +268,16 @@ button { font: inherit; color: inherit; }
   text-transform: uppercase; letter-spacing: .05em; white-space: nowrap;
 }
 .cover img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
+/* clear plastic sleeve catching the store lights */
+.cover::after { content: ""; position: absolute; z-index: 3; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none;
+  background: linear-gradient(118deg, rgba(255,255,255,0) 30%, rgba(255,255,255,.16) 38%, rgba(255,255,255,0) 47%, rgba(255,255,255,0) 72%, rgba(255,255,255,.08) 78%, rgba(255,255,255,0) 84%); }
+/* the store's rental sticker with a barcode */
+.cover .rs { position: absolute; z-index: 2; left: 5%; top: calc(var(--case-h) * .095); width: 30%; transform: rotate(-2deg); background: #fbf8ef; border-radius: 1px; box-shadow: 0 1px 2px rgba(0,0,0,.4);
+  padding: 1px 2px 2px; text-align: center; }
+.cover .rs b { display: block; font-family: var(--f-sign); font-weight: 400; color: var(--red); font-size: calc(var(--case-h) * .045); line-height: 1.1; letter-spacing: .04em; white-space: nowrap; overflow: hidden; }
+.cover .rs i { display: block; height: calc(var(--case-h) * .04);
+  background: repeating-linear-gradient(90deg, #111 0, #111 1px, transparent 1px, transparent 2px, #111 2px, #111 4px, transparent 4px, transparent 5px); }
+.cover .dot2 { position: absolute; z-index: 2; right: 6%; bottom: 5%; width: 17%; padding-bottom: 17%; border-radius: 50%; box-shadow: 0 1px 2px rgba(0,0,0,.4); }
 .cover.has-poster .ct { display: none; }
 .cover.has-poster .band, .cover.has-poster .meta { position: relative; z-index: 1; }
 .cover.has-poster .meta { margin-top: auto; background: linear-gradient(transparent, rgba(0,0,0,.85)); color: #fff; }
@@ -587,6 +631,31 @@ body.night .logo { z-index: 6; box-shadow: 0 4px 0 #8f1424, 0 0 18px #ff3b52, 0 
   .banner span { display: block; font-size: calc(var(--u) * 1.8); line-height: 1.05; }
   .banner em { display: block; font-style: normal; font-family: var(--f-ui); font-weight: 600; font-size: calc(var(--u) * 1.3); margin-top: calc(var(--u) * .5); color: #ffd84d; text-transform: uppercase; line-height: 1.1; }
   .crt-mount { position: absolute; z-index: 3; top: calc(var(--u) * 1); right: calc(var(--u) * 4); width: calc(var(--u) * 31); margin: 0; padding: 0; }
+  .painted { display: none; }
+  .wposter { display: block; position: absolute; top: calc(var(--u) * 1.4); width: calc(var(--u) * 10.6); height: calc(var(--u) * 15.4);
+    background: #111 center / cover no-repeat; border: calc(var(--u) * .55) solid #15120f; box-shadow: 0 6px 12px rgba(20,8,0,.45), inset 0 0 0 1px rgba(255,255,255,.1); }
+  .wposter::after { content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(125deg, rgba(255,255,255,.18), rgba(255,255,255,0) 40%); }
+  #wp0 { left: 34%; transform: rotate(-.6deg); }
+  /* changeable-letter marquee board, backlit, spelling out the tape you're on */
+  .marquee { display: flex; flex-direction: column; position: absolute; top: calc(var(--u) * 1.2); left: 41.6%; right: 28.4%; height: calc(var(--u) * 15.8);
+    background: linear-gradient(#5c5f68, #2f3138); padding: calc(var(--u) * .6); border-radius: calc(var(--u) * .4);
+    box-shadow: 0 8px 14px rgba(20,8,0,.45), inset 0 1px 0 rgba(255,255,255,.25); }
+  .mq-head { flex: 0 0 auto; background: var(--red); color: #fff; font-family: var(--f-sign); font-size: calc(var(--u) * 1.4); letter-spacing: .25em;
+    text-align: center; line-height: calc(var(--u) * 2.2); border-radius: 2px 2px 0 0; }
+  .mq-rows { flex: 1 1 auto; display: flex; flex-direction: column; justify-content: space-around; padding: calc(var(--u) * .3) calc(var(--u) * 1);
+    background: radial-gradient(ellipse at 50% 40%, #fffdf5, #f1ead6 75%, #ded5bd); box-shadow: inset 0 0 calc(var(--u) * 2) rgba(255,236,190,.9);
+    border-radius: 0 0 2px 2px; overflow: hidden; }
+  .mq-row { position: relative; display: flex; justify-content: center; align-items: flex-end; height: calc(var(--u) * 3.3); white-space: nowrap; overflow: hidden;
+    border-bottom: 2px solid #8b8574; }
+  .mq-row b { display: inline-block; font-family: var(--f-spine); font-weight: 700; color: #141218; font-size: calc(var(--u) * 2.9); line-height: 1;
+    width: .66em; text-align: center; margin: 0 1px; transform-origin: 50% 100%; animation: mqslide .32s ease-out both; }
+  .mq-row b.sp { width: .4em; }
+  .mq-row b.red { color: var(--red); }
+  .mq-row.sm b { font-size: calc(var(--u) * 2.2); width: .62em; }
+  @keyframes mqslide { from { transform: translateY(-120%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  #wp1 { left: 73.4%; transform: rotate(.5deg); }
+  .sign::before, .sign::after { top: calc(var(--u) * -1); height: calc(var(--u) * 1); }
   .crt-mount::before { content: ""; position: absolute; top: calc(var(--u) * -1); left: 50%; width: calc(var(--u) * 6); margin-left: calc(var(--u) * -3); height: calc(var(--u) * 1.6); background: #3b3b42; }
   .crt { padding: calc(var(--u) * 1.1) calc(var(--u) * 1.1) calc(var(--u) * 3); border-radius: calc(var(--u) * 1.6); }
   .screen { padding-bottom: 72%; }
@@ -784,6 +853,9 @@ body.night .logo { z-index: 6; box-shadow: 0 4px 0 #8f1424, 0 0 18px #ff3b52, 0 
       <div class="bunting" id="bunting" hidden></div>
       <div class="logo" id="logo" role="img" aria-label="Friday Night Video"><span class="l1" id="logo1">Friday Night</span><span class="l2" id="logo2">Video</span></div>
       <div class="painted" id="painted" aria-hidden="true">new releases</div>
+      <div class="wposter" id="wp0" aria-hidden="true"></div>
+      <div class="wposter" id="wp1" aria-hidden="true"></div>
+      <div class="marquee" id="marquee" aria-live="polite"><div class="mq-head" id="mqHead">NOW ON THE SHELF</div><div class="mq-rows" id="mqRows"></div></div>
       <div class="banner" id="banner" aria-hidden="true"><b>3</b><span>NIGHTS<br>$3.99</span><em>every new release</em></div>
     </div>
     <div class="crt-mount" id="crtMount">
@@ -807,8 +879,10 @@ body.night .logo { z-index: 6; box-shadow: 0 4px 0 #8f1424, 0 0 18px #ff3b52, 0 
     <canvas class="side" id="sideL" aria-hidden="true"></canvas>
     <div class="standee" id="standee" aria-hidden="true" hidden></div>
     <div class="slat" id="slat">
-      <div class="shelf-wrap"><div class="shelf" id="shelf0"></div></div>
-      <div class="shelf-wrap"><div class="shelf" id="shelf1"></div></div>
+      <div class="tiles" id="tiles" aria-hidden="true"></div>
+      <div class="shelf-wrap"><div class="shelf" id="shelf0"></div><div class="strip" aria-hidden="true"></div></div>
+      <div class="shelf-wrap"><div class="shelf" id="shelf1"></div><div class="strip" aria-hidden="true"></div></div>
+      <div class="shelf-wrap" id="wrap2"><div class="shelf" id="shelf2"></div><div class="strip" aria-hidden="true"></div></div>
     </div>
     <canvas class="side" id="sideR" aria-hidden="true"></canvas>
   </div>
@@ -1077,9 +1151,10 @@ body.night .logo { z-index: 6; box-shadow: 0 4px 0 #8f1424, 0 0 18px #ff3b52, 0 
   }
   // re-draw the current aisle without jumping the shelves back to the start
   function refreshShelvesInPlace() {
-    var s0 = $("shelf0").scrollLeft, s1 = $("shelf1").scrollLeft, keep = { r: focus.r, c: focus.c };
+    var s0 = $("shelf0").scrollLeft, s1 = $("shelf1").scrollLeft, s2 = $("shelf2").scrollLeft, keep = { r: focus.r, c: focus.c };
     renderShelves(); rebuildRows();
-    $("shelf0").scrollLeft = s0; $("shelf1").scrollLeft = s1;
+    $("shelf0").scrollLeft = s0; $("shelf1").scrollLeft = s1; $("shelf2").scrollLeft = s2;
+    loadVisibleCovers();
     focus = keep; clampFocus();
     var el = rows[focus.r] && rows[focus.r][focus.c];
     Array.prototype.forEach.call(document.querySelectorAll(".store .focused"), function (e) { e.classList.remove("focused"); });
@@ -1152,7 +1227,13 @@ body.night .logo { z-index: 6; box-shadow: 0 4px 0 #8f1424, 0 0 18px #ff3b52, 0 
     return '<div class="cover' + (it.poster && !lazy ? " has-poster" : "") + '"' + (it.poster && lazy ? ' data-poster="' + esc(it.poster) + '"' : "") + ' style="' + styleFor(it) + ';color:' + c.ink + '">' + poster +
       '<div class="band"><span>VHS</span><span>HI-FI</span></div>' +
       '<div class="ct">' + esc(it.name) + '</div>' +
-      '<div class="meta"><span>' + esc(g) + '</span><span>' + (it.year || "") + ' · ' + rating(it) + '</span></div></div>';
+      '<div class="meta"><span>' + esc(g) + '</span><span>' + (it.year || "") + ' · ' + rating(it) + '</span></div>' +
+      '<span class="rs"><b>' + esc(storeInitials()) + "</b><i></i></span>" +
+      (hash(it.id) % 3 === 0 ? '<span class="dot2" style="background:' + ["#ffd23f", "#46a758", "#e5484d", "#4c8ff0"][hash(it.name) % 4] + '"></span>' : "") + "</div>";
+  }
+  function storeInitials() {
+    var w = (prefs.storeName || "Video").replace(/[^A-Za-z0-9 ]/g, "").split(/\s+/).filter(Boolean);
+    return (w.length > 1 ? w.map(function (x) { return x[0]; }).join("").slice(0, 3) : (w[0] || "VID").slice(0, 4)).toUpperCase();
   }
   function daysLate(it) {
     if (!(it.progress > 0.01) || !it.lastWatched) return 0;
@@ -1170,8 +1251,15 @@ body.night .logo { z-index: 6; box-shadow: 0 4px 0 #8f1424, 0 0 18px #ff3b52, 0 
     var tease = !full && (it.blurb || "").length > 120 ? it.blurb.slice(0, 117).replace(/\s+\S*$/, "") + "…" : (it.blurb || "Trust us on this one.");
     return '<div class="cover kraft"><span class="stamp">BLIND DATE</span><div class="tease">' + esc(tease) + "<br>· " + esc(g.toUpperCase()) + " · " + (it.year ? String(it.year).slice(0, 3) + "0s" : "") + "</div></div>";
   }
-  function tapeHTML(it, isNew, blind) {
-    if (blind) return blindHTML(it);
+  function tapeHTML(it, isNew, blind, faces) {
+    if (blind) return faces ? blindCover(it) : blindHTML(it);
+    if (faces) {
+      return coverHTML(it, true) +
+        (isNew && !isWatched(it.id) ? '<div class="new-sticker">NEW</div>' : "") +
+        (isWatched(it.id) ? '<div class="rewound">Be kind rewind</div>' : "") +
+        (daysLate(it) ? '<div class="late">LATE</div>' : "") +
+        (it.progress > 0.01 ? '<div class="prog"><i style="width:' + Math.round(Math.min(1, it.progress) * 100) + '%"></i></div>' : "");
+    }
     var n = it.name.length, longest = Math.max.apply(null, it.name.split(/\s+/).map(function (w) { return w.length; }));
     var tc = n > 30 || longest > 13 ? " t-xl" : n > 15 || longest > 10 ? " t-l" : "";
     return '<div class="spine" style="' + styleFor(it) + '"><span class="lbl">VHS</span><span class="t' + tc + '">' + esc(it.name) +
@@ -1191,22 +1279,81 @@ body.night .logo { z-index: 6; box-shadow: 0 4px 0 #8f1424, 0 0 18px #ff3b52, 0 
     });
     $("signs").innerHTML = html;
   }
+  // Your Shelf is shown as spines, like a home collection; everything else faces out
+  function aisleFaces(key) { return key !== "lib"; }
+  function copiesFor(it, i, key) {
+    if (key === "new" || key === "season") return i < 10 ? 3 : i < 24 ? 2 : 0;
+    if (key === "staff" || key === "cw" || key === "blind") return 0;
+    return hash(it.id) % 4 === 0 ? 2 : 0;
+  }
   function renderShelves() {
     var list = aisleList(aisle);
-    var isNew = aisle === "new", blind = aisle === "blind";
-    var halves = [[], []];
-    list.forEach(function (it, i) { halves[i % 2].push(it); });
-    [0, 1].forEach(function (n) {
+    var isNew = aisle === "new", blind = aisle === "blind", faces = aisleFaces(aisle);
+    var nRows = faces ? 3 : 2, groups = [[], [], []];
+    list.forEach(function (it, i) { groups[i % nRows].push({ it: it, i: i }); });
+    document.querySelector(".fixture").classList.toggle("faces", faces);
+    [0, 1, 2].forEach(function (n) {
       var el = $("shelf" + n);
-      el.className = "shelf" + (isNew ? " faceout" : "");
+      el.className = "shelf" + (faces ? " faceout" : "");
       if (!list.length && n === 0) { el.innerHTML = '<div class="empty">Nothing on this shelf by<b>' + rewindYear() + '</b>yet. Try a later year.</div>'; return; }
-      el.innerHTML = halves[n].map(function (it) {
-        return '<button class="tape" data-id="' + esc(it.id) + '"' + (blind ? ' data-blind="1" aria-label="Blind date tape"' : ' aria-label="' + esc(it.name + (it.year ? ", " + it.year : "")) + '"') + ">" + tapeHTML(it, isNew, blind) + "</button>";
+      if (n >= nRows) { el.innerHTML = ""; return; }
+      el.innerHTML = groups[n].map(function (g) {
+        var it = g.it, cp = faces ? copiesFor(it, g.i, aisle) : 0;
+        return '<button class="tape" data-id="' + esc(it.id) + '"' + (cp ? ' data-copies="' + cp + '"' : "") +
+          (blind ? ' data-blind="1" aria-label="Blind date tape"' : ' aria-label="' + esc(it.name + (it.year ? ", " + it.year : "")) + '"') + ">" + tapeHTML(it, isNew, blind, faces) + "</button>";
       }).join("");
       el.scrollLeft = 0;
     });
     var a = allAisles().filter(function (x) { return x.key === aisle; })[0];
-    $("painted").textContent = a ? a.label.toLowerCase() : "";
+    var label = a ? a.label : "";
+    var painted = $("painted");
+    painted.textContent = label.toLowerCase();
+    painted.style.fontSize = "";
+    if (painted.scrollWidth > painted.clientWidth && painted.clientWidth) {
+      var fs = parseFloat(getComputedStyle(painted).fontSize) || 60;
+      painted.style.fontSize = Math.max(16, Math.floor(fs * painted.clientWidth / painted.scrollWidth) - 1) + "px";
+    }
+    renderTiles(label);
+    renderStrips(a);
+    renderWallPosters(list, blind);
+    setTimeout(loadVisibleCovers, 0);
+  }
+  function renderTiles(label) {
+    var html = "", word = label.toUpperCase().replace(/[^A-Z0-9&'!?:\- ]/g, "");
+    for (var rep = 0; rep < 6; rep++) {
+      for (var i = 0; i < word.length; i++) html += word[i] === " " ? '<i class="sp"></i>' : "<i>" + esc(word[i]) + "</i>";
+      html += '<i class="gap">★</i>';
+    }
+    $("tiles").innerHTML = html;
+  }
+  function renderStrips(a) {
+    var key = a ? a.key : "", name = a ? a.label.toUpperCase() : "";
+    var deal = key === "new" ? ["New release", "3 nights", "$3.99"] : key === "lib" ? ["Your shelf", "no late fees", "free"] :
+      key === "cw" ? ["Keep watching", "rewind optional", "free"] : key === "blind" ? ["Blind date", "no peeking", "$2.99"] :
+      key === "season" ? [name, "5 nights", "2 for $5"] : [name || "Catalog", "5 nights", "$1.99"];
+    var one = "<span>" + esc(deal[0]) + " · " + esc(deal[1]) + "<b>" + esc(deal[2]) + "</b></span>", html = "";
+    for (var i = 0; i < 10; i++) html += one;
+    Array.prototype.forEach.call(document.querySelectorAll(".strip"), function (st) { st.innerHTML = html; });
+  }
+  function renderWallPosters(list, blind) {
+    var picks = blind ? [] : list.filter(function (it) { return it.poster; }).slice(0, 2);
+    [0, 1].forEach(function (n) {
+      var el = $("wp" + n), it = picks[n] || items.filter(function (x) { return x.poster; })[n + 2];
+      el.style.backgroundImage = it ? "url('" + it.poster.replace(/'/g, "%27") + "')" : "";
+    });
+  }
+  // posters load for the covers on screen (plus a little either side), not the whole aisle
+  function loadVisibleCovers() {
+    if (!aisleFaces(aisle)) return;
+    [0, 1, 2].forEach(function (n) {
+      var sh = $("shelf" + n), tapes = sh.children;
+      if (!tapes.length || !tapes[0].classList.contains("tape")) return;
+      var step = tapes[0].offsetWidth + (parseFloat(getComputedStyle(tapes[0]).marginRight) || 0);
+      if (!step) return;
+      var i0 = Math.max(0, Math.floor((sh.scrollLeft - sh.clientWidth * 0.4) / step));
+      var i1 = Math.min(tapes.length - 1, Math.ceil((sh.scrollLeft + sh.clientWidth * 1.4) / step));
+      for (var i = i0; i <= i1; i++) loadCover(tapes[i]);
+    });
   }
   function rebuildRows() {
     rows = []; rowKinds = [];
@@ -1217,6 +1364,7 @@ body.night .logo { z-index: 6; box-shadow: 0 4px 0 #8f1424, 0 0 18px #ff3b52, 0 
     push("signs", "#signs .sign");
     push("shelf", "#shelf0 .tape");
     push("shelf", "#shelf1 .tape");
+    push("shelf", "#shelf2 .tape");
     push("counter", "#counter .btn");
   }
   function updateCounter() {
@@ -1251,17 +1399,19 @@ body.night .logo { z-index: 6; box-shadow: 0 4px 0 #8f1424, 0 0 18px #ff3b52, 0 
     if (parent && (parent.classList.contains("shelf") || parent.id === "signs")) {
       var target = el.offsetLeft - parent.clientWidth / 2 + el.offsetWidth;
       parent.scrollLeft = Math.max(0, target);
+      if (parent.classList.contains("shelf")) loadVisibleCovers();
     }
     if (el.classList.contains("tape")) {
       var it = byId[el.getAttribute("data-id")];
       loadCover(el);
       if (rowKinds[focus.r] === "shelf" && focus.c >= rows[focus.r].length - 8) loadMore(aisle);
-      if (el.getAttribute("data-blind")) tvBlind(it);
+      if (el.getAttribute("data-blind")) { tvBlind(it); marqueeFor(null, true); }
       else {
         if (it && it.genres && it.genres[0]) lastGenre = it.genres[0];
         tvSchedule(it);
+        marqueeFor(it);
       }
-    }
+    } else marqueeFor(null);
     // phones scroll the page; the TV layout fits on one screen
     var r = el.getBoundingClientRect();
     if (r.top < 0 || r.bottom > window.innerHeight) window.scrollTo(0, window.pageYOffset + r.top - window.innerHeight * 0.35);
@@ -1316,6 +1466,60 @@ body.night .logo { z-index: 6; box-shadow: 0 4px 0 #8f1424, 0 0 18px #ff3b52, 0 
 
   // ---------- the CRT ----------
   var tvTimer = null, trailerTimer = null, tvCurrent = null;
+  // ---------- the marquee board ----------
+  var mqT = null, mqKey = "";
+  function wrapWords(text, max) {
+    var words = String(text).toUpperCase().split(/\s+/), lines = [""];
+    words.forEach(function (w) {
+      var cur = lines[lines.length - 1];
+      if (!cur) lines[lines.length - 1] = w;
+      else if ((cur + " " + w).length <= max) lines[lines.length - 1] = cur + " " + w;
+      else lines.push(w);
+    });
+    return lines.map(function (l) { return l.length > max ? l.slice(0, max - 1) + "…" : l; });
+  }
+  function marqueeLines(it, blind) {
+    var a = allAisles().filter(function (x) { return x.key === aisle; })[0];
+    if (blind) return { head: "BLIND DATE", rows: [["NO PEEKING"], ["? ? ?"], ["UNWRAP AT HOME", 1]] };
+    if (!it) {
+      var name = a ? a.label : "Welcome", n = aisleList(aisle).length;
+      return { head: "NOW ON THE SHELF", rows: wrapWords(name, 18).slice(0, 2).map(function (l) { return [l]; }).concat([[n ? n + " TAPES IN THIS AISLE" : "PICK AN AISLE", 1]]) };
+    }
+    var m = metaCache[it.id] || {};
+    var title = wrapWords(it.name, 20);
+    var mins = parseInt(m.runtime || it.runtime, 10);
+    var facts = [it.year, mins ? mins + " MIN" : "", rating(it), m.imdbRating ? "★" + m.imdbRating : ""].filter(Boolean).join(" · ");
+    var rows = title.length > 2 ? [[title[0]], [title[1].length > 19 ? title[1] : title[1] + "…"]] : title.map(function (l) { return [l]; });
+    if (rows.length < 2) rows.push([((it.genres && it.genres[0]) || (it.type === "series" ? "Television" : "Feature")).toUpperCase(), 1]);
+    rows.push([facts || "VHS · HI-FI STEREO", 1]);
+    return { head: it.aisles.indexOf("new") !== -1 ? "NEW RELEASE" : it.type === "series" ? "NOW ON TV" : "NOW ON THE SHELF", rows: rows };
+  }
+  function drawMarquee(data) {
+    var key = data.head + "|" + data.rows.map(function (r) { return r[0]; }).join("|");
+    if (key === mqKey) return;
+    mqKey = key;
+    $("mqHead").textContent = data.head;
+    var k = 0;
+    $("mqRows").innerHTML = data.rows.map(function (r) {
+      var txt = String(r[0]), html = "";
+      for (var i = 0; i < txt.length; i++) {
+        var ch = txt[i], cls = ch === " " ? "sp" : (ch === "★" ? "red" : "");
+        html += '<b class="' + cls + '" style="animation-delay:' + Math.min(k++ * 18, 700) + 'ms">' + (ch === " " ? "&nbsp;" : esc(ch)) + "</b>";
+      }
+      return '<div class="mq-row' + (r[1] ? " sm" : "") + '">' + html + "</div>";
+    }).join("");
+  }
+  function marqueeFor(it, blind) {
+    clearTimeout(mqT);
+    // wait until browsing pauses, then change the letters (and again once the details arrive)
+    mqT = setTimeout(function () {
+      drawMarquee(marqueeLines(it, blind));
+      if (it && !blind && !metaCache[it.id]) getMeta(it).then(function () {
+        var el = rows[focus.r] && rows[focus.r][focus.c];
+        if (el && el.getAttribute("data-id") === it.id) drawMarquee(marqueeLines(it));
+      });
+    }, 280);
+  }
   function tvBlind(it) {
     clearTimeout(tvTimer); clearTimeout(trailerTimer);
     if (!it || tvCurrent === "blind:" + it.id) return;
