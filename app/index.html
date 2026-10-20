@@ -1,34 +1,35 @@
 <title>Friday Night Video</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo+Black&family=Archivo+Narrow:wght@400;600;700&family=Permanent+Marker&family=VT323&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Kanit:ital,wght@0,400;0,500;0,600;0,700;1,800&family=Oswald:wght@500;600;700&family=Permanent+Marker&family=VT323&display=swap">
 <style>
 /* Layout: a bright 90s superstore seen from the end of an aisle. Fluorescent drop ceiling and yellow wall up top, a row of aisle signs, a slatwall fixture of tapes flanked by aisles receding into the store, blue carpet underfoot. */
 /* Written for the 2020 Samsung TV browser (Chromium 69): no clamp/min/max without fallbacks, no inset, no aspect-ratio, no flex gap. */
 :root {
   color-scheme: light;
-  --wall: #f3cd4f;
-  --wall-shade: #d8aa27;
+  --wall: #dca23c;
+  --wall-shade: #8f5f1c;
   --blue: #1e3d93;
   --blue-2: #2f5db3;
-  --sign: #fbfaf4;
-  --slat: #d9c29b;
-  --slat-groove: #b59a6c;
-  --ledge: #86704f;
+  --sign: #f4ead2;
+  --slat: #c39d68;
+  --slat-groove: #946f40;
+  --ledge: #6f5534;
   --red: #d2263a;
   --ink: #1b1b22;
   --paper: #fbf7ea;
   --muted: #5f5a4e;
-  --carpet: #28509f;
-  --f-sign: "Archivo Black", "Arial Black", Impact, sans-serif;
-  --f-spine: "Anton", Impact, "Arial Narrow", sans-serif;
-  --f-ui: "Archivo Narrow", "Arial Narrow", Arial, sans-serif;
+  --carpet: #1c3168;
+  --f-sign: "Bungee", "Arial Black", Impact, sans-serif;
+  --f-wall: "Kanit", "Futura", "Trebuchet MS", sans-serif;
+  --f-spine: "Oswald", "Arial Narrow", Impact, sans-serif;
+  --f-ui: "Kanit", "Trebuchet MS", Arial, sans-serif;
   --f-osd: "VT323", "Courier New", monospace;
   --u: 6.5px;
   --case-h: 150px;
 }
 @media (min-width: 960px) and (min-aspect-ratio: 4/3) {
-  :root { --u: 1vh; --case-h: 20vh; }
+  :root { --u: 1vh; --case-h: 22.5vh; }
 }
 html, body { height: 100%; }
 [hidden] { display: none !important; }
@@ -52,7 +53,11 @@ button { font: inherit; color: inherit; }
   padding-left: 16px; padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: 16px; padding-right: max(16px, env(safe-area-inset-right, 0px));
   padding-top: 14px; padding-bottom: 16px;
-  background: linear-gradient(var(--wall-shade), var(--wall) 22%, var(--wall));
+  background:
+    radial-gradient(ellipse 22% 90% at 18% 0, rgba(255,214,140,.38), rgba(255,214,140,0) 100%),
+    radial-gradient(ellipse 22% 90% at 52% 0, rgba(255,214,140,.32), rgba(255,214,140,0) 100%),
+    radial-gradient(ellipse 22% 90% at 84% 0, rgba(255,214,140,.3), rgba(255,214,140,0) 100%),
+    linear-gradient(var(--wall-shade), #c48a2c 26%, var(--wall) 70%, #c98f30);
 }
 .logo {
   display: inline-block; position: relative;
@@ -63,7 +68,7 @@ button { font: inherit; color: inherit; }
 }
 .logo span { display: block; transform: skewX(8deg); font-family: var(--f-sign); line-height: .95; text-transform: uppercase; }
 .logo .l1 { font-size: 15px; letter-spacing: .08em; color: #ffe08a; }
-.logo .l2 { font-size: 34px; letter-spacing: .02em; }
+.logo .l2 { font-family: var(--f-wall); font-weight: 800; font-style: italic; font-size: 36px; letter-spacing: .01em; }
 .painted, .banner { display: none; }
 
 /* CRT */
@@ -113,8 +118,8 @@ button { font: inherit; color: inherit; }
 /* aisle signs */
 .signs {
   display: flex; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none;
-  background: linear-gradient(#efebe1, #d6d1c3);
-  border-top: 3px solid #fff; border-bottom: 4px solid #a9a394;
+  background: linear-gradient(#e6d8b8, #c3b08a);
+  border-top: 3px solid #f6ecd4; border-bottom: 4px solid #7e6a48;
   padding-top: 8px; padding-bottom: 8px;
   padding-left: 16px; padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: 16px; padding-right: max(16px, env(safe-area-inset-right, 0px));
@@ -124,8 +129,8 @@ button { font: inherit; color: inherit; }
   flex: 0 0 auto; margin-right: 8px; cursor: pointer;
   background: var(--sign); color: var(--blue);
   border: 3px solid var(--blue); border-radius: 3px;
-  font-family: var(--f-sign); font-size: 14px; text-transform: uppercase; letter-spacing: .04em;
-  padding: 6px 12px 5px; white-space: nowrap;
+  font-family: var(--f-sign); font-size: 14px; text-transform: uppercase; letter-spacing: .03em;
+  padding: 6px 12px 4px; white-space: nowrap;
 }
 .sign:focus { outline: none; }
 .sign.current { background: var(--blue); color: #fff; }
@@ -138,14 +143,21 @@ button { font: inherit; color: inherit; }
   position: relative;
   background:
     repeating-linear-gradient(var(--slat) 0, var(--slat) calc(var(--u) * 2.2), var(--slat-groove) calc(var(--u) * 2.2), #ecd9b4 calc(var(--u) * 2.5), var(--slat) calc(var(--u) * 2.6));
-  box-shadow: inset 0 12px 18px rgba(0,0,0,.18);
+  box-shadow: inset 0 14px 22px rgba(40,20,0,.35);
   padding-top: 6px; padding-bottom: 4px;
 }
 .shelf-wrap { position: relative; }
+/* warm pools of light falling on each shelf from the fixtures above */
+.shelf-wrap::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 85%; pointer-events: none; z-index: 0;
+  background:
+    radial-gradient(ellipse 18% 100% at 15% 0, rgba(255,222,160,.45), rgba(255,222,160,0) 100%),
+    radial-gradient(ellipse 18% 100% at 50% 0, rgba(255,222,160,.42), rgba(255,222,160,0) 100%),
+    radial-gradient(ellipse 18% 100% at 85% 0, rgba(255,222,160,.4), rgba(255,222,160,0) 100%); }
+.shelf { position: relative; z-index: 1; }
 .shelf-wrap::after {
   content: ""; display: block; height: calc(var(--u) * 1.6);
-  background: linear-gradient(#b99a6b, var(--ledge) 45%, #5c4a31);
-  box-shadow: 0 6px 10px rgba(0,0,0,.3);
+  background: linear-gradient(#a8865a, var(--ledge) 45%, #45341f);
+  box-shadow: 0 6px 12px rgba(20,8,0,.45);
 }
 .shelf {
   display: flex; align-items: flex-end;
@@ -163,26 +175,33 @@ button { font: inherit; color: inherit; }
 /* tapes */
 .tape {
   flex: 0 0 auto; position: relative; margin-right: 3px;
-  height: var(--case-h); width: calc(var(--case-h) * .2);
+  height: var(--case-h); width: calc(var(--case-h) * .24);
   border: 0; padding: 0; cursor: pointer; background: transparent;
   transition: width .26s ease-out, transform .26s ease-out;
 }
 .tape:focus { outline: none; }
 .tape .spine, .tape .cover { position: absolute; top: 0; left: 0; right: 0; bottom: 0; border-radius: 2px; overflow: hidden; }
 .spine {
-  background: linear-gradient(90deg, rgba(0,0,0,.35), rgba(255,255,255,.08) 25%, transparent 50%, rgba(0,0,0,.35)), var(--c1);
+  background: linear-gradient(90deg, rgba(0,0,0,.4), rgba(255,255,255,.1) 22%, transparent 50%, rgba(0,0,0,.4)), var(--c1);
   display: flex; flex-direction: column; align-items: center; justify-content: space-between;
-  padding-bottom: 6px;
+  padding-bottom: calc(var(--case-h) * .03);
   transition: opacity .15s;
 }
-.spine .lbl { width: 100%; background: #f3f0e6; color: #222; font-family: var(--f-sign); font-size: calc(var(--case-h) * .04); text-align: center; padding: 3px 0 2px; letter-spacing: .1em; }
+.spine .lbl { width: 100%; background: rgba(0,0,0,.35); color: #f4ead2; font-family: var(--f-sign); font-size: calc(var(--case-h) * .036); text-align: center; padding: 3px 0 2px; letter-spacing: .12em; }
+/* the title sits on a cream rental label so it reads from the couch */
 .spine .t {
   writing-mode: vertical-rl; -webkit-writing-mode: vertical-rl; transform: rotate(180deg);
-  font-family: var(--f-spine); text-transform: uppercase; letter-spacing: .04em;
-  font-size: calc(var(--case-h) * .084); line-height: 1; color: var(--c-ink);
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  max-height: calc(var(--case-h) * .66); margin: 6px 0;
+  font-family: var(--f-spine); font-weight: 700; text-transform: uppercase; letter-spacing: .02em;
+  font-size: calc(var(--case-h) * .1); line-height: 1; color: #17131c; text-align: center;
+  background: #f6eedb; border-radius: 2px; box-shadow: 0 0 0 1px rgba(0,0,0,.25);
+  padding: calc(var(--case-h) * .025) calc(var(--case-h) * .01);
+  height: calc(var(--case-h) * .7); max-width: 86%;
+  white-space: normal; overflow: hidden; word-break: normal; overflow-wrap: normal;
+  margin: calc(var(--case-h) * .02) 0;
 }
+/* longer titles drop to two or three smaller lines instead of being cut off */
+.spine .t.t-l { font-size: calc(var(--case-h) * .074); }
+.spine .t.t-xl { font-size: calc(var(--case-h) * .056); }
 .spine .dot { width: calc(var(--case-h) * .09); height: calc(var(--case-h) * .09); border-radius: 50%; background: var(--c2); box-shadow: inset 0 0 0 2px rgba(0,0,0,.25); }
 .cover { opacity: 0; transition: opacity .15s; }
 .tape.focused { width: calc(var(--case-h) * .58); transform: translateY(calc(var(--u) * -1.6)); z-index: 2; }
@@ -269,7 +288,7 @@ button { font: inherit; color: inherit; }
   color: #3a2410 !important;
 }
 .spine.kraft { background: repeating-linear-gradient(17deg, rgba(90,60,25,.14) 0, rgba(90,60,25,.14) 1px, transparent 1px, transparent 6px), #c49a63 !important; }
-.spine.kraft .t { color: #3a2410; }
+.spine.kraft .t { color: #3a2410; background: rgba(255,240,210,.45); }
 .cover.kraft { padding: 10% 9%; display: block; }
 .stamp { display: inline-block; border: 3px solid var(--red); color: var(--red); font-family: var(--f-sign); font-size: calc(var(--case-h) * .07); padding: 2px 6px; transform: rotate(-6deg); background: rgba(196,154,99,.9); position: relative; z-index: 1; }
 .kraft .tease { position: relative; z-index: 1; margin-top: 10%; font-family: var(--f-osd); font-size: calc(var(--case-h) * .062); line-height: 1.05; background: rgba(196,154,99,.92); padding: 4px; }
@@ -299,6 +318,8 @@ button { font: inherit; color: inherit; }
 .checks .ok { color: #2f7a52; } .checks .bad { color: var(--red); } .checks .wait { color: var(--muted); }
 .results:empty { display: none; }
 /* night: the store after 10pm */
+.mood { position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 3; pointer-events: none;
+  background: radial-gradient(ellipse 75% 70% at 50% 55%, rgba(30,12,0,0) 50%, rgba(30,12,0,.5) 100%), linear-gradient(rgba(255,150,60,.05), rgba(255,150,60,.05)); }
 .night-veil { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 4; pointer-events: none; background: rgba(10, 14, 48, .46); }
 body.night .night-veil { display: block; }
 body.night .logo { z-index: 6; box-shadow: 0 4px 0 #8f1424, 0 0 18px #ff3b52, 0 0 60px rgba(255,59,82,.55); }
@@ -523,7 +544,7 @@ body.night .logo { z-index: 6; box-shadow: 0 4px 0 #8f1424, 0 0 18px #ff3b52, 0 
 .btn {
   background: var(--sign); color: var(--blue); border: 3px solid var(--blue); border-radius: 4px;
   padding: 8px 12px; cursor: pointer; text-align: left;
-  font-family: var(--f-sign); font-size: 13px; text-transform: uppercase; letter-spacing: .03em;
+  font-family: var(--f-ui); font-weight: 600; font-size: 14px; text-transform: uppercase; letter-spacing: .07em;
   display: flex; align-items: center; justify-content: space-between;
   box-shadow: 0 4px 0 rgba(0,0,0,.25);
 }
@@ -542,29 +563,30 @@ body.night .logo { z-index: 6; box-shadow: 0 4px 0 #8f1424, 0 0 18px #ff3b52, 0 
 @media (min-width: 960px) and (min-aspect-ratio: 4/3) {
   body { overflow: hidden; }
   .store { height: 100%; display: -webkit-box; display: flex; flex-direction: column; }
-  .top { flex: 0 0 calc(var(--u) * 31); height: calc(var(--u) * 31); }
-  .ceil { position: absolute; top: 0; left: 0; height: calc(var(--u) * 11); }
-  .wall { position: absolute; top: calc(var(--u) * 11); left: 0; right: 0; bottom: 0; padding: calc(var(--u) * 2.6) 0 0 calc(var(--u) * 4); }
+  .top { flex: 0 0 calc(var(--u) * 27); height: calc(var(--u) * 27); }
+  .ceil { position: absolute; top: 0; left: 0; height: calc(var(--u) * 8); }
+  .wall { position: absolute; top: calc(var(--u) * 8); left: 0; right: 0; bottom: 0; padding: calc(var(--u) * 2.2) 0 0 calc(var(--u) * 4); }
   .logo .l1 { font-size: calc(var(--u) * 2); }
-  .logo .l2 { font-size: calc(var(--u) * 5.2); }
+  .logo .l2 { font-size: calc(var(--u) * 5.4); }
   .painted {
     display: block; position: absolute; left: 0; right: 0; bottom: calc(var(--u) * 1.2);
-    text-align: center; font-family: var(--f-sign); font-size: calc(var(--u) * 6);
-    color: var(--blue); text-transform: lowercase; letter-spacing: -.01em; line-height: 1;
+    text-align: center; font-family: var(--f-wall); font-weight: 800; font-style: italic; font-size: calc(var(--u) * 6.6);
+    color: #1b3478; text-transform: lowercase; letter-spacing: -.01em; line-height: 1;
+    text-shadow: 0 2px 0 rgba(255,232,180,.35);
   }
   .banner {
     display: block; position: absolute; z-index: 2; top: calc(var(--u) * 1); left: 25%;
-    width: calc(var(--u) * 15); padding: calc(var(--u) * 1.2);
+    width: calc(var(--u) * 13.5); padding: calc(var(--u) * .9);
     background: var(--blue); color: #fff; border: calc(var(--u) * .5) solid #ffd84d;
     font-family: var(--f-sign); text-align: center; line-height: 1;
     box-shadow: 0 8px 16px rgba(0,0,0,.25);
   }
   .banner::before, .banner::after { content: ""; position: absolute; top: calc(var(--u) * -1.5); width: 1px; height: calc(var(--u) * 1.5); background: #666; }
   .banner::before { left: 18%; } .banner::after { right: 18%; }
-  .banner b { display: block; font-size: calc(var(--u) * 7); color: #ffd84d; }
-  .banner span { display: block; font-size: calc(var(--u) * 2.2); }
-  .banner em { display: block; font-style: normal; font-family: var(--f-ui); font-weight: 700; font-size: calc(var(--u) * 1.5); margin-top: calc(var(--u) * .8); color: #ffd84d; text-transform: uppercase; }
-  .crt-mount { position: absolute; z-index: 3; top: calc(var(--u) * 1); right: calc(var(--u) * 4); width: calc(var(--u) * 35); margin: 0; padding: 0; }
+  .banner b { display: block; font-size: calc(var(--u) * 5.2); color: #ffd84d; }
+  .banner span { display: block; font-size: calc(var(--u) * 1.8); line-height: 1.05; }
+  .banner em { display: block; font-style: normal; font-family: var(--f-ui); font-weight: 600; font-size: calc(var(--u) * 1.3); margin-top: calc(var(--u) * .5); color: #ffd84d; text-transform: uppercase; line-height: 1.1; }
+  .crt-mount { position: absolute; z-index: 3; top: calc(var(--u) * 1); right: calc(var(--u) * 4); width: calc(var(--u) * 31); margin: 0; padding: 0; }
   .crt-mount::before { content: ""; position: absolute; top: calc(var(--u) * -1); left: 50%; width: calc(var(--u) * 6); margin-left: calc(var(--u) * -3); height: calc(var(--u) * 1.6); background: #3b3b42; }
   .crt { padding: calc(var(--u) * 1.1) calc(var(--u) * 1.1) calc(var(--u) * 3); border-radius: calc(var(--u) * 1.6); }
   .screen { padding-bottom: 72%; }
@@ -583,12 +605,12 @@ body.night .logo { z-index: 6; box-shadow: 0 4px 0 #8f1424, 0 0 18px #ff3b52, 0 
   .shelf { padding-left: calc(var(--u) * 2); padding-right: calc(var(--u) * 2); }
   .empty { font-size: calc(var(--u) * 3); }
 
-  .floor { flex: 0 0 calc(var(--u) * 13); }
-  .floor-in { padding: calc(var(--u) * 1.6) calc(var(--u) * 4) 0; }
+  .floor { flex: 0 0 calc(var(--u) * 11); }
+  .floor-in { padding: calc(var(--u) * 1.2) calc(var(--u) * 4) 0; }
   .counter { display: -webkit-box; display: flex; justify-content: center; }
-  .btn { font-size: calc(var(--u) * 1.7); padding: calc(var(--u) * 1) calc(var(--u) * 1.4); margin: 0 calc(var(--u) * .5); border-width: calc(var(--u) * .35); }
+  .btn { font-size: calc(var(--u) * 1.75); padding: calc(var(--u) * .8) calc(var(--u) * 1.4); margin: 0 calc(var(--u) * .5); border-width: calc(var(--u) * .35); }
   .btn .key { width: calc(var(--u) * 1.4); height: calc(var(--u) * 1.4); }
-  .hint { margin-top: calc(var(--u) * 1.4); font-size: calc(var(--u) * 1.6); justify-content: center; }
+  .hint { margin-top: calc(var(--u) * 1); font-size: calc(var(--u) * 1.6); justify-content: center; }
 }
 
 /* ---------- overlays ---------- */
@@ -820,6 +842,7 @@ body.night .logo { z-index: 6; box-shadow: 0 4px 0 #8f1424, 0 0 18px #ff3b52, 0 
   <div class="land-ui"><div class="land-press" id="landPress">PRESS OK TO GO INSIDE ▶</div><div class="land-status" id="landStatus">Stocking the shelves…</div></div>
 </div>
 <div class="overlay" id="overlay" hidden></div>
+<div class="mood" aria-hidden="true"></div>
 <div class="night-veil" aria-hidden="true"></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <div class="demo" id="demo" hidden></div>
@@ -927,6 +950,8 @@ body.night .logo { z-index: 6; box-shadow: 0 4px 0 #8f1424, 0 0 18px #ff3b52, 0 
   var LINK = "https://link.stremio.com/api/v2/";
   var GENRE_KEYS = ["Action", "Comedy", "Sci-Fi", "Horror", "Family", "Romance", "Thriller", "Drama"];
   var extraAisles = [];      // catalogs from the person's installed addons
+  var pager = {};            // aisle key -> { base, extras, type, skip, done, loading }
+  var MAX_PER_AISLE = 600;
   var account = store("fnv-auth", null);   // { authKey }
   var accountInfo = "";
 
@@ -1007,8 +1032,13 @@ body.night .logo { z-index: 6; box-shadow: 0 4px 0 #8f1424, 0 0 18px #ff3b52, 0 
   }
   function loadLive() {
     var base = CINEMETA + "/catalog/movie/top";
+    pager = {
+      "new": { base: base, extras: "", type: "movie", skip: 0 },
+      tv: { base: CINEMETA + "/catalog/series/top", extras: "", type: "series", skip: 0 }
+    };
     var reqs = [getJSON(base + ".json", 5000).then(function (j) { return { a: "new", metas: j.metas }; }),
       getJSON(CINEMETA + "/catalog/series/top.json", 6000).then(function (j) { return { a: "tv", metas: (j.metas || []).map(function (m) { m.type = "series"; return m; }) }; }, function () { return null; })];
+    GENRE_KEYS.forEach(function (g) { pager[g] = { base: base, extras: "genre=" + encodeURIComponent(g), type: "movie", skip: 0 }; });
     GENRE_KEYS.forEach(function (g) {
       var a = { key: g };
       reqs.push(getJSON(base + "/genre=" + encodeURIComponent(a.key) + ".json", 6000)
@@ -1018,12 +1048,42 @@ body.night .logo { z-index: 6; box-shadow: 0 4px 0 #8f1424, 0 0 18px #ff3b52, 0 
       items = []; byId = {};
       res.forEach(function (r) {
         if (!r || !r.metas) return;
-        r.metas.slice(0, 40).forEach(function (m) { add(fromMeta(m), r.a); });
+        r.metas.forEach(function (m) { add(fromMeta(m), r.a); });
+        if (pager[r.a]) { pager[r.a].skip = r.metas.length; if (!r.metas.length) pager[r.a].done = true; }
       });
-      // anything without art gets Stremio's standard poster for that title
-      items.forEach(function (it) { if (!it.poster && /^tt\d+$/.test(it.id)) it.poster = "https://images.metahub.space/poster/medium/" + it.id + "/img"; });
+      fillPosters();
       live = true;
     });
+  }
+  // anything without art gets Stremio's standard poster for that title
+  function fillPosters() {
+    items.forEach(function (it) { if (!it.poster && /^tt\d+$/.test(it.id)) it.poster = "https://images.metahub.space/poster/medium/" + it.id + "/img"; });
+  }
+  // the next page of an aisle, fetched when you get near the end of its shelves
+  function loadMore(key) {
+    var pg = pager[key];
+    if (!pg || pg.done || pg.loading || !live || pg.skip >= MAX_PER_AISLE) return;
+    pg.loading = true;
+    var url = pg.base + "/" + (pg.extras ? pg.extras + "&" : "") + "skip=" + pg.skip + ".json";
+    getJSON(url, 9000).then(function (j) {
+      pg.loading = false;
+      var metas = j.metas || [], before = aisleList(key).length;
+      metas.forEach(function (m) { var it = fromMeta(m); if (pg.type) it.type = m.type || pg.type; add(it, key); });
+      pg.skip += metas.length;
+      fillPosters();
+      if (!metas.length || aisleList(key).length === before) pg.done = true;
+      if (aisle === key && !modal && aisleList(key).length !== before) refreshShelvesInPlace();
+    }, function () { pg.loading = false; pg.fails = (pg.fails || 0) + 1; if (pg.fails > 2) pg.done = true; });
+  }
+  // re-draw the current aisle without jumping the shelves back to the start
+  function refreshShelvesInPlace() {
+    var s0 = $("shelf0").scrollLeft, s1 = $("shelf1").scrollLeft, keep = { r: focus.r, c: focus.c };
+    renderShelves(); rebuildRows();
+    $("shelf0").scrollLeft = s0; $("shelf1").scrollLeft = s1;
+    focus = keep; clampFocus();
+    var el = rows[focus.r] && rows[focus.r][focus.c];
+    Array.prototype.forEach.call(document.querySelectorAll(".store .focused"), function (e) { e.classList.remove("focused"); });
+    if (el) { el.classList.add("focused"); if (el.classList.contains("tape")) loadCover(el); }
   }
   // Fuller details (synopsis, cast, director, IMDb rating, trailer) for the back of the box.
   function getMeta(it) {
@@ -1061,14 +1121,12 @@ body.night .logo { z-index: 6; box-shadow: 0 4px 0 #8f1424, 0 0 18px #ff3b52, 0 
 
   // ---------- helpers ----------
   function hash(str) { var h = 0; for (var i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) | 0; return Math.abs(h); }
+  var SPINE_COLS = ["#1b1a20", "#efe6d2", "#a8232e", "#1e3c86", "#d8a423", "#2a6643", "#57307a", "#c35a1d", "#0e2a52", "#7a1f2b", "#2b6e78", "#d9cdb5", "#262a33", "#8c2f5c", "#3d4f2a"];
+  function lum(hex) { var n = parseInt(hex.slice(1), 16); return (0.299 * (n >> 16) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255; }
   function colorsFor(it) {
-    var h = hash(it.name) % 360, light = (hash(it.id) % 3) === 0;
-    return {
-      c1: light ? "hsl(" + h + ",70%,80%)" : "hsl(" + h + ",62%,26%)",
-      c2: "hsl(" + ((h + 150) % 360) + ",85%,60%)",
-      c3: "hsl(" + h + ",45%,18%)",
-      ink: light ? "#1b1b22" : "#fff4e6"
-    };
+    var h = hash(it.name), c1 = SPINE_COLS[h % SPINE_COLS.length], c2 = SPINE_COLS[(h >> 4) % SPINE_COLS.length];
+    if (c2 === c1) c2 = SPINE_COLS[(h + 3) % SPINE_COLS.length];
+    return { c1: c1, c2: c2, c3: c1, ink: lum(c1) > 0.6 ? "#1b1b22" : "#fff4e6" };
   }
   function styleFor(it) { var c = colorsFor(it); return "--c1:" + c.c1 + ";--c2:" + c.c2 + ";--c3:" + c.c3 + ";--c-ink:" + c.ink; }
   function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
@@ -1088,10 +1146,10 @@ body.night .logo { z-index: 6; box-shadow: 0 4px 0 #8f1424, 0 0 18px #ff3b52, 0 
   }
   function aisleList(key) { return items.filter(function (it) { return it.aisles.indexOf(key) !== -1 && visible(it); }); }
 
-  function coverHTML(it) {
+  function coverHTML(it, lazy) {
     var c = colorsFor(it), g = (it.genres && it.genres[0]) || "Feature";
-    var poster = it.poster ? '<img alt="" src="' + esc(it.poster) + '" onerror="this.parentNode.classList.remove(\'has-poster\');this.parentNode.removeChild(this)">' : "";
-    return '<div class="cover' + (it.poster ? " has-poster" : "") + '" style="' + styleFor(it) + ';color:' + c.ink + '">' + poster +
+    var poster = it.poster && !lazy ? '<img alt="" src="' + esc(it.poster) + '" onerror="this.parentNode.classList.remove(\'has-poster\');this.parentNode.removeChild(this)">' : "";
+    return '<div class="cover' + (it.poster && !lazy ? " has-poster" : "") + '"' + (it.poster && lazy ? ' data-poster="' + esc(it.poster) + '"' : "") + ' style="' + styleFor(it) + ';color:' + c.ink + '">' + poster +
       '<div class="band"><span>VHS</span><span>HI-FI</span></div>' +
       '<div class="ct">' + esc(it.name) + '</div>' +
       '<div class="meta"><span>' + esc(g) + '</span><span>' + (it.year || "") + ' · ' + rating(it) + '</span></div></div>';
@@ -1114,8 +1172,10 @@ body.night .logo { z-index: 6; box-shadow: 0 4px 0 #8f1424, 0 0 18px #ff3b52, 0 
   }
   function tapeHTML(it, isNew, blind) {
     if (blind) return blindHTML(it);
-    return '<div class="spine" style="' + styleFor(it) + '"><span class="lbl">VHS</span><span class="t">' + esc(it.name) +
-      '</span><span class="dot"></span></div>' + coverHTML(it) +
+    var n = it.name.length, longest = Math.max.apply(null, it.name.split(/\s+/).map(function (w) { return w.length; }));
+    var tc = n > 30 || longest > 13 ? " t-xl" : n > 15 || longest > 10 ? " t-l" : "";
+    return '<div class="spine" style="' + styleFor(it) + '"><span class="lbl">VHS</span><span class="t' + tc + '">' + esc(it.name) +
+      '</span><span class="dot"></span></div>' + coverHTML(it, !isNew) +
       (isNew && !isWatched(it.id) ? '<div class="new-sticker">NEW</div>' : "") +
       (isWatched(it.id) ? '<div class="rewound">Be kind rewind</div>' : "") +
       (daysLate(it) ? '<div class="late">LATE</div>' : "") +
@@ -1194,6 +1254,8 @@ body.night .logo { z-index: 6; box-shadow: 0 4px 0 #8f1424, 0 0 18px #ff3b52, 0 
     }
     if (el.classList.contains("tape")) {
       var it = byId[el.getAttribute("data-id")];
+      loadCover(el);
+      if (rowKinds[focus.r] === "shelf" && focus.c >= rows[focus.r].length - 8) loadMore(aisle);
       if (el.getAttribute("data-blind")) tvBlind(it);
       else {
         if (it && it.genres && it.genres[0]) lastGenre = it.genres[0];
@@ -1206,6 +1268,15 @@ body.night .logo { z-index: 6; box-shadow: 0 4px 0 #8f1424, 0 0 18px #ff3b52, 0 
     if (!quiet) sfx("tick");
   }
 
+  function loadCover(el) {
+    var cov = el.querySelector(".cover[data-poster]");
+    if (!cov || cov.getAttribute("data-loading")) return;
+    cov.setAttribute("data-loading", "1");
+    var img = new Image();
+    img.alt = "";
+    img.onload = function () { cov.insertBefore(img, cov.firstChild); cov.classList.add("has-poster"); };
+    img.src = cov.getAttribute("data-poster");
+  }
   function move(dr, dc) {
     if (dr) {
       var nr = focus.r + dr;
@@ -1319,17 +1390,17 @@ body.night .logo { z-index: 6; box-shadow: 0 4px 0 #8f1424, 0 0 18px #ff3b52, 0 
     var zN = 1.25, zF = 8, sN = 1 / zN, sF = 1 / zF, k = w * 0.2;
     function Y(z) { return h * (sN - 1 / z) / (sN - sF); }
     function X(x, z) { return w / 2 + x * k / z; }
-    var g = ctx.createLinearGradient(0, 0, 0, h); g.addColorStop(0, "#f5f3ec"); g.addColorStop(1, "#d7d3c6");
+    var g = ctx.createLinearGradient(0, 0, 0, h); g.addColorStop(0, "#a69c88"); g.addColorStop(1, "#7d7262");
     ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
-    ctx.strokeStyle = "rgba(120,112,95,.35)"; ctx.lineWidth = 1;
+    ctx.strokeStyle = "rgba(60,48,32,.35)"; ctx.lineWidth = 1;
     for (var x = -14; x <= 14; x++) { ctx.beginPath(); ctx.moveTo(X(x, zN), 0); ctx.lineTo(X(x, zF), h); ctx.stroke(); }
     for (var z = 2; z < zF; z++) { ctx.beginPath(); ctx.moveTo(0, Y(z)); ctx.lineTo(w, Y(z)); ctx.stroke(); }
-    ctx.save(); ctx.shadowColor = "rgba(255,255,235,.95)"; ctx.shadowBlur = 14;
+    ctx.save(); ctx.shadowColor = "rgba(255,196,120,.95)"; ctx.shadowBlur = 22;
     [[1.4, 1.9], [2.9, 3.5], [4.4, 5], [5.9, 6.5], [7.2, 7.7]].forEach(function (zz) {
       [-9, -4, 1, 6].forEach(function (x0) {
         var x1 = x0 + 0.15, x2 = x0 + 1.85;
         quad(ctx, [X(x1, zz[0]), Y(zz[0]), X(x2, zz[0]), Y(zz[0]), X(x2, zz[1]), Y(zz[1]), X(x1, zz[1]), Y(zz[1])]);
-        ctx.fillStyle = "#fffef6"; ctx.fill();
+        ctx.fillStyle = "#ffe6b8"; ctx.fill();
       });
     });
     ctx.restore();
@@ -1347,9 +1418,9 @@ body.night .logo { z-index: 6; box-shadow: 0 4px 0 #8f1424, 0 0 18px #ff3b52, 0 
     function B(z) { return h / 2 + (h / 2) * (zN / z); }
     function lerp(a, b, t) { return a + (b - a) * t; }
     var bg = ctx.createLinearGradient(0, 0, 0, h);
-    bg.addColorStop(0, "#e4e0d4"); bg.addColorStop(0.5, "#cfc9b9"); bg.addColorStop(0.5, "#22478f"); bg.addColorStop(1, "#2d5aac");
+    bg.addColorStop(0, "#8d8370"); bg.addColorStop(0.5, "#b3955f"); bg.addColorStop(0.5, "#182c5e"); bg.addColorStop(1, "#203a78");
     ctx.fillStyle = bg; ctx.fillRect(0, 0, w, h);
-    ctx.fillStyle = "#c9b088";
+    ctx.fillStyle = "#a9844f";
     quad(ctx, [X(zN), T(zN), X(zF), T(zF), X(zF), B(zF), X(zN), B(zN)]); ctx.fill();
     var cols = ["#18181d", "#f1eee4", "#b8322f", "#2a4f9c", "#e2b33c", "#2f7a52", "#6b3f8c", "#d96b2b", "#0f2c5c", "#e9e9e9", "#7a1f2b"];
     var levels = [0, 0.5];
@@ -1361,18 +1432,18 @@ body.night .logo { z-index: 6; box-shadow: 0 4px 0 #8f1424, 0 0 18px #ff3b52, 0 
       }
       var l0 = f + 0.44, l1 = f + 0.5;
       quad(ctx, [X(zN), lerp(T(zN), B(zN), l0), X(zF), lerp(T(zF), B(zF), l0), X(zF), lerp(T(zF), B(zF), l1), X(zN), lerp(T(zN), B(zN), l1)]);
-      ctx.fillStyle = "#86704f"; ctx.fill();
+      ctx.fillStyle = "#6f5534"; ctx.fill();
     });
-    var g = ctx.createLinearGradient(0, 0, w, 0); g.addColorStop(0, "rgba(0,0,0,.25)"); g.addColorStop(1, "rgba(0,0,0,0)");
+    var g = ctx.createLinearGradient(0, 0, w, 0); g.addColorStop(0, "rgba(20,8,0,.45)"); g.addColorStop(1, "rgba(20,8,0,.05)");
     ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
   }
 
   function drawCarpet() {
     var c = prep($("carpet")), ctx = c.ctx, w = c.w, h = c.h, r = rand(7);
-    var g = ctx.createLinearGradient(0, 0, 0, h); g.addColorStop(0, "#22478f"); g.addColorStop(1, "#2d5aac");
+    var g = ctx.createLinearGradient(0, 0, 0, h); g.addColorStop(0, "#152858"); g.addColorStop(1, "#1f3a78");
     ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
     var zN = 1, zF = 5, sN = 1, sF = 1 / zF, k = w * 0.3;
-    var cols = ["rgba(120,160,230,.55)", "rgba(10,30,80,.55)", "rgba(240,200,80,.45)", "rgba(210,80,110,.4)"];
+    var cols = ["rgba(110,140,210,.4)", "rgba(5,15,50,.55)", "rgba(230,180,80,.32)", "rgba(200,70,100,.3)"];
     for (var i = 0; i < 2600; i++) {
       var z = zN + r() * (zF - zN), x = (r() - 0.5) * 2 * (w / 2) / k * z;
       var y = h * (1 / z - sF) / (sN - sF), sx = w / 2 + x * k / z, s = 2.4 / z + 0.6;
@@ -1698,8 +1769,9 @@ body.night .logo { z-index: 6; box-shadow: 0 4px 0 #8f1424, 0 0 18px #ff3b52, 0 
       // drop the example progress from the sample shelf
       items.forEach(function (it) { var i = it.aisles.indexOf("cw"); if (i !== -1) { it.aisles.splice(i, 1); it.progress = 0; } });
       cw.slice(0, 30).forEach(function (it) { var x = add(it, "cw"); x.progress = it.progress; x.videoId = it.videoId; x.lastWatched = it.lastWatched; });
-      lib.slice(0, 80).forEach(function (it) { add(it, "lib"); });
-      return list.length;
+      lib.forEach(function (it) { add(it, "lib"); });
+      fillPosters();
+      return lib.length;
     });
   }
   function catalogUsable(c) {
@@ -1727,8 +1799,12 @@ body.night .logo { z-index: 6; box-shadow: 0 4px 0 #8f1424, 0 0 18px #ff3b52, 0 
             var label = c.name || m.name || "Addon";
             extras.push({ key: key, label: label.length > 24 ? label.slice(0, 23) + "…" : label });
           }
-          jobs.push(getJSON(base + "/catalog/" + c.type + "/" + encodeURIComponent(c.id) + ".json", 8000).then(function (j) {
-            (j.metas || []).slice(0, 40).forEach(function (mt) { var it = fromMeta(mt); it.type = mt.type || c.type; add(it, key); });
+          var cbase = base + "/catalog/" + c.type + "/" + encodeURIComponent(c.id);
+          var pages = (c.extra || []).some(function (e) { return e && e.name === "skip"; }) || (c.extraSupported || []).indexOf("skip") !== -1;
+          jobs.push(getJSON(cbase + ".json", 8000).then(function (j) {
+            var metas = j.metas || [];
+            metas.forEach(function (mt) { var it = fromMeta(mt); it.type = mt.type || c.type; add(it, key); });
+            if (pages && metas.length) pager[key] = { base: cbase, extras: "", type: c.type, skip: metas.length };
           }, function () {}));
         });
       });
@@ -2515,7 +2591,7 @@ body.night .logo { z-index: 6; box-shadow: 0 4px 0 #8f1424, 0 0 18px #ff3b52, 0 
       if (t >= dur) { t = dur; clearInterval(iv); cb.ended(); }
       bars.forEach(function (c, i) { ctx.fillStyle = c; ctx.fillRect(i * 960 / 7, 0, 960 / 7 + 1, 360); });
       ctx.fillStyle = "#101018"; ctx.fillRect(0, 360, 960, 180);
-      ctx.fillStyle = "#fff"; ctx.font = "bold 44px Anton, Impact, sans-serif"; ctx.textAlign = "center";
+      ctx.fillStyle = "#fff"; ctx.font = "bold 44px Oswald, Impact, sans-serif"; ctx.textAlign = "center";
       ctx.fillText(it.name.toUpperCase(), 480, 430);
       ctx.font = "26px VT323, monospace";
       ctx.fillText("PREVIEW TAPE · REAL FILMS PLAY ON THE TV", 480, 470);
@@ -3188,7 +3264,7 @@ body.night .logo { z-index: 6; box-shadow: 0 4px 0 #8f1424, 0 0 18px #ff3b52, 0 
       // the building next door
       '<rect class="ok c-wall2" x="1650" y="440" width="290" height="262"/><rect x="1650" y="440" width="290" height="262" fill="url(#oShadeTop)"/>' +
       '<rect class="ok" x="1662" y="452" width="262" height="58" fill="#4a6fa5"/><rect x="1662" y="452" width="262" height="58" fill="url(#oFace)"/>' +
-      '<text x="1792" y="491" text-anchor="middle" font-family="Archivo Black, Arial Black, sans-serif" font-size="26" fill="#e3e9f5">COIN LAUNDRY</text>' +
+      '<text x="1792" y="491" text-anchor="middle" font-family="Bungee, Arial Black, sans-serif" font-size="26" fill="#e3e9f5">COIN LAUNDRY</text>' +
       '<rect class="ok" x="1670" y="556" width="252" height="138" fill="#2a3a5a"/>' +
       '<circle class="ok2" cx="1712" cy="640" r="22" fill="#8fa0ba"/><circle class="ok2" cx="1772" cy="640" r="22" fill="#8fa0ba"/><circle class="ok2" cx="1832" cy="640" r="22" fill="#8fa0ba"/><circle class="ok2" cx="1892" cy="640" r="22" fill="#8fa0ba"/>' +
       // the video store
@@ -3200,7 +3276,7 @@ body.night .logo { z-index: 6; box-shadow: 0 4px 0 #8f1424, 0 0 18px #ff3b52, 0 
       '<rect x="980" y="452" width="670" height="250" fill="url(#oShadeTop)"/><rect class="o-spill" x="980" y="560" width="670" height="142" fill="url(#oWarmUp)"/>' +
       '<ellipse class="o-spill" cx="1126" cy="628" rx="190" ry="120" fill="url(#oWinGlow)"/><ellipse class="o-spill" cx="1500" cy="628" rx="200" ry="120" fill="url(#oWinGlow)"/>' +
       '<rect class="ok" x="994" y="462" width="642" height="72" rx="6" fill="#c4313d"/><rect x="994" y="462" width="642" height="72" rx="6" fill="url(#oFace)"/>' +
-      '<text id="oFascia" x="1315" y="516" text-anchor="middle" font-family="Archivo Black, Arial Black, sans-serif" font-size="48" fill="#ffd84d" stroke="#2b2140" stroke-width="3" paint-order="stroke">VIDEO</text>' +
+      '<text id="oFascia" x="1315" y="516" text-anchor="middle" font-family="Bungee, Arial Black, sans-serif" font-size="48" fill="#ffd84d" stroke="#2b2140" stroke-width="3" paint-order="stroke">VIDEO</text>' +
       // left window: shelves of tapes and a poster
       '<rect class="ok c-win" x="1000" y="556" width="252" height="138"/>' +
       '<rect x="1004" y="600" width="244" height="36" fill="url(#oSpines)" opacity=".7"/><rect x="1004" y="650" width="244" height="40" fill="url(#oSpines)" opacity=".7"/>' +
@@ -3210,7 +3286,7 @@ body.night .logo { z-index: 6; box-shadow: 0 4px 0 #8f1424, 0 0 18px #ff3b52, 0 
       // door
       '<rect class="ok" x="1262" y="546" width="100" height="156" fill="#3a3448"/>' +
       '<g id="oDoor"><rect class="ok2 c-glass" x="1270" y="554" width="84" height="148"/><rect x="1270" y="554" width="84" height="148" fill="url(#oWinTop)"/><rect x="1280" y="578" width="64" height="20" fill="#ffd84d"/>' +
-      '<text x="1312" y="592" text-anchor="middle" font-family="Archivo Narrow, Arial Narrow, sans-serif" font-weight="700" font-size="9" fill="#2b2140" textLength="58" lengthAdjust="spacingAndGlyphs">BE KIND REWIND</text>' +
+      '<text x="1312" y="592" text-anchor="middle" font-family="Kanit, Arial Narrow, sans-serif" font-weight="700" font-size="9" fill="#2b2140" textLength="58" lengthAdjust="spacingAndGlyphs">BE KIND REWIND</text>' +
       '<rect x="1338" y="620" width="6" height="28" fill="#2b2140"/></g>' +
       // right window: shelves and the OPEN neon
       '<rect class="ok c-win" x="1370" y="556" width="262" height="138"/>' +
@@ -3218,13 +3294,13 @@ body.night .logo { z-index: 6; box-shadow: 0 4px 0 #8f1424, 0 0 18px #ff3b52, 0 
       '<rect x="1370" y="556" width="262" height="138" fill="url(#oWinTop)"/>' +
       '<line class="ok2" x1="1500" y1="556" x2="1500" y2="694"/>' +
       '<g class="o-neon"><ellipse cx="1440" cy="584" rx="90" ry="44" fill="url(#oNeon)"/><rect x="1392" y="566" width="96" height="36" rx="10" fill="rgba(40,10,30,.55)" stroke="#ff4f7a" stroke-width="4"/>' +
-      '<text id="oOpen" x="1440" y="593" text-anchor="middle" font-family="Archivo Black, Arial Black, sans-serif" font-size="22" fill="#ff8aa2">OPEN</text></g>' +
+      '<text id="oOpen" x="1440" y="593" text-anchor="middle" font-family="Bungee, Arial Black, sans-serif" font-size="22" fill="#ff8aa2">OPEN</text></g>' +
       // planters and hedges along the front
       '<rect class="ok" x="986" y="696" width="270" height="18" fill="#8a5a44"/><rect class="ok" x="1366" y="696" width="270" height="18" fill="#8a5a44"/>' +
       hedge(990, 1250, 698) + hedge(1370, 1630, 698) +
       // returns box
       '<rect class="ok" x="1208" y="648" width="46" height="66" rx="6" fill="#2d5bb0"/><rect x="1208" y="648" width="46" height="66" rx="6" fill="url(#oShine)"/><rect x="1216" y="662" width="30" height="6" fill="#2b2140"/>' +
-      '<text x="1231" y="702" text-anchor="middle" font-family="Archivo Narrow, Arial Narrow, sans-serif" font-weight="700" font-size="9" fill="#fff" textLength="38" lengthAdjust="spacingAndGlyphs">RETURNS</text>' +
+      '<text x="1231" y="702" text-anchor="middle" font-family="Kanit, Arial Narrow, sans-serif" font-weight="700" font-size="9" fill="#fff" textLength="38" lengthAdjust="spacingAndGlyphs">RETURNS</text>' +
       // window light spilling onto the lot
       '<polygon class="o-spill" points="1000,716 1252,716 1310,800 940,812" fill="url(#oSpill)"/><polygon class="o-spill" points="1370,716 1632,716 1700,796 1330,806" fill="url(#oSpill)"/>' +
       // parked cars
@@ -3243,14 +3319,14 @@ body.night .logo { z-index: 6; box-shadow: 0 4px 0 #8f1424, 0 0 18px #ff3b52, 0 
       '<rect class="ok" x="540" y="150" width="342" height="182" rx="14" fill="#2a2340"/>' +
       '<rect class="c-sign" x="556" y="166" width="310" height="150" rx="6"/><ellipse cx="711" cy="250" rx="170" ry="80" fill="url(#oHalo)"/>' +
       '<rect x="556" y="166" width="310" height="30" fill="#c4313d"/><rect x="556" y="166" width="310" height="30" fill="url(#oFace)"/>' +
-      '<text x="711" y="187" text-anchor="middle" font-family="Archivo Narrow, Arial Narrow, sans-serif" font-weight="700" font-size="17" letter-spacing="3" fill="#fff" textLength="286" lengthAdjust="spacingAndGlyphs">MOVIES · GAMES · LATE NIGHT</text>' +
-      '<text id="oName1" x="711" y="236" text-anchor="middle" font-family="Archivo Black, Arial Black, sans-serif" font-size="30" fill="#1e3d93">FRIDAY NIGHT</text>' +
-      '<text id="oName2" x="711" y="298" text-anchor="middle" font-family="Archivo Black, Arial Black, sans-serif" font-size="58" fill="#c4313d" stroke="#2b2140" stroke-width="2" paint-order="stroke">VIDEO</text>' +
+      '<text x="711" y="187" text-anchor="middle" font-family="Kanit, Arial Narrow, sans-serif" font-weight="700" font-size="17" letter-spacing="3" fill="#fff" textLength="286" lengthAdjust="spacingAndGlyphs">MOVIES · GAMES · LATE NIGHT</text>' +
+      '<text id="oName1" x="711" y="236" text-anchor="middle" font-family="Bungee, Arial Black, sans-serif" font-size="30" fill="#1e3d93">FRIDAY NIGHT</text>' +
+      '<text id="oName2" x="711" y="298" text-anchor="middle" font-family="Bungee, Arial Black, sans-serif" font-size="58" fill="#c4313d" stroke="#2b2140" stroke-width="2" paint-order="stroke">VIDEO</text>' +
       '<rect class="ok" x="560" y="342" width="302" height="84" fill="#f6f3ea"/><rect x="560" y="342" width="302" height="84" fill="url(#oFace)"/>' +
       '<line x1="566" y1="369" x2="856" y2="369" stroke="#b9b4a6" stroke-width="2"/><line x1="566" y1="398" x2="856" y2="398" stroke="#b9b4a6" stroke-width="2"/>' +
-      '<text id="oMq1" x="711" y="364" text-anchor="middle" font-family="Archivo Narrow, Arial Narrow, sans-serif" font-weight="700" font-size="22" letter-spacing="2" fill="#16131f">NEW THIS WEEK</text>' +
-      '<text id="oMq2" x="711" y="393" text-anchor="middle" font-family="Archivo Narrow, Arial Narrow, sans-serif" font-weight="700" font-size="22" letter-spacing="2" fill="#16131f">OPEN TIL MIDNIGHT</text>' +
-      '<text id="oMq3" x="711" y="420" text-anchor="middle" font-family="Archivo Narrow, Arial Narrow, sans-serif" font-weight="700" font-size="18" letter-spacing="2" fill="#c4313d">BE KIND · REWIND</text>' +
+      '<text id="oMq1" x="711" y="364" text-anchor="middle" font-family="Kanit, Arial Narrow, sans-serif" font-weight="700" font-size="22" letter-spacing="2" fill="#16131f">NEW THIS WEEK</text>' +
+      '<text id="oMq2" x="711" y="393" text-anchor="middle" font-family="Kanit, Arial Narrow, sans-serif" font-weight="700" font-size="22" letter-spacing="2" fill="#16131f">OPEN TIL MIDNIGHT</text>' +
+      '<text id="oMq3" x="711" y="420" text-anchor="middle" font-family="Kanit, Arial Narrow, sans-serif" font-weight="700" font-size="18" letter-spacing="2" fill="#c4313d">BE KIND · REWIND</text>' +
       // a car driving past now and then
       '<g id="oPasser"><polygon class="o-light" points="182,962 560,930 560,1012 182,982" fill="url(#oBeam)"/>' + carSVG(0, 994, "#e2c04f", "sedan") + "</g>" +
       "</svg>";
