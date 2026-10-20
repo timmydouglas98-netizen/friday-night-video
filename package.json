@@ -1,0 +1,21 @@
+{
+  "name": "friday-night-video",
+  "version": "0.6.1",
+  "description": "A 90s video store front-end for Stremio, for Samsung TVs via TizenBrew",
+  "packageType": "app",
+  "appName": "Friday Night Video",
+  "appPath": "app/index.html",
+  "keys": [
+    "ColorF0Red",
+    "ColorF1Green",
+    "ColorF2Yellow",
+    "ColorF3Blue",
+    "MediaPlayPause",
+    "MediaPlay",
+    "MediaPause",
+    "MediaStop",
+    "MediaRewind",
+    "MediaFastForward"
+  ],
+  "license": "MIT"
+}
