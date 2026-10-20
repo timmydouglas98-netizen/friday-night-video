@@ -326,10 +326,19 @@ body.night .logo { z-index: 6; box-shadow: 0 4px 0 #8f1424, 0 0 18px #ff3b52, 0 
 .player.av { background: transparent; }
 .p-stage, .p-stage > * { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
 .p-stage video, .p-stage canvas { object-fit: contain; background: #000; }
-.p-vhs { position: absolute; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; display: none;
-  background: repeating-linear-gradient(rgba(0,0,0,.22) 0, rgba(0,0,0,.22) 1px, transparent 1px, transparent 3px), radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,.55) 100%); }
+.p-vhs { position: absolute; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; display: none; overflow: hidden;
+  background:
+    repeating-linear-gradient(rgba(0,0,0,.2) 0, rgba(0,0,0,.2) 1px, transparent 1px, transparent 3px),
+    radial-gradient(ellipse at center, rgba(0,0,0,0) 58%, rgba(0,0,0,.5) 100%),
+    linear-gradient(rgba(255,170,90,.06), rgba(80,40,140,.07)); }
+/* a soft tracking band that rolls down the picture now and then */
+.p-vhs::after { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 7vh; will-change: transform;
+  background: linear-gradient(transparent, rgba(255,255,255,.07) 40%, rgba(255,255,255,.12) 50%, rgba(0,0,0,.08) 70%, transparent);
+  transform: translateY(-10vh); animation: vhsband 11s linear infinite; }
+@keyframes vhsband { 0%, 70% { transform: translateY(-10vh); } 100% { transform: translateY(110vh); } }
 .player.vhs .p-vhs { display: block; }
-.player.vhs .p-stage { filter: saturate(1.25) contrast(1.06) blur(.4px); }
+/* the TV can't apply filters to its hardware video picture (it goes black), so the look is all overlay */
+@media (prefers-reduced-motion: reduce) { .p-vhs::after { animation: none; display: none; } }
 .p-osd { position: absolute; top: 4vh; left: 5vw; right: 5vw; display: flex; justify-content: space-between; font-family: var(--f-osd); font-size: 5vh; text-shadow: 0 0 6px #000, 2px 2px 0 #000; pointer-events: none; transition: opacity .3s; }
 .p-osd.off { opacity: 0; }
 .p-subs { position: absolute; left: 6vw; right: 6vw; bottom: 9vh; text-align: center; pointer-events: none; }
@@ -1593,6 +1602,7 @@ body.night .logo { z-index: 6; box-shadow: 0 4px 0 #8f1424, 0 0 18px #ff3b52, 0 
     else if (act === "pick-mode") { var modes = ["4k-sdr", "best", "1080"]; prefs.pick = modes[(modes.indexOf(prefs.pick) + 1) % 3]; save("fnv-prefs", prefs); playerSettings(modal.idx); }
     else if (act === "toggle-vhs") { prefs.vhs = !prefs.vhs; save("fnv-prefs", prefs); playerSettings(modal.idx); }
     else if (act === "toggle-previews") { prefs.previews = !prefs.previews; save("fnv-prefs", prefs); playerSettings(modal.idx); }
+    else if (act === "audio-lang") { var al = ["en", "es", "fr", "de", "it", "pt", "ja", "ko", "hi", "ru", "zh", "nl"]; prefs.audioLang = al[(al.indexOf(prefs.audioLang || "en") + 1) % al.length]; save("fnv-prefs", prefs); playerSettings(modal.idx); }
     else if (act === "toggle-autonext") { prefs.noAutoNext = !prefs.noAutoNext; save("fnv-prefs", prefs); playerSettings(modal.idx); }
     else if (act === "saveserver") { prefs.server = ($("serverUrl").value || "").trim().replace(/\/+$/, ""); save("fnv-prefs", prefs); toast(prefs.server ? "Streaming server saved" : "Streaming server cleared"); playerSettings(0); }
     else if (act === "reroll") clerk();
@@ -2116,11 +2126,33 @@ body.night .logo { z-index: 6; box-shadow: 0 4px 0 #8f1424, 0 0 18px #ff3b52, 0 
     var hdr = /hdr10|\bhdr\b|\bhlg\b/i.test(text);
     var dv = /\bdv\b|dolby.?vision|\bdovi\b/i.test(text);
     var cam = /\b(cam|hdcam|camrip|telesync|hdts|tc)\b/i.test(text);
+    var langs = copyLangs(text);
     var sm = text.match(/([\d.]+)\s*(GB|MB)\b/i);
     var size = sm ? parseFloat(sm[1]) / (/mb/i.test(sm[2]) ? 1024 : 1) : 0;
     var kind = st.url ? (/download|uncached|⏳|⬇/i.test(st.name || "") ? "uncached" : "instant") : (st.infoHash ? "torrent" : "other");
     var first = String(st.title || st.description || "").split("\n")[0];
-    return { st: st, addon: addonName, res: res, hdr: hdr, dv: dv, dvOnly: dv && !hdr, cam: cam, size: size, kind: kind, file: first };
+    return { st: st, addon: addonName, res: res, hdr: hdr, dv: dv, dvOnly: dv && !hdr, cam: cam, size: size, kind: kind, file: first, langs: langs };
+  }
+  // what languages a copy's description says it has (Torrentio lists them as flags and words)
+  var FLAG_LANG = { "🇬🇧": "en", "🇺🇸": "en", "🇮🇹": "it", "🇪🇸": "es", "🇲🇽": "es", "🇫🇷": "fr", "🇩🇪": "de", "🇷🇺": "ru", "🇺🇦": "uk", "🇵🇹": "pt", "🇧🇷": "pt",
+    "🇯🇵": "ja", "🇰🇷": "ko", "🇨🇳": "zh", "🇮🇳": "hi", "🇳🇱": "nl", "🇵🇱": "pl", "🇹🇷": "tr", "🇸🇦": "ar", "🇨🇿": "cs", "🇭🇺": "hu", "🇬🇷": "el", "🇹🇭": "th", "🇻🇳": "vi" };
+  function copyLangs(text) {
+    var out = [], t = String(text || "");
+    for (var f in FLAG_LANG) if (t.indexOf(f) !== -1 && out.indexOf(FLAG_LANG[f]) === -1) out.push(FLAG_LANG[f]);
+    var words = { it: /\b(ita|italian)\b/i, es: /\b(spa|spanish|castellano|latino)\b/i, fr: /\b(french|truefrench|vff?)\b/i, de: /\b(ger|german)\b/i,
+      ru: /\b(rus|russian)\b/i, hi: /\b(hindi)\b/i, pt: /\b(por|portuguese|dublado)\b/i, en: /\b(eng|english)\b/i };
+    for (var k in words) if (words[k].test(t) && out.indexOf(k) === -1) out.push(k);
+    if (/multi/i.test(t) && out.indexOf("multi") === -1) out.push("multi");
+    return out;
+  }
+  function langPenalty(c) {
+    var want = prefs.audioLang || "en", L = c.langs || [];
+    var others = L.filter(function (x) { return x !== want && x !== "multi"; });
+    if (!L.length) return 0;                           // no languages listed: usually the original audio
+    if (L.indexOf(want) !== -1 && !others.length) return 0; // only your language
+    if (L.indexOf(want) !== -1) return 1;              // yours plus others: may start on the wrong one
+    if (!others.length) return 1.5;                    // "multi" with nothing named
+    return 2;                                          // only other languages (a dub)
   }
   function copyUrl(c) {
     if (c.fake) return "";
@@ -2139,7 +2171,7 @@ body.night .logo { z-index: 6; box-shadow: 0 4px 0 #8f1424, 0 0 18px #ff3b52, 0 
       if (prefs.pick === "1080") return c.res && c.res <= 1080 ? 0 : 1;
       return 0;
     }
-    function key(c) { return [tier(c), c.cam ? 1 : 0, c.dvOnly ? 1 : 0, bucket(c), -(c.res || 0), (c.hdr || c.dv) ? 1 : 0, -c.size]; }
+    function key(c) { return [tier(c), c.cam ? 1 : 0, langPenalty(c) === 2 ? 1 : 0, c.dvOnly ? 1 : 0, bucket(c), langPenalty(c), -(c.res || 0), (c.hdr || c.dv) ? 1 : 0, -c.size]; }
     return list.slice().sort(function (a, b) {
       var ka = key(a), kb = key(b);
       for (var i = 0; i < ka.length; i++) if (ka[i] !== kb[i]) return ka[i] - kb[i];
@@ -2156,6 +2188,9 @@ body.night .logo { z-index: 6; box-shadow: 0 4px 0 #8f1424, 0 0 18px #ff3b52, 0 
     if (c.size) out.push('<span class="stk">' + (c.size >= 1 ? c.size.toFixed(1) + " GB" : Math.round(c.size * 1024) + " MB") + "</span>");
     out.push(c.kind === "instant" ? '<span class="stk ok">INSTANT</span>' : c.kind === "torrent" ? '<span class="stk ' + (prefs.server ? "warn" : "bad") + '">' + (prefs.server ? "TORRENT" : "TORRENT · NEEDS SERVER") + "</span>" : '<span class="stk bad">NOT CACHED YET</span>');
     if (c.cam) out.push('<span class="stk bad">CAM</span>');
+    var L = (c.langs || []).filter(function (x) { return x !== "multi"; });
+    if (langPenalty(c) === 2) out.push('<span class="stk warn">' + esc(L.map(function (x) { return langName(x).toUpperCase(); }).join(" / ") || "DUBBED") + " AUDIO</span>");
+    else if ((c.langs || []).indexOf("multi") !== -1) out.push('<span class="stk">MULTI AUDIO</span>');
     return out.join("");
   }
   function fetchCopies(it, vid) {
@@ -2269,7 +2304,8 @@ body.night .logo { z-index: 6; box-shadow: 0 4px 0 #8f1424, 0 0 18px #ff3b52, 0 
       '<button class="btn" data-m="pick-mode">Best copy: ' + esc(modeLabel) + "</button>" +
       '<button class="btn" data-m="toggle-vhs">VHS look on films: ' + (prefs.vhs ? "On" : "Off") + "</button>" +
       '<button class="btn" data-m="toggle-previews">Coming attractions before films: ' + (prefs.previews ? "On" : "Off") + "</button>" +
-      '<button class="btn" data-m="toggle-autonext">Next episode countdown: ' + (prefs.noAutoNext ? "Off" : "On") + "</button></div>" +
+      '<button class="btn" data-m="toggle-autonext">Next episode countdown: ' + (prefs.noAutoNext ? "Off" : "On") + "</button>" +
+      '<button class="btn" data-m="audio-lang">Preferred audio: ' + esc(langName(prefs.audioLang || "en")) + "</button></div>" +
       '<div class="desk-side"><label for="serverUrl">Streaming server for plain torrents (optional)</label>' +
       '<input class="field" id="serverUrl" data-m="input" data-submit="saveserver" value="' + esc(prefs.server || "") + '" placeholder="http://192.168.1.20:11470">' +
       '<p class="note">Cached Real-Debrid copies don\'t need this. For plain torrents, run Stremio on a computer at home and enter its address and port 11470.</p></div>' +
@@ -2339,12 +2375,13 @@ body.night .logo { z-index: 6; box-shadow: 0 4px 0 #8f1424, 0 0 18px #ff3b52, 0 
         oncurrentplaytime: function () {}
       });
       av.prepareAsync(function () {
-        function go() { av.play(); cb.playing(); }
-        if (startMs) { try { av.seekTo(startMs, go, go); } catch (e) { go(); } } else go();
+        function rdy() { cb.ready(); }
+        if (startMs) { try { av.seekTo(startMs, rdy, rdy); } catch (e) { rdy(); } } else rdy();
       }, function (e) { cb.error(String(e && e.name || e)); });
     } catch (e) { setTimeout(function () { cb.error(String(e && e.message || e)); }, 0); }
     return {
       kind: "av",
+      start: function () { try { av.play(); paused = false; } catch (e) {} cb.playing(); },
       play: function () { try { av.play(); paused = false; } catch (e) {} },
       pause: function () { try { av.pause(); paused = true; } catch (e) {} },
       paused: function () { return paused; },
@@ -2355,7 +2392,7 @@ body.night .logo { z-index: 6; box-shadow: 0 4px 0 #8f1424, 0 0 18px #ff3b52, 0 
         try {
           return av.getTotalTrackInfo().map(function (t) {
             var info = {}; try { info = JSON.parse(t.extra_info); } catch (e) {}
-            return { type: t.type, index: t.index, lang: info.language || info.track_lang || "", label: info.track_lang || info.language || "" };
+            return { type: t.type, index: t.index, lang: String(info.language || info.track_lang || "").toLowerCase(), label: "", on: false };
           });
         } catch (e) { return []; }
       },
@@ -2369,31 +2406,105 @@ body.night .logo { z-index: 6; box-shadow: 0 4px 0 #8f1424, 0 0 18px #ff3b52, 0 
   }
   function htmlEngine(url, startMs, cb) {
     var stage = $("pStage"), v = document.createElement("video");
-    v.autoplay = true; v.preload = "auto"; v.setAttribute("playsinline", "");
+    // load muted and paused; the tape only starts once the picture is ready
+    v.autoplay = false; v.preload = "auto"; v.muted = true; v.setAttribute("playsinline", "");
     stage.innerHTML = ""; stage.appendChild(v);
-    v.addEventListener("loadedmetadata", function () { if (startMs) { try { v.currentTime = startMs / 1000; } catch (e) {} } });
-    v.addEventListener("waiting", function () { cb.buffering(true); });
-    v.addEventListener("playing", function () { cb.buffering(false); cb.playing(); });
-    v.addEventListener("ended", function () { cb.ended(); });
-    v.addEventListener("error", function () { cb.error("code " + (v.error ? v.error.code : "?")); });
+    var phase = "load", warmFrom = 0, warmT = null, buffering = false, lastT = -1;
+    function readyNow() {
+      if (phase === "ready" || phase === "live") return;
+      phase = "ready"; clearTimeout(warmT);
+      try { v.pause(); } catch (e) {}
+      cb.ready();
+    }
+    // after a short silent run the decoder is warmed up; go back to the start point and wait
+    function rewindThenReady() {
+      if (phase !== "warm") return;
+      phase = "rewind";
+      try { v.pause(); } catch (e) {}
+      var done = false;
+      function fin() { if (done) return; done = true; v.removeEventListener("seeked", fin); readyNow(); }
+      v.addEventListener("seeked", fin);
+      try { v.currentTime = warmFrom; } catch (e) { fin(); }
+      setTimeout(fin, 4000);
+    }
+    v.addEventListener("loadedmetadata", function () {
+      pickAudio();
+      if (startMs) { try { v.currentTime = startMs / 1000; } catch (e) {} }
+    });
+    v.addEventListener("canplay", function () {
+      if (phase !== "load") return;
+      phase = "warm"; warmFrom = startMs ? startMs / 1000 : v.currentTime;
+      var q = v.play(); if (q && q.catch) q.catch(function () { readyNow(); });
+      warmT = setTimeout(rewindThenReady, 20000);
+    });
+    v.addEventListener("waiting", function () { if (phase !== "live") return; buffering = true; cb.buffering(true); });
+    v.addEventListener("playing", function () { if (phase !== "live") return; buffering = false; cb.buffering(false); cb.playing(); });
+    v.addEventListener("timeupdate", function () {
+      if (phase === "warm" && v.currentTime >= warmFrom + 1.5 && (v.videoWidth > 0 || !("videoWidth" in v))) { rewindThenReady(); return; }
+      if (phase !== "live") return;
+      // some TVs never send "playing" after a stall, so moving time clears the message too
+      if (buffering && lastT >= 0 && v.currentTime > lastT + 0.2) { buffering = false; cb.buffering(false); }
+      lastT = v.currentTime;
+    });
+    setTimeout(function () { if (phase === "load") cb.error("timed out loading"); }, 45000);
+    function audioList() {
+      var at = v.audioTracks, out = [];
+      if (!at || typeof at.length !== "number") return out;
+      for (var i = 0; i < at.length; i++) {
+        var t = at[i];
+        out.push({ type: "AUDIO", index: i, lang: String(t.language || "").toLowerCase(), label: t.label || "", on: !!t.enabled });
+      }
+      return out;
+    }
+    function setAudio(index) {
+      var at = v.audioTracks; if (!at) return false;
+      var cur = v.currentTime;
+      for (var i = 0; i < at.length; i++) at[i].enabled = (i === index);
+      // nudging playback makes some TV decoders switch straight away
+      try { v.currentTime = cur; } catch (e) {}
+      return true;
+    }
+    var picked = false;
+    function pickAudio() {
+      if (picked) return;
+      var list = audioList(); if (list.length < 2) return;
+      picked = true;
+      var want = prefs.audioLang || "en";
+      var cur = list.filter(function (t) { return t.on; })[0];
+      if (cur && langMatches(cur.lang, cur.label, want)) return;
+      var best = list.filter(function (t) { return langMatches(t.lang, t.label, want); })[0];
+      if (best) { setAudio(best.index); cb.audio && cb.audio(best); }
+    }
+    if (v.audioTracks && v.audioTracks.addEventListener) {
+      try { v.audioTracks.addEventListener("addtrack", function () { setTimeout(pickAudio, 50); }); } catch (e) {}
+    }
+    v.addEventListener("ended", function () { if (phase === "live") cb.ended(); });
+    v.addEventListener("error", function () { clearTimeout(warmT); cb.error("code " + (v.error ? v.error.code : "?")); });
     v.src = url;
-    var p = v.play(); if (p && p.catch) p.catch(function () {});
+    try { v.load(); } catch (e) {}
     return {
       kind: "html",
+      start: function () {
+        phase = "live"; lastT = -1;
+        v.muted = false;
+        var q = v.play(); if (q && q.catch) q.catch(function () {});
+      },
       play: function () { var q = v.play(); if (q && q.catch) q.catch(function () {}); },
       pause: function () { v.pause(); },
       paused: function () { return v.paused; },
       time: function () { return v.currentTime * 1000; },
       duration: function () { return isFinite(v.duration) ? v.duration * 1000 : 0; },
       seek: function (ms) { try { v.currentTime = Math.max(0, ms / 1000); } catch (e) {} },
-      tracks: function () { return []; }, setTrack: function () {},
+      tracks: audioList,
+      canSwitchAudio: function () { return !!v.audioTracks; },
+      setTrack: function (type, index) { if (type === "AUDIO") setAudio(index); },
       close: function () { try { v.pause(); v.removeAttribute("src"); v.load(); } catch (e) {} stage.innerHTML = ""; }
     };
   }
   function fakeEngine(it, startMs, cb) {
     var stage = $("pStage"), cv = document.createElement("canvas");
     cv.width = 960; cv.height = 540; stage.innerHTML = ""; stage.appendChild(cv);
-    var ctx = cv.getContext("2d"), t = startMs || 0, playing = true;
+    var ctx = cv.getContext("2d"), t = startMs || 0, playing = false;
     var dur = ((it.type === "series" ? 22 : it.runtime) || 100) * 60000;
     var bars = ["#c0c0c0", "#c0c000", "#00c0c0", "#00c000", "#c000c0", "#c00000", "#0000c0"];
     var last = Date.now();
@@ -2411,9 +2522,11 @@ body.night .logo { z-index: 6; box-shadow: 0 4px 0 #8f1424, 0 0 18px #ff3b52, 0 
       ctx.fillText(fmtTime(t), 480, 505);
       ctx.fillStyle = "rgba(255,255,255,.85)"; ctx.fillRect((t / 40) % 960, 340, 30, 12);
     }, 200);
-    setTimeout(function () { cb.playing(); }, 300);
+    playing = false;
+    setTimeout(function () { cb.ready(); }, 400);
     return {
       kind: "fake",
+      start: function () { playing = true; cb.playing(); },
       play: function () { playing = true; }, pause: function () { playing = false; }, paused: function () { return !playing; },
       time: function () { return t; }, duration: function () { return dur; },
       seek: function (ms) { t = Math.max(0, Math.min(dur - 1000, ms)); },
@@ -2439,9 +2552,35 @@ body.night .logo { z-index: 6; box-shadow: 0 4px 0 #8f1424, 0 0 18px #ff3b52, 0 
       if (!P) return; P.subs = list;
       if (prefs.subLang) { var m = list.filter(function (x) { return x.lang === prefs.subLang; })[0]; if (m) loadSubs(m); }
     });
+    P.introDone = false; P.ready = false; P.started = false; P.failed = false;
+    // with no trailers before the film, the tape loads behind the VCR animation
+    var parallel = !(prefs.previews && live && !P.start);
+    if (parallel) openCopy(P.idx, P.start);
     insertTape(function () {
-      comingAttractions(function () { openCopy(P.idx, P.start); });
+      comingAttractions(function () {
+        if (!P) return;
+        P.introDone = true;
+        if (parallel) maybeStart(); else openCopy(P.idx, P.start);
+      });
     });
+  }
+  function showLoading() {
+    if (!P || P.failed) return;
+    var c = P.copies[P.idx] || {};
+    var intro = $("pIntro"); intro.hidden = false; intro.className = "p-intro blue";
+    intro.innerHTML = '<div class="tracking"></div><div class="intro-osd"><span>PLAY ▶</span><span>SP</span></div>' +
+      '<div class="intro-msg">LOADING TAPE<small>' + esc(c.fake ? "Preview tape" : [c.res === 2160 ? "4K" : c.res ? c.res + "p" : "", c.kind === "torrent" ? "torrent via your server" : "instant copy"].filter(Boolean).join(" · ")) +
+      " · BACK to stop</small></div>";
+    P.intro = { loading: true, skip: function () {}, cancel: function () { stopTape(false); } };
+  }
+  function maybeStart() {
+    if (!P || P.started || P.failed || !P.introDone) return;
+    if (!P.ready || !P.eng) { if (!(P.intro && P.intro.loading)) showLoading(); return; }
+    P.started = true;
+    if (P.intro && P.intro.loading) { var intro = $("pIntro"); intro.hidden = true; intro.innerHTML = ""; P.intro = null; }
+    $("pCenter").innerHTML = "";
+    P.lastSave = Date.now();
+    P.eng.start();
   }
   function insertTape(next) {
     if (!P) return;
@@ -2515,16 +2654,20 @@ body.night .logo { z-index: 6; box-shadow: 0 4px 0 #8f1424, 0 0 18px #ff3b52, 0 
     if (!c) return playerFail("Every copy we tried wouldn't play on this TV.");
     var url = copyUrl(c);
     if (!c.fake && !url) return openCopy(i + 1, startMs);
-    P.idx = i; P.ended = false;
+    P.idx = i; P.ended = false; P.ready = false; P.started = false;
     if (P.eng) { try { P.eng.close(); } catch (e) {} P.eng = null; }
-    $("pCenter").innerHTML = '<div>TRACKING…</div><small>' + esc(c.fake ? "Preview tape" : [c.res === 2160 ? "4K" : c.res ? c.res + "p" : "", c.kind === "torrent" ? "torrent via your server" : "instant"].filter(Boolean).join(" · ")) + "</small>";
+    $("pCenter").innerHTML = "";
+    if (P.introDone) showLoading();
     var cb = {
+      ready: function () { if (!P || P.copies[P.idx] !== c) return; P.ready = true; maybeStart(); },
       buffering: function (on) { if (!P) return; $("pCenter").innerHTML = on ? "<div>TRACKING…</div><small>Buffering</small>" : ""; },
       playing: function () { if (!P) return; $("pCenter").innerHTML = ""; osd("PLAY ▶"); showBar(); },
+      audio: function (a) { if (P) osd("AUDIO " + trackName(a).toUpperCase(), 3000); },
       ended: function () { if (P) tapeEnded(); },
       error: function (msg) {
         if (!P) return;
         var at = P.eng ? P.eng.time() : startMs;
+        if (P.copies[P.idx] !== c) return;
         if (i + 1 < P.copies.length) { toast("That copy wouldn't play (" + msg + "). Trying the next best copy…", 4000); openCopy(i + 1, at || startMs); }
         else playerFail("That copy wouldn't play on this TV (" + msg + ").");
       }
@@ -2537,6 +2680,8 @@ body.night .logo { z-index: 6; box-shadow: 0 4px 0 #8f1424, 0 0 18px #ff3b52, 0 
   }
   function playerFail(msg) {
     if (!P) return;
+    P.failed = true;
+    if (P.intro && P.intro.loading) { var intro = $("pIntro"); intro.hidden = true; intro.innerHTML = ""; P.intro = null; }
     if (P.eng) { try { P.eng.close(); } catch (e) {} P.eng = null; }
     $("pCenter").innerHTML = "<div>NO SIGNAL</div><small>" + esc(msg) + "</small>";
     playerMenu("This tape won't play", [
@@ -2562,7 +2707,7 @@ body.night .logo { z-index: 6; box-shadow: 0 4px 0 #8f1424, 0 0 18px #ff3b52, 0 
     renderSubs(t);
   }
   setInterval(function () {
-    if (!P || !P.eng || P.intro) return;
+    if (!P || !P.eng || P.intro || !P.started) return;
     tickPlayer();
     var now = Date.now();
     if (!P.eng.paused()) P.watched += 500;
@@ -2600,8 +2745,25 @@ body.night .logo { z-index: 6; box-shadow: 0 4px 0 #8f1424, 0 0 18px #ff3b52, 0 
     var el = P.menu.els[P.menu.idx]; if (el) { el.classList.add("focused"); try { el.scrollIntoView({ block: "nearest" }); } catch (e) {} }
   }
   function closeMenu() { if (!P) return; P.menu = null; $("pMenu").hidden = true; $("pMenu").innerHTML = ""; showBar(); }
+  var LANG_ALIASES = {
+    en: ["en", "eng", "english"], es: ["es", "spa", "spanish", "castellano", "latino"], fr: ["fr", "fre", "fra", "french", "vf", "vff", "truefrench"],
+    de: ["de", "ger", "deu", "german"], it: ["it", "ita", "italian"], pt: ["pt", "por", "pob", "portuguese"], ru: ["ru", "rus", "russian"],
+    ja: ["ja", "jpn", "japanese"], ko: ["ko", "kor", "korean"], zh: ["zh", "chi", "zho", "chinese", "mandarin", "cantonese"], hi: ["hi", "hin", "hindi"],
+    nl: ["nl", "dut", "nld", "dutch"], pl: ["pl", "pol", "polish"], tr: ["tr", "tur", "turkish"], ar: ["ar", "ara", "arabic"]
+  };
+  function normLang(code) {
+    code = String(code || "").toLowerCase();
+    for (var k in LANG_ALIASES) if (LANG_ALIASES[k].indexOf(code) !== -1) return k;
+    return code;
+  }
+  function langMatches(code, label, want) {
+    var names = LANG_ALIASES[want] || [want];
+    if (normLang(code) === want) return true;
+    var l = String(label || "").toLowerCase();
+    return names.some(function (n) { return n.length > 2 && l.indexOf(n) !== -1; });
+  }
   function langName(code) {
-    var names = { eng: "English", en: "English", spa: "Spanish", es: "Spanish", fre: "French", fra: "French", fr: "French", ger: "German", deu: "German", de: "German", ita: "Italian", it: "Italian", por: "Portuguese", pob: "Portuguese (BR)", pt: "Portuguese", dut: "Dutch", nld: "Dutch", jpn: "Japanese", ja: "Japanese", kor: "Korean", chi: "Chinese", zho: "Chinese", ara: "Arabic", rus: "Russian", swe: "Swedish", dan: "Danish", nor: "Norwegian", fin: "Finnish", pol: "Polish", gre: "Greek", ell: "Greek", heb: "Hebrew", tur: "Turkish", hin: "Hindi", vie: "Vietnamese", tha: "Thai", ind: "Indonesian" };
+    var names = { eng: "English", en: "English", spa: "Spanish", es: "Spanish", fre: "French", fra: "French", fr: "French", ger: "German", deu: "German", de: "German", ita: "Italian", it: "Italian", por: "Portuguese", pob: "Portuguese (BR)", pt: "Portuguese", dut: "Dutch", nld: "Dutch", jpn: "Japanese", ja: "Japanese", kor: "Korean", chi: "Chinese", zho: "Chinese", ara: "Arabic", rus: "Russian", swe: "Swedish", dan: "Danish", nor: "Norwegian", fin: "Finnish", pol: "Polish", gre: "Greek", ell: "Greek", heb: "Hebrew", tur: "Turkish", hin: "Hindi", vie: "Vietnamese", tha: "Thai", ind: "Indonesian", ru: "Russian", ko: "Korean", zh: "Chinese", hi: "Hindi", nl: "Dutch", pl: "Polish", tr: "Turkish", ar: "Arabic", uk: "Ukrainian", ukr: "Ukrainian", cs: "Czech", hu: "Hungarian", el: "Greek", th: "Thai", vi: "Vietnamese" };
     return names[code] || String(code || "?").toUpperCase();
   }
   function optionsMenu() {
@@ -2615,10 +2777,30 @@ body.night .logo { z-index: 6; box-shadow: 0 4px 0 #8f1424, 0 0 18px #ff3b52, 0 
       { label: "Stop the tape", fn: function () { stopTape(true); } },
       { label: "Keep watching", fn: closeMenu }
     ];
-    if (audio.length > 1) list.splice(1, 0, { label: "Audio track (" + audio.length + ")", fn: function () {
-      playerMenu("Audio", audio.map(function (a, i) { return { label: (langName(a.lang) || "Track") + " · " + (i + 1), fn: function () { P.eng.setTrack("AUDIO", a.index); closeMenu(); osd("AUDIO " + (i + 1)); } }; }));
-    } });
+    var curA = audio.filter(function (a) { return a.on; })[0];
+    list.splice(1, 0, { label: "Audio: " + (audio.length ? (curA ? trackName(curA) : "Track 1") + " (" + audio.length + ")" : "Default"), fn: audioMenu });
     playerMenu("Options", list);
+  }
+  function trackName(a) {
+    var n = a.lang && a.lang !== "und" ? langName(a.lang) : "";
+    var lab = (a.label || "").trim();
+    if (lab && n && lab.toLowerCase().indexOf(n.toLowerCase()) === -1) return n + " · " + lab;
+    return n || lab || "Track " + (a.index + 1);
+  }
+  function audioMenu() {
+    var audio = (P.eng ? P.eng.tracks() : []).filter(function (t) { return t.type === "AUDIO"; });
+    var list = [];
+    audio.forEach(function (a, i) {
+      list.push({ label: (a.on ? "▶ " : "") + trackName(a), fn: function () {
+        P.eng.setTrack("AUDIO", a.index); closeMenu(); osd("AUDIO " + trackName(a).toUpperCase());
+        if (a.lang && a.lang !== "und") { prefs.audioLang = normLang(a.lang); save("fnv-prefs", prefs); }
+      } });
+    });
+    if (audio.length < 2) {
+      list.push({ label: audio.length ? "Only one audio track in this copy" : "This TV didn't list this copy's audio tracks", fn: closeMenu });
+      list.push({ label: "Try another copy (" + langName(prefs.audioLang || "en") + " first)", fn: copyMenu });
+    }
+    playerMenu("Audio", list);
   }
   function subtitleMenu() {
     var list = [{ label: "Off", fn: function () { P.cues = null; P.cueLabel = "Off"; prefs.subLang = ""; save("fnv-prefs", prefs); $("pSubs").innerHTML = ""; closeMenu(); } }];
@@ -2630,7 +2812,9 @@ body.night .logo { z-index: 6; box-shadow: 0 4px 0 #8f1424, 0 0 18px #ff3b52, 0 
   }
   function copyMenu() {
     playerMenu("Copies", P.copies.slice(0, 25).map(function (c, i) {
-      var label = (i === P.idx ? "▶ " : "") + (c.fake ? "Preview tape" : [c.res === 2160 ? "4K" : c.res ? c.res + "p" : "?", c.dvOnly ? "DV only" : c.hdr ? "HDR" : "SDR", c.size ? c.size.toFixed(1) + "GB" : "", c.kind === "instant" ? "instant" : c.kind].filter(Boolean).join(" · "));
+      var lp = langPenalty(c), L = (c.langs || []).filter(function (x) { return x !== "multi"; });
+      var label = (i === P.idx ? "▶ " : "") + (c.fake ? "Preview tape" : [c.res === 2160 ? "4K" : c.res ? c.res + "p" : "?", c.dvOnly ? "DV only" : c.hdr ? "HDR" : "SDR", c.size ? c.size.toFixed(1) + "GB" : "", c.kind === "instant" ? "instant" : c.kind,
+        lp === 2 ? L.map(langName).join("/") + " audio" : (c.langs || []).indexOf("multi") !== -1 ? "multi audio" : ""].filter(Boolean).join(" · "));
       return { label: label, fn: function () { closeMenu(); var at = P.eng ? P.eng.time() : 0; openCopy(i, at); } };
     }));
   }
