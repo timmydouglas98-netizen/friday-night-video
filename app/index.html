@@ -31,7 +31,7 @@
   --shelf-pad: calc(var(--u) * 2.4);
 }
 @media (min-width: 960px) and (min-aspect-ratio: 4/3) {
-  :root { --u: 1vh; --case-h: 20.8vh; --face-h: 13.3vh; }
+  :root { --u: 1vh; --case-h: 20.8vh; --face-h: 19.8vh; }
 }
 html, body { height: 100%; }
 [hidden] { display: none !important; }
@@ -632,6 +632,10 @@ body.night .logo { z-index: 6; box-shadow: 0 4px 0 #8f1424, 0 0 18px #ff3b52, 0 
   .banner em { display: block; font-style: normal; font-family: var(--f-ui); font-weight: 600; font-size: calc(var(--u) * 1.3); margin-top: calc(var(--u) * .5); color: #ffd84d; text-transform: uppercase; line-height: 1.1; }
   .crt-mount { position: absolute; z-index: 3; top: calc(var(--u) * 1); right: calc(var(--u) * 4); width: calc(var(--u) * 31); margin: 0; padding: 0; }
   .painted { display: none; }
+  /* on the TV, two shelves of bigger covers read better from the couch than three small ones */
+  .fixture.faces #wrap2 { display: none; }
+  .fixture.faces .shelf { --shelf-pad: calc(var(--u) * 2.8); }
+  .faceout .tape.focused { transform: translateY(calc(var(--u) * -1.2)) scale(1.07); }
   .wposter { display: block; position: absolute; top: calc(var(--u) * 1.4); width: calc(var(--u) * 10.6); height: calc(var(--u) * 15.4);
     background: #111 center / cover no-repeat; border: calc(var(--u) * .55) solid #15120f; box-shadow: 0 6px 12px rgba(20,8,0,.45), inset 0 0 0 1px rgba(255,255,255,.1); }
   .wposter::after { content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
@@ -1289,7 +1293,8 @@ body.night .logo { z-index: 6; box-shadow: 0 4px 0 #8f1424, 0 0 18px #ff3b52, 0 
   function renderShelves() {
     var list = aisleList(aisle);
     var isNew = aisle === "new", blind = aisle === "blind", faces = aisleFaces(aisle);
-    var nRows = faces ? 3 : 2, groups = [[], [], []];
+    var tvLayout = window.matchMedia && matchMedia("(min-width: 960px) and (min-aspect-ratio: 4/3)").matches;
+    var nRows = faces && !tvLayout ? 3 : 2, groups = [[], [], []];
     list.forEach(function (it, i) { groups[i % nRows].push({ it: it, i: i }); });
     document.querySelector(".fixture").classList.toggle("faces", faces);
     [0, 1, 2].forEach(function (n) {
