@@ -107,10 +107,9 @@ button { font: inherit; color: inherit; }
   pointer-events: none; overflow: hidden;
   background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,.65) 100%);
 }
-.scan::before { content: ""; position: absolute; left: 0; right: 0; top: -3px; bottom: 0; will-change: transform;
-  background: repeating-linear-gradient(rgba(0,0,0,.28) 0, rgba(0,0,0,.28) 1px, transparent 1px, transparent 3px);
-  animation: roll .3s linear infinite; }
-@keyframes roll { from { transform: translateY(0); } to { transform: translateY(3px); } }
+/* static scan lines: a rolling version kept the TV redrawing 60 times a second for a 3px shimmer */
+.scan::before { content: ""; position: absolute; left: 0; right: 0; top: 0; bottom: 0;
+  background: repeating-linear-gradient(rgba(0,0,0,.28) 0, rgba(0,0,0,.28) 1px, transparent 1px, transparent 3px); }
 .tv-osd {
   pointer-events: none; height: auto !important; padding: 4% 5%;
   display: -webkit-box; display: flex; justify-content: space-between;
@@ -205,7 +204,7 @@ button { font: inherit; color: inherit; }
   flex: 0 0 auto; position: relative; margin-right: 3px;
   height: var(--case-h); width: calc(var(--case-h) * .24);
   border: 0; padding: 0; cursor: pointer; background: transparent;
-  transition: width .26s ease-out, transform .26s ease-out;
+  /* focus moves instantly: easing the width re-laid the whole shelf every frame, and easing the lift made a new layer each press */
 }
 .tape:focus { outline: none; }
 .tape .spine, .tape .cover { position: absolute; top: 0; left: 0; right: 0; bottom: 0; border-radius: 2px; overflow: hidden; }
@@ -213,7 +212,6 @@ button { font: inherit; color: inherit; }
   background: linear-gradient(90deg, rgba(0,0,0,.4), rgba(255,255,255,.1) 22%, transparent 50%, rgba(0,0,0,.4)), var(--c1);
   display: flex; flex-direction: column; align-items: center; justify-content: space-between;
   padding-bottom: calc(var(--case-h) * .03);
-  transition: opacity .15s;
 }
 .spine .lbl { width: 100%; background: rgba(0,0,0,.35); color: #f4ead2; font-family: var(--f-sign); font-size: calc(var(--case-h) * .036); text-align: center; padding: 3px 0 2px; letter-spacing: .12em; }
 /* the title sits on a cream rental label so it reads from the couch */
@@ -419,11 +417,27 @@ body.night .logo { z-index: 6; box-shadow: 0 4px 0 #8f1424, 0 0 18px #ff3b52, 0 
 .player.vhs .p-vhs { display: block; }
 /* the TV can't apply filters to its hardware video picture (it goes black), so the look is all overlay */
 @media (prefers-reduced-motion: reduce) { .p-vhs::after { animation: none; display: none; } }
+/* diagnostics */
+.panel.diag { font-size: 15px; }
+.diag-list { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; margin: 10px 0 0; }
+.diag-list dt { font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+.diag-list dd { margin: 0; word-break: break-word; }
+.diag-h { margin: 14px 0 4px; text-transform: uppercase; letter-spacing: .05em; }
+.diag-errs { margin: 0; padding-left: 1.4em; max-height: 9.5em; overflow: hidden; }
+.diag-errs b { color: var(--red); font-weight: 700; margin-right: .4em; }
+@media (min-width: 960px) and (min-aspect-ratio: 4/3) { .panel.diag { font-size: calc(var(--u) * 2.4); } }
+/* calm mode (front desk; on automatically when the system asks for reduced motion) */
+html.calm *, html.calm *::before, html.calm *::after {
+  animation-duration: 1ms !important; animation-delay: 0s !important; animation-iteration-count: 1 !important;
+  transition-duration: 0s !important; transition-delay: 0s !important; }
+html.calm .wx-bolt, html.calm .land-flash, html.calm .tv-noise, html.calm .p-vhs::after,
+html.calm .land .moth, html.calm .land .bat, html.calm .land .o-leaves, html.calm #oShoot, html.calm .tracking { display: none !important; }
+html.calm .wx-rain i, html.calm .wx-snow i { opacity: .35; }
 .p-osd { position: absolute; top: 4vh; left: 5vw; right: 5vw; display: flex; justify-content: space-between; font-family: var(--f-osd); font-size: 5vh; text-shadow: 0 0 6px #000, 2px 2px 0 #000; pointer-events: none; transition: opacity .3s; }
 .p-osd.off { opacity: 0; }
-.p-subs { position: absolute; left: 6vw; right: 6vw; bottom: 9vh; text-align: center; pointer-events: none; }
-.p-subs span { display: inline; background: rgba(0,0,0,.82); color: #fff; font-family: var(--f-osd); font-size: 5vh; line-height: 1.35; padding: 0 .4em; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
-.player.bar-on .p-subs { bottom: 22vh; }
+.p-subs { position: absolute; left: 6vw; right: 6vw; bottom: var(--sub-bottom, 9vh); text-align: center; pointer-events: none; }
+.p-subs span { display: inline; background: rgba(0,0,0,.82); color: #fff; font-family: var(--f-osd); font-size: calc(5vh * var(--sub-scale, 1)); line-height: 1.35; padding: 0 .4em; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+.player.bar-on .p-subs { bottom: calc(var(--sub-bottom, 9vh) + 13vh); }
 .p-center { position: absolute; top: 50%; left: 0; right: 0; transform: translateY(-50%); text-align: center; font-family: var(--f-osd); font-size: 6vh; text-shadow: 0 0 8px #000, 2px 2px 0 #000; pointer-events: none; }
 .p-center small { display: block; font-size: .5em; color: #c9d2ff; }
 .p-bar { position: absolute; left: 0; right: 0; bottom: 0; padding: 8vh 5vw 4vh; background: linear-gradient(transparent, rgba(0,0,0,.85)); opacity: 0; transition: opacity .3s; pointer-events: none; }
@@ -804,13 +818,13 @@ body.night .logo { z-index: 6; box-shadow: 0 4px 0 #8f1424, 0 0 18px #ff3b52, 0 
   .fixture.faces #wrap2 { display: none; }
   .fixture.faces .shelf { --shelf-pad: calc(var(--u) * 2.8); }
   .faceout .tape.focused { transform: translateY(calc(var(--u) * -1.2)) scale(1.07); }
-  .wposter { display: block; position: absolute; top: calc(var(--u) * 1.4); width: calc(var(--u) * 10.6); height: calc(var(--u) * 15.4);
+  .wposter { will-change: transform; display: block; position: absolute; top: calc(var(--u) * 1.4); width: calc(var(--u) * 10.6); height: calc(var(--u) * 15.4);
     background: #111 center / cover no-repeat; border: calc(var(--u) * .55) solid #15120f; box-shadow: 0 6px 12px rgba(20,8,0,.45), inset 0 0 0 1px rgba(255,255,255,.1); }
   .wposter::after { content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
     background: linear-gradient(125deg, rgba(255,255,255,.18), rgba(255,255,255,0) 40%); }
   #wp0 { left: 34%; transform: rotate(-.6deg); }
   /* changeable-letter marquee board, backlit, spelling out the tape you're on */
-  .marquee { display: flex; flex-direction: column; position: absolute; top: calc(var(--u) * 1.2); left: 41.6%; right: 28.4%; height: calc(var(--u) * 15.8);
+  .marquee { will-change: transform; display: flex; flex-direction: column; position: absolute; top: calc(var(--u) * 1.2); left: 41.6%; right: 28.4%; height: calc(var(--u) * 15.8);
     background: linear-gradient(#5c5f68, #2f3138); padding: calc(var(--u) * .6); border-radius: calc(var(--u) * .4);
     box-shadow: 0 8px 14px rgba(20,8,0,.45), inset 0 1px 0 rgba(255,255,255,.25); }
   .mq-head { flex: 0 0 auto; background: var(--red); color: #fff; font-family: var(--f-sign); font-size: calc(var(--u) * 1.4); letter-spacing: .25em;
@@ -821,11 +835,14 @@ body.night .logo { z-index: 6; box-shadow: 0 4px 0 #8f1424, 0 0 18px #ff3b52, 0 
   .mq-row { position: relative; display: flex; justify-content: center; align-items: flex-end; height: calc(var(--u) * 3.3); white-space: nowrap; overflow: hidden;
     border-bottom: 2px solid #8b8574; }
   .mq-row b { display: inline-block; font-family: var(--f-spine); font-weight: 700; color: #141218; font-size: calc(var(--u) * 2.9); line-height: 1;
-    width: .66em; text-align: center; margin: 0 1px; transform-origin: 50% 100%; animation: mqslide .32s ease-out both; }
+    width: .66em; text-align: center; margin: 0 1px; }
   .mq-row b.sp { width: .4em; }
   .mq-row b.red { color: var(--red); }
   .mq-row.sm b { font-size: calc(var(--u) * 2.2); width: .62em; }
-  @keyframes mqslide { from { transform: translateY(-120%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  /* the board changes a line at a time (a letter at a time meant 40 redraws of the whole store per tape) */
+  .mq-row { animation: mqpop 1ms steps(1) backwards; }
+  .mq-row + .mq-row { animation-delay: .14s; } .mq-row + .mq-row + .mq-row { animation-delay: .28s; } .mq-row + .mq-row + .mq-row + .mq-row { animation-delay: .42s; }
+  @keyframes mqpop { from { visibility: hidden; } to { visibility: hidden; } }
   #wp1 { left: 73.4%; transform: rotate(.5deg); }
   .sign::before, .sign::after { top: calc(var(--u) * -1); height: calc(var(--u) * 1); }
   .crt-mount::before { content: ""; position: absolute; top: calc(var(--u) * -1); left: 50%; width: calc(var(--u) * 6); margin-left: calc(var(--u) * -3); height: calc(var(--u) * 1.6); background: #3b3b42; }
@@ -890,6 +907,14 @@ body.night .logo { z-index: 6; box-shadow: 0 4px 0 #8f1424, 0 0 18px #ff3b52, 0 
 /* swap which side is drawn at the halfway point of the flip, so nothing on one side bleeds through the other */
 .face { transition: visibility 0s linear .3s; }
 .flipped .face.front, .box3d:not(.flipped) .face.back { visibility: hidden; }
+/* the box in your hands: printed strips top and bottom with the poster art between them, like a real sleeve */
+.box3d .cover.has-poster img { position: relative; order: 1; flex: 1 1 0; min-height: 0; height: auto; }
+.box3d .cover.has-poster .band { order: 0; font-size: calc(var(--case-h) * .045); padding: .3em .6em .25em; }
+.box3d .cover.has-poster .meta { order: 2; margin-top: 0; background: #111; color: #f3eedf; font-size: calc(var(--case-h) * .03);
+  padding: .75em .9em .7em; letter-spacing: .1em; border-top: calc(var(--case-h) * .005) solid var(--red); }
+.box3d .cover .meta span:first-child { overflow: hidden; text-overflow: ellipsis; margin-right: 1em; }
+.box3d .cover.has-poster .dot2 { display: none; }
+.box3d .cover .rs { top: calc(var(--case-h) * .085); }
 .vback {
   background: linear-gradient(var(--c3), #0d0d12); color: #f2eee4;
   height: 100%; display: flex; flex-direction: column; padding: 4% 6% 0;
@@ -1333,10 +1358,10 @@ body.osk-open .overlay { align-items: flex-start; padding-bottom: 48vh; }
   var extraAisles = [];      // catalogs from the person's installed addons
   var pager = {};            // aisle key -> { base, extras, type, skip, done, loading }
   var MAX_PER_AISLE = 600;
-  var APP_VERSION = "0.14.2", APP_UPDATED = "23 Oct 2026";
+  var APP_VERSION = "0.16.0", APP_UPDATED = "1 Nov 2026";
   var staffConnected = false;
   function staffOn() { return staffConnected || !!(account && prefs.staffSeen); }
-  var account = store("fnv-auth", null);   // { authKey }
+  var account = store("fnv-auth", null, function (a) { return typeof a.authKey === "string" && a.authKey ? a : null; });   // { authKey }
   var accountInfo = "";
 
   // ---------- state ----------
@@ -1346,19 +1371,90 @@ body.osk-open .overlay { align-items: flex-start; padding-bottom: 48vh; }
   var rows = [], rowKinds = [];
   var modal = null, lastStoreFocus = null;
   var lastGenre = "Comedy";
-  var watched = store("fnv-watched", []);
-  var prefs = store("fnv-prefs", { sound: false, trailers: true });
+  var watched = store("fnv-watched", [], function (a) { return strList(a, 5000); });
+  var prefs = store("fnv-prefs", { sound: false, trailers: true }, fixPrefs);
   if (!prefs.storeName) prefs.storeName = "Friday Night Video";
   if (!prefs.memberSince) { prefs.memberSince = new Date().toISOString().slice(0, 7); }
+  // the corner TV playing YouTube trailers is the heaviest thing in the store on a TV; it starts on stills there
+  // (once, so turning trailers back on at the front desk sticks)
+  if (window.tizen && !prefs.stillsOnTV) { prefs.stillsOnTV = true; prefs.trailers = false; }
+  // Calm mode: no flashing, flicker, particles, static or moving set dressing. The TV's browser can't see the system's
+  // reduce-motion setting, so it's a switch at the front desk too (and starts on wherever that setting is on).
+  // Atmosphere: full, calm (no flashing, flicker, particles or static; animations finish at once) or light
+  // (calm, plus the corner TV shows title cards only and no trailers play: the fastest the store gets).
+  if (["full", "calm", "light"].indexOf(prefs.atmos) === -1) prefs.atmos = prefs.calm === true || !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) ? "calm" : "full";
+  delete prefs.calm;
+  applyAtmos();
   save("fnv-prefs", prefs);
   var metaCache = {};
   var libRaw = {};            // raw Stremio library items, for saving progress back
   var installedAddons = [];   // the person's Stremio addons
-  var progressMap = store("fnv-progress", {});
+  var progressMap = store("fnv-progress", {}, fixProgress);
   if (!prefs.pick) prefs.pick = "4k-sdr";
   if (prefs.server === undefined) prefs.server = "";
 
-  function store(k, def) { try { var v = localStorage.getItem(k); return v ? JSON.parse(v) : def; } catch (e) { return def; } }
+  // Saved values are checked on the way in: anything unreadable, null or the wrong shape falls back to the default,
+  // so a corrupted setting can never stop the store from opening.
+  // ---------- diagnostics: what the store knows about its own health, for the Front desk screen ----------
+  // Nothing private goes in here: no sign-in key, no add-on addresses (they often carry your debrid key), no library.
+  var diag = {
+    errors: [], addons: {}, catalog: null, account: null, lastPlay: null, lastSearch: null, started: Date.now(),
+    clean: function (x) {
+      var t = String(x == null ? "" : (x && x.message) || x);
+      if (account && account.authKey) t = t.split(account.authKey).join("•••");
+      return t.replace(/[a-z][a-z0-9+.-]*:\/\/\S+/gi, "[link]").replace(/[A-Za-z0-9_\-]{24,}/g, "•••").slice(0, 160);
+    },
+    err: function (what, e) {
+      diag.errors.unshift({ t: Date.now(), msg: diag.clean(what) + (e ? " (" + diag.clean(e) + ")" : "") });
+      if (diag.errors.length > 12) diag.errors.length = 12;
+    },
+    addonFail: function (name, what, e) { diag.addons[diag.clean(name)] = { t: Date.now(), what: diag.clean(what) }; diag.err(name + " didn't answer for its " + what, e); },
+    copies: function (n, total, failed) { diag.lastSearch = { t: Date.now(), n: n, total: total, failed: failed.map(diag.clean) }; },
+    play: function (c, result, engine) {
+      var d = c.fake ? "test tape" : [c.res === 2160 ? "4K" : c.res ? c.res + "p" : "", c.dv ? "DV" : c.hdr ? "HDR" : "", c.vc, c.ac, c.size ? c.size.toFixed(1) + " GB" : "", c.remux ? "remux" : "",
+        c.kind === "instant" ? (c.debrid ? "debrid instant" : "direct") : c.kind, c.addon ? "from " + c.addon : ""].filter(Boolean).join(" · ");
+      diag.lastPlay = { t: Date.now(), copy: diag.clean(d), result: diag.clean(result), engine: ({ av: "AVPlay", html: "HTML5", fake: "test" })[engine] || "" };
+    }
+  };
+  window.addEventListener("error", function (e) { diag.err("Script error: " + (e && e.message)); });
+  window.addEventListener("unhandledrejection", function (e) { diag.err("Unhandled problem", e && e.reason); });
+  function isCalm() { return !!prefs && (prefs.atmos === "calm" || prefs.atmos === "light"); }
+  function isLight() { return !!prefs && prefs.atmos === "light"; }
+  function applyAtmos() { var h = document.documentElement.classList; h.toggle("calm", isCalm()); h.toggle("light", isLight()); }
+  // the pick-up, put-back and flip animations still run, but finish at once in calm mode
+  function calmAnim(el, frames, opts) {
+    if (isCalm()) { var o = {}; for (var k in opts) o[k] = opts[k]; o.duration = 1; opts = o; }
+    return el.animate(frames, opts);
+  }
+  function isObj(v) { return !!v && typeof v === "object" && !Array.isArray(v); }
+  function store(k, def, fix) {
+    var v;
+    try { var raw = localStorage.getItem(k); v = raw ? JSON.parse(raw) : undefined; } catch (e) { v = undefined; }
+    if (v === undefined || v === null) return def;
+    if (Array.isArray(def) ? !Array.isArray(v) : (def === null || isObj(def)) ? !isObj(v) : typeof v !== typeof def) return def;
+    if (fix) { try { v = fix(v); } catch (e) { return def; } }
+    return v === undefined ? def : v;
+  }
+  function numIn(v, lo, hi) { return typeof v === "number" && isFinite(v) && v >= lo && v <= hi; }
+  function strList(a, max) { return (Array.isArray(a) ? a : []).filter(function (x) { return typeof x === "string" && x.length < 300; }).slice(0, max); }
+  function fixPrefs(p) {
+    ["sound", "quiet", "trailers", "vhs", "staffSeen", "noAutoNext", "previews", "stillsOnTV", "calm"].forEach(function (k) { if (p[k] !== undefined && typeof p[k] !== "boolean") delete p[k]; });
+    ["storeName", "server", "atmos", "nextEp", "subSize", "subPos", "outside", "wxMode", "pick", "audioLang", "subLang", "memberName", "memberSince", "remux", "deco"].forEach(function (k) { if (p[k] !== undefined && typeof p[k] !== "string") delete p[k]; });
+    if (p.storeName) p.storeName = p.storeName.slice(0, 60);
+    if (p.server && !parseUrl(p.server)) p.server = "";
+    p.recentSearches = strList(p.recentSearches, 6);
+    if (!isObj(p.subOffsets)) p.subOffsets = {};
+    Object.keys(p.subOffsets).forEach(function (k) { if (!numIn(p.subOffsets[k], -600000, 600000)) delete p.subOffsets[k]; });
+    if (!isObj(p.listRoles)) delete p.listRoles;
+    else Object.keys(p.listRoles).forEach(function (k) { if (typeof p.listRoles[k] !== "string") delete p.listRoles[k]; });
+    var w = p.wxPlace;
+    if (w !== undefined && !(isObj(w) && typeof w.name === "string" && numIn(w.lat, -90, 90) && numIn(w.lon, -180, 180))) delete p.wxPlace;
+    return p;
+  }
+  function fixProgress(m) {
+    Object.keys(m).forEach(function (k) { var e = m[k]; if (!isObj(e) || !numIn(e.t, 0, 1e9) || !numIn(e.d || 0, 0, 1e9) || (e.v !== undefined && typeof e.v !== "string")) delete m[k]; else if (!numIn(e.at, 0, 1e13)) e.at = 0; });
+    return m;
+  }
   function save(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
   var watchedSet = new Set(watched);
   function syncWatched() { watchedSet = new Set(watched); }
@@ -1382,7 +1478,9 @@ body.osk-open .overlay { align-items: flex-start; padding-bottom: 48vh; }
   function fromSample(s, type) {
     return { id: s[0], type: type || "movie", name: s[1], year: s[2], genres: s[3], runtime: s[4], director: s[5], cast: s[6].split(", "), blurb: s[7] };
   }
+  var onSample = false;   // the built-in sample shelf is showing; never saved as "last time's shelves"
   function loadSample() {
+    onSample = true;
     SAMPLE.forEach(function (s) {
       var it = add(fromSample(s));
       it.genres.forEach(function (g) { if (it.aisles.indexOf(g) === -1) it.aisles.push(g); });
@@ -1399,12 +1497,27 @@ body.osk-open .overlay { align-items: flex-start; padding-bottom: 48vh; }
 
   // ---------- live data from Stremio's Cinemeta catalog ----------
   // Web addresses from add-ons and services only get used if they're ordinary web links.
+  // a whole number in range, or null: season and episode numbers come from add-ons, so they're checked before use
+  function intIn(v, lo, hi) { var n = typeof v === "string" && v.trim() !== "" ? Number(v) : v; return typeof n === "number" && isFinite(n) && Math.floor(n) === n && n >= lo && n <= hi ? n : null; }
   function webUrl(u) { u = String(u || ""); return /^https?:\/\/[^\s"<>\\]+$/i.test(u) ? u : ""; }
   // Add-ons must use https, except ones running on your own home network (a computer or NAS at home).
-  function lanHost(host) { return /^(localhost|127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|[^.]+\.local$)/i.test(host || ""); }
+  // A host counts as "home network" only if it is exactly localhost, a complete private IPv4 address,
+  // or a single-label name ending in .local. (Prefix checks let names like 10.example.com through.)
+  function lanHost(host) {
+    host = String(host || "").toLowerCase().replace(/\.$/, "");
+    if (host === "localhost") return true;
+    if (/^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.local$/.test(host)) return true;
+    var m = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.exec(host);
+    if (!m) return false;
+    var o = [+m[1], +m[2], +m[3], +m[4]];
+    if (o.some(function (n, i) { return n > 255 || (m[i + 1].length > 1 && m[i + 1][0] === "0"); })) return false;
+    return o[0] === 127 || o[0] === 10 || (o[0] === 192 && o[1] === 168) || (o[0] === 172 && o[1] >= 16 && o[1] <= 31);
+  }
+  function parseUrl(u) { try { return new URL(String(u || "")); } catch (e) { return null; } }
   function addonOK(url) {
-    var m = /^(https?):\/\/([^\/:?#]+)/i.exec(String(url || ""));
-    return !!m && (m[1].toLowerCase() === "https" || lanHost(m[2]));
+    var u = parseUrl(url);
+    if (!u || u.username || u.password) return false;
+    return u.protocol === "https:" || (u.protocol === "http:" && lanHost(u.hostname));
   }
   function cssUrl(u) { return "url('" + String(u || "").replace(/'/g, "%27").replace(/[\n\r]/g, "") + "')"; }
   function getJSON(url, ms) {
@@ -1428,6 +1541,7 @@ body.osk-open .overlay { align-items: flex-start; padding-bottom: 48vh; }
   // the shelves from last time, shown straight away while Stremio is asked for today's stock
   var SNAP_KEY = "fnv-shelves";
   function saveSnapshot() {
+    if (onSample) return;
     try {
       var inRole = {};
       ["day", "night", "back"].forEach(function (r) { (roleItems[r] || []).forEach(function (it) { inRole[it.id] = 1; }); });
@@ -1447,17 +1561,23 @@ body.osk-open .overlay { align-items: flex-start; padding-bottom: 48vh; }
   }
   function loadSnapshot() {
     var snap = store(SNAP_KEY, null);
-    if (!snap || !snap.items || !snap.items.length || Date.now() - snap.t > 14 * 864e5) return false;
-    items = []; byId = {};
+    if (!snap || !Array.isArray(snap.items) || !snap.items.length || !numIn(snap.t, 0, 1e13) || Date.now() - snap.t > 14 * 864e5) return false;
+    var its = [], ids = {};
     snap.items.forEach(function (a) {
-      var it = { id: a[0], type: a[1], name: a[2], year: a[3], genres: a[4] || [], poster: a[5], blurb: a[6], progress: a[8], videoId: a[9], seen: !!a[10], lastWatched: a[11], runtime: a[12] };
-      if (a[13]) it.fromList = a[13];
-      it.aisles = (a[7] || []).slice();
-      byId[it.id] = it; items.push(it);
+      if (!Array.isArray(a) || typeof a[0] !== "string" || !a[0] || ids[a[0]] || typeof a[2] !== "string") return;
+      var it = { id: a[0], type: a[1] === "series" ? "series" : "movie", name: a[2], year: numIn(a[3], 1800, 3000) ? a[3] : undefined,
+        genres: strList(a[4], 12), poster: webUrl(a[5]), blurb: typeof a[6] === "string" ? a[6] : "", progress: numIn(a[8], 0, 1) ? a[8] : 0,
+        videoId: typeof a[9] === "string" ? a[9] : "", seen: !!a[10], lastWatched: numIn(a[11], 0, 1e13) ? a[11] : 0, runtime: numIn(a[12], 0, 10000) ? a[12] : undefined };
+      if (typeof a[13] === "string") it.fromList = a[13];
+      it.aisles = strList(a[7], 40);
+      ids[it.id] = it; its.push(it);
     });
-    extraAisles = snap.extra || []; catalogChoices = snap.choices || [];
+    if (!its.length) return false;
+    var extra = Array.isArray(snap.extra) ? snap.extra.filter(function (x) { return isObj(x) && typeof x.key === "string" && typeof x.label === "string"; }) : [];
+    items = its; byId = ids;
+    extraAisles = extra; catalogChoices = Array.isArray(snap.choices) ? snap.choices.filter(isObj) : [];
     roleItems = { day: [], night: [], back: [] };
-    ["day", "night", "back"].forEach(function (r) { ((snap.roles || {})[r] || []).forEach(function (id) { if (byId[id]) roleItems[r].push(byId[id]); }); });
+    ["day", "night", "back"].forEach(function (r) { strList(isObj(snap.roles) ? snap.roles[r] : [], 2000).forEach(function (id) { if (byId[id]) roleItems[r].push(byId[id]); }); });
     live = true;
     return true;
   }
@@ -1483,7 +1603,7 @@ body.osk-open .overlay { align-items: flex-start; padding-bottom: 48vh; }
         if (pager[r.a]) { pager[r.a].skip = r.metas.length; if (!r.metas.length) pager[r.a].done = true; }
       });
       fillPosters();
-      live = true;
+      live = true; onSample = false;
     });
   }
   // anything without art gets Stremio's standard poster for that title
@@ -1508,8 +1628,15 @@ body.osk-open .overlay { align-items: flex-start; padding-bottom: 48vh; }
   }
   // re-draw the current aisle without jumping the shelves back to the start
   function refreshShelvesInPlace() {
+    var st = shelfState, list = aisleList(aisle), same = st.key === aisle && list.length >= st.list.length;
+    for (var i = 0; same && i < st.shown; i++) if (list[i] !== st.list[i]) same = false;
+    if (same) {
+      st.list = list;
+      if (rowKinds[focus.r] === "shelf" && focus.c >= rows[focus.r].length - 8) growShelves();
+      return;
+    }
     var s0 = $("shelf0").scrollLeft, s1 = $("shelf1").scrollLeft, s2 = $("shelf2").scrollLeft, keep = { r: focus.r, c: focus.c };
-    renderShelves(); rebuildRows();
+    renderShelves(true); rebuildRows();
     $("shelf0").scrollLeft = s0; $("shelf1").scrollLeft = s1; $("shelf2").scrollLeft = s2;
     loadVisibleCovers();
     focus = keep; clampFocus();
@@ -1531,7 +1658,10 @@ body.osk-open .overlay { align-items: flex-start; padding-bottom: 48vh; }
         base.videos.push({ id: it.id + ":" + se + ":" + ep, season: se, episode: ep, title: "Episode " + ep, overview: "" });
     }
     if (!live || !/^tt\d+$/.test(it.id)) { metaCache[it.id] = base; return Promise.resolve(base); }
-    return getJSON(CINEMETA + "/meta/" + (it.type === "series" ? "series" : "movie") + "/" + idPath(it.id) + ".json", 6000).then(function (j) {
+    if (metaFlights[it.id]) return metaFlights[it.id];
+    var id0 = it.id;
+    return metaFlights[id0] = getJSON(CINEMETA + "/meta/" + (it.type === "series" ? "series" : "movie") + "/" + idPath(it.id) + ".json", 6000).then(function (j) {
+      delete metaFlights[id0];
       var m = j.meta || {};
       var yt = [];
       arr(m.trailers).forEach(function (t) { if (t && t.source) yt.push(t.source); });
@@ -1545,12 +1675,13 @@ body.osk-open .overlay { align-items: flex-start; padding-bottom: 48vh; }
         trailers: yt,
         background: webUrl(m.background) || ("https://images.metahub.space/background/medium/" + encodeURIComponent(it.id) + "/img"),
         videos: arr(m.videos).map(function (v) {
-          return { id: v.id, season: v.season, episode: v.episode || v.number, title: v.title || v.name || "", overview: v.overview || v.description || "", released: v.released, thumbnail: webUrl(v.thumbnail) };
+          return { id: String(v.id || ""), season: intIn(v.season, 0, 9999), episode: intIn(v.episode != null ? v.episode : v.number, 0, 99999), title: v.title || v.name || "", overview: v.overview || v.description || "", released: v.released, thumbnail: webUrl(v.thumbnail) };
         })
       };
       metaCache[it.id] = d; return d;
-    }, function () { base.failedAt = Date.now(); metaCache[it.id] = base; return base; });
+    }, function (e) { delete metaFlights[id0]; base.failedAt = Date.now(); metaCache[it.id] = base; diag.err("Details for " + it.name + " didn't load", e); return base; });
   }
+  var metaFlights = {};
 
   // ---------- helpers ----------
   function hash(str) { var h = 0; for (var i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) | 0; return Math.abs(h); }
@@ -1588,6 +1719,25 @@ body.osk-open .overlay { align-items: flex-start; padding-bottom: 48vh; }
       '<div class="meta"><span>' + esc(g) + '</span><span>' + (it.year || "") + ' · ' + rating(it) + '</span></div>' +
       '<span class="rs"><b>' + esc(prefs.storeName.toUpperCase()) + '</b><i></i><em>' + (hash(it.id) % 9000 + 1000) + "</em></span>" +
       (hash(it.id) % 3 === 0 ? '<span class="dot2" style="background:' + ["#ffd23f", "#46a758", "#e5484d", "#4c8ff0"][hash(it.name) % 4] + '"></span>' : "") + "</div>";
+  }
+  // While you read the back of the box, quietly ask the add-ons for copies, so the counter is ready when you get there.
+  // Only once you've held the box for a moment, and only for something that's ready to rent (not a box set's episode list).
+  function prefetchCopies(it, view) {
+    if (!live || !account || !installedAddons.length) return;
+    var vid = it.type === "series" ? it.videoId : it.id;
+    if (!vid) return;
+    setTimeout(function () { if (sameView(view) && modal.caseId === it.id) streamCopies(it, vid, function () {}); }, 700);
+  }
+  // shelves use the small posters; the box in your hands swaps to a big one once it has loaded
+  function bigPoster(url) {
+    return String(url || "").replace(/\/poster\/(small|medium)\//, "/poster/large/").replace(/\/t\/p\/w(92|154|185|342|500)\//, "/t/p/w780/");
+  }
+  function sharpenPoster(box, it) {
+    var img = box && box.querySelector(".face.front img"), big = bigPoster(it.poster);
+    if (!img || !big || big === it.poster) return;
+    var pre = new Image();
+    pre.onload = function () { if (document.body.contains(img)) img.src = big; };
+    pre.src = big;
   }
   function isRecent(it) { return !it.year || it.year >= new Date().getFullYear() - 1; }
   function daysLate(it) {
@@ -1641,24 +1791,43 @@ body.osk-open .overlay { align-items: flex-start; padding-bottom: 48vh; }
     if (key === "staff" || key === "cw" || key === "blind") return 0;
     return hash(it.id) % 4 === 0 ? 2 : 0;
   }
-  function renderShelves() {
+  // Big aisles are drawn a chunk at a time: about two screens of tapes a shelf up front, more as you browse towards the end.
+  // Hundreds of tapes on the page at once made every press and every aisle change slow on the TV.
+  var shelfState = { key: "", list: [], shown: 0, nRows: 2 };
+  function tapeButton(it, i, st) {
+    var cp = st.faces ? copiesFor(it, i, st.key) : 0;
+    return '<button class="tape" data-id="' + esc(it.id) + '"' + (cp ? ' data-copies="' + cp + '"' : "") +
+      (st.blind ? ' data-blind="1" aria-label="Blind date tape"' : ' aria-label="' + esc(it.name + (it.year ? ", " + it.year : "")) + '"') + ">" + tapeHTML(it, st.isNew, st.blind, st.faces) + "</button>";
+  }
+  function growShelves() {
+    var st = shelfState;
+    if (st.key !== aisle || st.shown >= st.list.length) return false;
+    var to = Math.min(st.list.length, st.shown + shelfChunk(st.faces) * st.nRows), html = ["", "", ""];
+    for (var i = st.shown; i < to; i++) html[i % st.nRows] += tapeButton(st.list[i], i, st);
+    for (var n = 0; n < st.nRows; n++) if (html[n]) $("shelf" + n).insertAdjacentHTML("beforeend", html[n]);
+    st.shown = to;
+    rebuildRows();
+    return true;
+  }
+  function shelfChunk(faces) { return faces ? 24 : 64; }
+  function renderShelves(keepShown) {
     var list = aisleList(aisle);
     var isNew = aisle === "new", blind = aisle === "blind", faces = aisleFaces(aisle);
     var tvLayout = isTV();
     var nRows = faces && !tvLayout ? 3 : 2, groups = [[], [], []];
-    list.forEach(function (it, i) { groups[i % nRows].push({ it: it, i: i }); });
+    var shown = Math.min(list.length, Math.max(shelfChunk(faces) * nRows, keepShown && shelfState.key === aisle ? shelfState.shown : 0));
+    shelfState = { key: aisle, list: list, shown: shown, nRows: nRows, faces: faces, isNew: isNew, blind: blind };
+    list.slice(0, shown).forEach(function (it, i) { groups[i % nRows].push({ it: it, i: i }); });
+    // back to the start of each shelf before swapping the tapes, while the layout is still clean;
+    // doing it after made the TV lay out every shelf again, once per shelf
+    [0, 1, 2].forEach(function (n) { var el = $("shelf" + n); if (el.scrollLeft) el.scrollLeft = 0; });
     document.querySelector(".fixture").classList.toggle("faces", faces);
     [0, 1, 2].forEach(function (n) {
       var el = $("shelf" + n);
       el.className = "shelf" + (faces ? " faceout" : "");
       if (!list.length && n === 0) { el.innerHTML = '<div class="empty">' + emptyMessage() + "</div>"; return; }
       if (n >= nRows) { el.innerHTML = ""; return; }
-      el.innerHTML = groups[n].map(function (g) {
-        var it = g.it, cp = faces ? copiesFor(it, g.i, aisle) : 0;
-        return '<button class="tape" data-id="' + esc(it.id) + '"' + (cp ? ' data-copies="' + cp + '"' : "") +
-          (blind ? ' data-blind="1" aria-label="Blind date tape"' : ' aria-label="' + esc(it.name + (it.year ? ", " + it.year : "")) + '"') + ">" + tapeHTML(it, isNew, blind, faces) + "</button>";
-      }).join("");
-      el.scrollLeft = 0;
+      el.innerHTML = groups[n].map(function (g) { return tapeButton(g.it, g.i, shelfState); }).join("");
     });
     var a = allAisles().filter(function (x) { return x.key === aisle; })[0];
     var label = a ? a.label : "";
@@ -1739,8 +1908,18 @@ body.osk-open .overlay { align-items: flex-start; padding-bottom: 48vh; }
     $("returnsVal").textContent = String(watched.length);
     $("deskVal").textContent = prefs.memberName ? prefs.memberName.split(" ")[0].toUpperCase().slice(0, 10) : "";
   }
+  // Redraw the current aisle but keep your place: as many tapes as were drawn, each shelf where it was scrolled to.
+  // (Plain renderShelves() starts the aisle from the top, which is right for a new aisle and wrong for anything else.)
+  function redrawShelves() {
+    var sc = [0, 1, 2].map(function (n) { return $("shelf" + n).scrollLeft; });
+    var cur = rows[focus.r] && rows[focus.r][focus.c], fid = cur && cur.classList.contains("tape") ? cur.getAttribute("data-id") : "";
+    renderShelves(true); rebuildRows();
+    sc.forEach(function (x, n) { if (x) $("shelf" + n).scrollLeft = x; });
+    // stay on the same tape even if it moved (Continue Watching puts what you just watched first)
+    if (fid) rows.forEach(function (row, r) { if (rowKinds[r] !== "shelf") return; row.forEach(function (el, c) { if (el.getAttribute("data-id") === fid) focus = { r: r, c: c }; }); });
+  }
   function renderAll(keepFocus) {
-    renderSigns(); renderShelves(); rebuildRows(); updateCounter(); updateOSD();
+    renderSigns(); if (keepFocus) redrawShelves(); else { renderShelves(); rebuildRows(); } updateCounter(); updateOSD();
     if (!keepFocus) focus = { r: rowKinds.indexOf("shelf") !== -1 ? rowKinds.indexOf("shelf") : 0, c: 0 };
     clampFocus(); applyFocus(true);
   }
@@ -1767,7 +1946,7 @@ body.osk-open .overlay { align-items: flex-start; padding-bottom: 48vh; }
     var row = rows[focus.r]; if (!row) return;
     var el = row[focus.c]; if (!el) return;
     el.classList.add("focused");
-    if (!modal) { try { el.focus({ preventScroll: true }); } catch (e) { el.focus(); } }
+    if (!modal && !isTV()) { try { el.focus({ preventScroll: true }); } catch (e) { el.focus(); } }
     var parent = el.parentNode;
     // read everything first, then write, so the TV only lays the page out once per press
     var r = isTV() ? null : el.getBoundingClientRect();
@@ -1779,7 +1958,7 @@ body.osk-open .overlay { align-items: flex-start; padding-bottom: 48vh; }
     if (el.classList.contains("tape")) {
       var it = byId[el.getAttribute("data-id")];
       loadCover(el);
-      if (rowKinds[focus.r] === "shelf" && focus.c >= rows[focus.r].length - 8) loadMore(aisle);
+      if (rowKinds[focus.r] === "shelf" && focus.c >= rows[focus.r].length - 8 && !growShelves()) loadMore(aisle);
       if (el.getAttribute("data-blind")) { tvBlind(it); marqueeFor(null, true); }
       else {
         if (it && it.genres && it.genres[0]) lastGenre = it.genres[0];
@@ -1801,6 +1980,17 @@ body.osk-open .overlay { align-items: flex-start; padding-bottom: 48vh; }
     img.onload = function () { cov.insertBefore(img, cov.firstChild); cov.classList.add("has-poster"); };
     img.src = cov.getAttribute("data-poster");
   }
+  // Holding an arrow sends repeats faster than the TV can draw. Move once per drawn frame; if more presses arrive
+  // in between, the last one waits its turn and the rest are dropped, so the highlight never runs ahead of the screen.
+  var moveBusy = false, moveQueued = null;
+  function paced(dr, dc) {
+    if (moveBusy) { moveQueued = [dr, dc]; return; }
+    moveBusy = true; move(dr, dc);
+    requestAnimationFrame(function () { requestAnimationFrame(function () {
+      moveBusy = false;
+      if (moveQueued) { var q = moveQueued; moveQueued = null; paced(q[0], q[1]); }
+    }); });
+  }
   function move(dr, dc) {
     if (dr) {
       var nr = focus.r + dr;
@@ -1820,6 +2010,7 @@ body.osk-open .overlay { align-items: flex-start; padding-bottom: 48vh; }
       return;
     }
     var nc = focus.c + dc;
+    if (nc >= rows[focus.r].length && rowKinds[focus.r] === "shelf") growShelves();
     if (nc < 0 || nc >= rows[focus.r].length) return;
     focus.c = nc;
     if (rowKinds[focus.r] === "signs") selectAisle(rows[focus.r][nc].getAttribute("data-aisle"));
@@ -1890,7 +2081,7 @@ body.osk-open .overlay { align-items: flex-start; padding-bottom: 48vh; }
       var txt = String(r[0]), html = "";
       for (var i = 0; i < txt.length; i++) {
         var ch = txt[i], cls = ch === " " ? "sp" : (ch === "★" ? "red" : "");
-        html += '<b class="' + cls + '" style="animation-delay:' + Math.min(k++ * 18, 700) + 'ms">' + (ch === " " ? "&nbsp;" : esc(ch)) + "</b>";
+        html += '<b class="' + cls + '">' + (ch === " " ? "&nbsp;" : esc(ch)) + "</b>";
       }
       return '<div class="mq-row' + (r[1] ? " sm" : "") + '">' + html + "</div>";
     }).join("");
@@ -1919,7 +2110,8 @@ body.osk-open .overlay { align-items: flex-start; padding-bottom: 48vh; }
     clearTimeout(tvTimer); clearTimeout(trailerTimer);
     if (!it || (tvCurrent === it.id)) return;
     $("tvFrame").innerHTML = "";
-    tvTimer = setTimeout(function () { tvShow(it); }, 380);
+    // wait until you've stopped on a tape before changing the picture: scrolling past costs nothing
+    tvTimer = setTimeout(function () { tvShow(it); }, 950);
   }
   // YouTube reports trouble (removed, region-locked, embedding off) through messages; if it does,
   // the corner TV goes back to the still instead of showing an error card
@@ -1944,38 +2136,40 @@ body.osk-open .overlay { align-items: flex-start; padding-bottom: 48vh; }
   });
   function tvShow(it) {
     tvCurrent = it.id;
-    staticBurst(260);
     $("osdL").textContent = "PLAY ▶";
-    setTimeout(function () {
+    (function () {
       if (tvCurrent !== it.id) return;
       var card = $("tvCard"), still = $("tvStill");
       card.innerHTML = '<span class="k">NOW SHOWING</span><span class="t">' + esc(it.name) + '</span><span class="s">' +
         esc([it.year, it.director || (it.genres || [])[0]].filter(Boolean).join(" · ")) + "</span>";
       card.style.display = "";
       still.style.backgroundImage = "";
-      if (!live) return;
+      if (!live || isLight()) return;
       getMeta(it).then(function (m) {
         if (tvCurrent !== it.id) return;
         if (m.background) {
           var img = new Image();
-          img.onload = function () { if (tvCurrent !== it.id) return; still.style.backgroundImage = cssUrl(m.background); card.style.display = "none"; };
+          var show = function () { if (tvCurrent !== it.id) return; still.style.backgroundImage = cssUrl(m.background); card.style.display = "none"; };
           img.src = m.background;
+          // decode away from the main thread where the browser can, so the still never stalls a key press
+          if (img.decode) img.decode().then(show, function () {}); else img.onload = show;
         }
         if (prefs.trailers && m.trailers.length) {
           trailerTimer = setTimeout(function () {
             if (tvCurrent !== it.id || modal) return;
             var yt = encodeURIComponent(m.trailers[0]);
-            $("tvFrame").innerHTML = '<iframe allow="autoplay; encrypted-media" src="https://www.youtube-nocookie.com/embed/' + yt +
+            $("tvFrame").innerHTML = '<iframe title="' + esc("Trailer: " + it.name) + '" allow="autoplay; encrypted-media" src="https://www.youtube-nocookie.com/embed/' + yt +
               "?autoplay=1&mute=" + (prefs.sound ? 0 : 1) + "&controls=0&rel=0&modestbranding=1&playsinline=1&iv_load_policy=3&enablejsapi=1&loop=1&playlist=" + yt + '"></iframe>';
             $("osdL").textContent = "TRAILER ▶"; sfx("degauss");
             watchTrailer($("tvFrame").querySelector("iframe"), it.id);
           }, 2600);
         }
       });
-    }, 260);
+    })();
   }
   var noiseCtx = $("tvNoise").getContext("2d");
   function staticBurst(ms) {
+    if (isCalm()) return;
     var cv = $("tvNoise"); cv.classList.add("on");
     var end = Date.now() + ms, img = noiseCtx.createImageData(80, 60), d = img.data;
     (function frame() {
@@ -2251,7 +2445,7 @@ body.osk-open .overlay { align-items: flex-start; padding-bottom: 48vh; }
       picked = { rect: from.rect, back: from.back, box: box };
       fp.classList.add("no-ease"); overlay.classList.add("no-ease"); fp.classList.add("lifting"); overlay.classList.add("lifting");
       void getComputedStyle(fp).opacity; fp.classList.remove("no-ease"); overlay.classList.remove("no-ease");
-      box.animate([
+      calmAnim(box, [
         { transform: flyTransform(from.rect, fb, 1, 0, 0) },
         { transform: flyTransform(from.rect, fb, .5, fb.height * .07, -4), offset: .5 },
         { transform: "translate(0,0) scale(1) rotate(0deg)" }
@@ -2271,7 +2465,7 @@ body.osk-open .overlay { align-items: flex-start; padding-bottom: 48vh; }
     panel.classList.add("lifting"); overlay.classList.add("lifting");
     void getComputedStyle(panel).opacity; void overlay.offsetWidth;
     panel.classList.remove("no-ease"); overlay.classList.remove("no-ease");
-    box.animate([
+    calmAnim(box, [
       { transform: flyTransform(a, b, 1, 0, 0) },
       { transform: flyTransform(a, b, .5, b.height * .07, -4), offset: .5 },
       { transform: "translate(0,0) scale(1) rotate(0deg)" }
@@ -2291,7 +2485,7 @@ body.osk-open .overlay { align-items: flex-start; padding-bottom: 48vh; }
     panel.classList.add("lifting"); overlay.classList.add("lifting");
     var done = false;
     function end() { if (done) return; done = true; putting = false; overlay.classList.remove("lifting"); if (toBack) reopenBack(toBack); else closeModal(); }
-    var anim = box.animate([
+    var anim = calmAnim(box, [
       { transform: "translate(0,0) scale(1) rotate(0deg)" },
       { transform: flyTransform(a, b, .55, b.height * .05, -3), offset: .45 },
       { transform: flyTransform(a, b, 1, 0, 0) }
@@ -2304,7 +2498,7 @@ body.osk-open .overlay { align-items: flex-start; padding-bottom: 48vh; }
     $("tvFrame").innerHTML = ""; clearTimeout(trailerTimer);
     overlay.innerHTML = html; overlay.hidden = false;
     var els = Array.prototype.slice.call(overlay.querySelectorAll("[data-m]"));
-    modal = { els: els, idx: 0, onBack: onBack || closeModal };
+    modal = { els: els, idx: 0, onBack: onBack || closeModal, seq: ++viewSeq };
     if (ac) duckRoom(true);
     modalFocus(true);
   }
@@ -2323,16 +2517,20 @@ body.osk-open .overlay { align-items: flex-start; padding-bottom: 48vh; }
         if (!el.hasAttribute("data-ph")) el.setAttribute("data-ph", el.placeholder || "");
         if (!el.value) el.placeholder = (el.getAttribute("data-ph") ? el.getAttribute("data-ph") + " · " : "") + "press OK to type";
       }
-    } else {
+    } else if (!isTV()) {
       try { el.focus({ preventScroll: true }); } catch (e) { el.focus(); }
-    }
+    } else if (document.activeElement && document.activeElement !== el && document.activeElement.tagName === "INPUT") document.activeElement.blur();
     try { el.scrollIntoView({ block: "nearest" }); } catch (e) {}
     if (!quiet) sfx("tick");
   }
   function dismissModal() { if (modal.onBack !== putBack) sfx("close"); modal.onBack(); }
   // back onto the back-room shelf, in the same spot, with the same tapes
   function reopenBack(back) { picked = null; backroomShelf(back.who, back.list, back.focus); }
+  // every panel gets its own number: a slow answer meant for an earlier panel is dropped instead of drawn into this one
+  var viewSeq = 0;
+  function sameView(v) { return !!modal && modal.seq === v; }
   function closeModal() {
+    viewSeq++;
     if (osk) closeBoard(true);
     stopLinkPoll();
     overlay.hidden = true; overlay.innerHTML = ""; modal = null;
@@ -2391,6 +2589,7 @@ body.osk-open .overlay { align-items: flex-start; padding-bottom: 48vh; }
       '<span class="bar"></span><span class="fmt">VHS · COLOR · HI-FI STEREO · ' + (it.year || "") + "</span></div></div>";
   }
   function caseView(it, quiet, from) {
+    if (cwUndo && cwUndo.id !== it.id) cwUndo = null;
     if (!quiet) sfx("clack");
     if (!quiet && daysLate(it)) later([380], function () { sfx("coin"); });
     var w = isWatched(it.id);
@@ -2410,9 +2609,13 @@ body.osk-open .overlay { align-items: flex-start; padding-bottom: 48vh; }
         : '<button class="btn primary" data-m="rent" data-id="' + esc(it.id) + '">' + (resumePoint(it, it.id) ? "Keep watching" : "Rent it") + "</button>") +
       '<button class="btn" data-m="flip">Flip the box</button>' +
       '<button class="btn" data-m="watched" data-id="' + esc(it.id) + '">' + (w ? "Take it out of returns" : "Mark as watched") + "</button>" +
+      (it.aisles.indexOf("cw") !== -1 ? '<button class="btn" data-m="uncw" data-id="' + esc(it.id) + '">Take off Continue Watching</button>'
+        : cwUndo && cwUndo.id === it.id ? '<button class="btn" data-m="recw" data-id="' + esc(it.id) + '">Undo · put back on Continue Watching</button>' : "") +
       '<button class="btn" data-m="close">Put it back</button>' +
       "</div></div></div></div>", putBack);
     modal.caseId = it.id; modal.from = from || "";
+    sharpenPoster($("box3d"), it);
+    prefetchCopies(it, modal.seq);
     liftFrom($("box3d"));
     getMeta(it).then(function (m) {
       var back = $("boxBack"); if (!back) return;
@@ -2500,7 +2703,8 @@ body.osk-open .overlay { align-items: flex-start; padding-bottom: 48vh; }
       '<p class="rummage">*rummaging through boxes<i>…</i>*</p><div class="actions"><button class="btn" data-m="close">Never mind</button></div></div>');
     modal.view = "rummage";
     sfx("rummage");
-    setTimeout(function () { if (modal && modal.view === "rummage") { sfx("shhk"); backroomShelf(who); } }, 2600);
+    var view = modal.seq;
+    setTimeout(function () { if (sameView(view)) { sfx("shhk"); backroomShelf(who); } }, 2600);
   }
   function backroomShelf(who, keep, focusIdx) {
     var C = CLERKS[who], got = keep ? { list: keep, fallback: false } : backroomPool();
@@ -2743,7 +2947,7 @@ body.osk-open .overlay { align-items: flex-start; padding-bottom: 48vh; }
     else if (act === "toggle-vhs") { prefs.vhs = !prefs.vhs; save("fnv-prefs", prefs); playerSettings(modal.idx); }
     else if (act === "toggle-previews") { prefs.previews = !prefs.previews; save("fnv-prefs", prefs); playerSettings(modal.idx); }
     else if (act === "audio-lang") { var al = ["en", "es", "fr", "de", "it", "pt", "ja", "ko", "hi", "ru", "zh", "nl"]; prefs.audioLang = al[(al.indexOf(prefs.audioLang || "en") + 1) % al.length]; save("fnv-prefs", prefs); playerSettings(modal.idx); }
-    else if (act === "toggle-autonext") { prefs.noAutoNext = !prefs.noAutoNext; save("fnv-prefs", prefs); playerSettings(modal.idx); }
+    else if (act === "toggle-autonext") { var nm = ["auto", "ask", "off"]; prefs.nextEp = nm[(nm.indexOf(nextEpMode()) + 1) % 3]; save("fnv-prefs", prefs); playerSettings(modal.idx); }
     else if (act === "saveserver") {
       var raw = ($("serverUrl").value || "").trim(), srv = "";
       if (raw) {
@@ -2758,11 +2962,20 @@ body.osk-open .overlay { align-items: flex-start; padding-bottom: 48vh; }
       prefs.server = srv; save("fnv-prefs", prefs); if (!srv || lanHost(new URL(srv).hostname) || srv.indexOf("https:") === 0) toast(srv ? "Streaming server saved" : "Streaming server cleared"); clearCopyCache(); playerSettings(0);
     }
     else if (act === "reroll") { clerkReroll = true; clerk(); clerkReroll = false; }
+    else if ((act === "uncw" || act === "recw") && it) {
+      if (act === "uncw") dropFromCW(it); else undoDropCW(it);
+      var keepF = lastStoreFocus; if (keepF) focus = { r: keepF.r, c: keepF.c };
+      redrawShelves(); clampFocus(); lastStoreFocus = keepF ? { r: focus.r, c: focus.c } : keepF;
+      sfx("tap"); caseView(it, true, modal && modal.from);
+      var again = overlay.querySelector(act === "uncw" ? '[data-m="recw"]' : '[data-m="uncw"]');
+      modal.idx = Math.max(0, modal.els.indexOf(again)); modalFocus(true);
+    }
     else if (act === "watched" && it) {
       if (watched.indexOf(id) !== -1) watched.splice(watched.indexOf(id), 1); else watched.push(id);
       syncWatched();
       save("fnv-watched", watched);
-      var keep = lastStoreFocus; renderShelves(); rebuildRows(); updateCounter(); lastStoreFocus = keep;
+      var keep = lastStoreFocus; if (keep) focus = { r: keep.r, c: keep.c };
+      redrawShelves(); updateCounter(); lastStoreFocus = keep ? { r: focus.r, c: focus.c } : keep;
       sfx("tap"); caseView(it, true, modal && modal.from); modal.idx = Math.max(0, modal.els.indexOf(overlay.querySelector('[data-m="watched"]'))); modalFocus(true);
     } else if (act === "play" && it) launchStremio(it);
     else if (act === "email") emailSignIn();
@@ -2790,6 +3003,12 @@ body.osk-open .overlay { align-items: flex-start; padding-bottom: 48vh; }
       if (!prefs.sound) { prefs.quiet = false; setSound(true); } else if (!prefs.quiet) { prefs.quiet = true; save("fnv-prefs", prefs); } else { prefs.quiet = false; setSound(false); }
       setVolume(); sfx("tap"); frontDesk(modal.idx);
     }
+    else if (act === "toggle-calm") {
+      var am = ["full", "calm", "light"]; prefs.atmos = am[(am.indexOf(prefs.atmos) + 1) % 3]; save("fnv-prefs", prefs); applyAtmos();
+      if (isCalm()) { stopLandLoops(); var bol = $("wxBolt"); if (bol) bol.classList.remove("go"); }
+      if (isLight()) { $("tvFrame").innerHTML = ""; clearTimeout(trailerTimer); tvCurrent = null; }
+      frontDesk(modal.idx);
+    }
     else if (act === "toggle-crt") { prefs.trailers = !prefs.trailers; save("fnv-prefs", prefs); if (!prefs.trailers) $("tvFrame").innerHTML = ""; frontDesk(modal.idx); }
     else if (act === "account") accountPanel();
     else if (act === "checks") runChecks();
@@ -2800,6 +3019,7 @@ body.osk-open .overlay { align-items: flex-start; padding-bottom: 48vh; }
     else if (act === "listrole") cycleRole(parseInt(el.getAttribute("data-i"), 10));
     else if (act === "refresh-lists") { toast("Checking your add-ons for new lists…"); refreshAccount(false); }
     else if (act === "outside") outsidePanel(0);
+    else if (act === "diag") diagnosticsPanel();
     else if (act === "wxsave") saveWxPlace();
     else if (act === "wx-mode") { prefs.wxMode = WX_MODES[(WX_MODES.indexOf(prefs.wxMode || "live") + 1) % WX_MODES.length]; save("fnv-prefs", prefs); if (prefs.wxMode === "live") refreshWeather(); outsidePanel(modal.idx); }
     else if (act === "deco-mode") { var dm = ["auto", "halloween", "xmas", "none"]; prefs.deco = dm[(dm.indexOf(prefs.deco || "auto") + 1) % dm.length]; save("fnv-prefs", prefs); outsidePanel(modal.idx); }
@@ -2864,6 +3084,36 @@ body.osk-open .overlay { align-items: flex-start; padding-bottom: 48vh; }
   }
   function saveAccount(key) { account = { authKey: key }; save("fnv-auth", account); updateCounter(); }
 
+  // Taking a tape off Continue Watching rewinds it, the same thing Stremio's own "dismiss" does, so it stays off on every device.
+  // The box keeps an Undo button until you pick up something else.
+  var cwUndo = null;
+  function dropFromCW(it) {
+    var pre = {}; Object.keys(progressMap).forEach(function (k) { if (k === it.id || k.indexOf("ep:" + it.id + ":") === 0) pre[k] = progressMap[k]; });
+    cwUndo = { id: it.id, progress: it.progress, lastWatched: it.lastWatched, pm: pre, li: libRaw[it.id] ? JSON.parse(JSON.stringify(libRaw[it.id])) : null };
+    it.aisles = it.aisles.filter(function (a) { return a !== "cw"; }); it.progress = 0;
+    Object.keys(pre).forEach(function (k) { delete progressMap[k]; }); save("fnv-progress", progressMap);
+    var li = libRaw[it.id];
+    if (li && account) {
+      li = JSON.parse(JSON.stringify(li)); li.state = li.state || {}; li.state.timeOffset = 0; li._mtime = new Date().toISOString();
+      libRaw[it.id] = li;
+      api("datastorePut", { authKey: account.authKey, collection: "libraryItem", changes: [li] }).catch(function (e) { diag.err("Couldn't tell Stremio to take " + it.name + " off Continue Watching", e); });
+    }
+    toast("Taken off Continue Watching", 2500);
+    setTimeout(saveSnapshot, 0);
+  }
+  function undoDropCW(it) {
+    var u = cwUndo; if (!u || u.id !== it.id) return;
+    cwUndo = null;
+    if (it.aisles.indexOf("cw") === -1) it.aisles.push("cw");
+    it.progress = u.progress; it.lastWatched = u.lastWatched;
+    Object.keys(u.pm).forEach(function (k) { progressMap[k] = u.pm[k]; }); save("fnv-progress", progressMap);
+    if (u.li && account) {
+      var li = JSON.parse(JSON.stringify(u.li)); li._mtime = new Date().toISOString(); libRaw[it.id] = li;
+      api("datastorePut", { authKey: account.authKey, collection: "libraryItem", changes: [li] }).catch(function (e) { diag.err("Couldn't put " + it.name + " back on Continue Watching", e); });
+    }
+    toast("Back on Continue Watching", 2500);
+    setTimeout(saveSnapshot, 0);
+  }
   function fromLibrary(li) {
     var st = li.state || {};
     return {
@@ -2926,7 +3176,7 @@ body.osk-open .overlay { align-items: flex-start; padding-bottom: 48vh; }
               // a clerk's list or the back room: stocked, but never shown as an aisle
               jobs.push(getJSON(base + "/catalog/" + c.type + "/" + encodeURIComponent(c.id) + ".json", 8000).then(function (j) {
                 (j.metas || []).forEach(function (mt) { var it = fromMeta(mt); it.type = mt.type || c.type; var ex = add(it, null); if (!ex.fromList) ex.fromList = nm; roles[role].push(ex); });
-              }, function () {}));
+              }, function (e) { diag.addonFail(m.name || "Add-on", "list " + nm, e); }));
               return;
             }
             if (extras.length >= 8) return;
@@ -2940,7 +3190,7 @@ body.osk-open .overlay { align-items: flex-start; padding-bottom: 48vh; }
             var metas = j.metas || [];
             metas.forEach(function (mt) { var it = fromMeta(mt); it.type = mt.type || c.type; add(it, key); });
             if (pages && metas.length) pager[key] = { base: cbase, extras: "", type: c.type, skip: metas.length };
-          }, function () {}));
+          }, function (e) { diag.addonFail(m.name || "Add-on", "aisle " + (c.name || c.id), e); }));
         });
       });
       extraAisles = extras;
@@ -2963,7 +3213,9 @@ body.osk-open .overlay { align-items: flex-start; padding-bottom: 48vh; }
       if (aisleList("cw").length && (aisle === "new" || announce)) aisle = "cw";
       renderAll(!announce);
       $("status").textContent = "Signed in to Stremio · " + accountInfo;
+      diag.account = { ok: true, t: Date.now(), info: accountInfo };
     }, function (e) {
+      diag.account = { ok: false, t: Date.now() }; diag.err("Your Stremio account didn't load", e);
       if (/auth|session|token/i.test(e.message)) { account = null; save("fnv-auth", null); updateCounter(); }
       $("status").textContent = "Couldn't load your Stremio account: " + e.message;
     });
@@ -2987,10 +3239,11 @@ body.osk-open .overlay { align-items: flex-start; padding-bottom: 48vh; }
     openModal('<div class="panel"><div class="clerk-head"><div class="clerk-face" aria-hidden="true">?</div><p>Sign in to Stremio to stock your own shelves.</p></div>' +
       '<p class="note" id="linkMsg">Getting a sign-in code…</p><div class="actions">' +
       '<button class="btn" data-m="email">Use email and password</button><button class="btn" data-m="close">Not now</button></div></div>');
+    var view = modal && modal.seq;
     timeoutP(getJSON(LINK + "create?type=Create", 8000), 9000).then(function (j) {
       var r = j.result || j;
       if (!r || !r.code) throw new Error("no code");
-      if (!modal) return;
+      if (!sameView(view)) return;
       var link = r.link || ("https://link.stremio.com/" + r.code);
       linkExpiry = Date.now() + 290000;
       var qr = r.qrcode || ("https://link.stremio.com/qr?data=" + encodeURIComponent(link));
@@ -3000,15 +3253,16 @@ body.osk-open .overlay { align-items: flex-start; padding-bottom: 48vh; }
         '<button class="btn" data-m="email">Use email and password</button><button class="btn" data-m="close">Not now</button></div></div>');
       linkPoll = setInterval(function () {
         if (Date.now() > linkExpiry) { stopLinkPoll(); linkSignIn(); return; }
+        var poll = linkPoll;
         getJSON(LINK + "read?type=Read&code=" + encodeURIComponent(r.code), 6000).then(function (rj) {
-          if (!linkPoll || !rj.result || !rj.result.authKey) return;
+          if (!linkPoll || linkPoll !== poll || !rj || !rj.result || !rj.result.authKey) return;
           stopLinkPoll();
           finishSignIn(rj.result.authKey, true);
         }, function () {});
       }, 3000);
     }).catch(function () {
       var m = $("linkMsg");
-      if (m) m.textContent = "Couldn't get a code from Stremio from here. On the TV this works; you can also use email and password.";
+      if (m && sameView(view)) m.textContent = "Couldn't get a code from Stremio from here. On the TV this works; you can also use email and password.";
     });
   }
   function finishSignIn(key, fromLink) {
@@ -3133,6 +3387,7 @@ body.osk-open .overlay { align-items: flex-start; padding-bottom: 48vh; }
       '<p class="note" id="searchMsg"></p><div class="picks results" id="results"></div></div>');
   }
   function refreshModalEls() { if (modal) modal.els = Array.prototype.slice.call(overlay.querySelectorAll("[data-m]")); }
+  var searchSeq = 0;
   function doSearch(liveTyping) {
     var q = ($("q").value || "").trim(), msg = $("searchMsg");
     if (!q) { msg.textContent = "Type something first."; return; }
@@ -3141,6 +3396,7 @@ body.osk-open .overlay { align-items: flex-start; padding-bottom: 48vh; }
       rs.unshift(q); prefs.recentSearches = rs.slice(0, 6); save("fnv-prefs", prefs);
     }
     msg.textContent = "Checking the shelves…";
+    var seq = ++searchSeq, view = modal && modal.seq;
     var local = items.filter(function (it) {
       var hay = (it.name + " " + (it.cast || []).join(" ") + " " + (it.director || "")).toLowerCase();
       return hay.indexOf(q.toLowerCase()) !== -1;
@@ -3154,13 +3410,13 @@ body.osk-open .overlay { align-items: flex-start; padding-bottom: 48vh; }
       return out;
     });
     p.then(function (list) {
-      if (!$("results")) return;
+      if (seq !== searchSeq || !sameView(view) || !$("results")) return;   // a newer search, or a different panel
+      var msg = $("searchMsg"); if (!msg) return;
       msg.textContent = list.length ? "Found " + Math.min(list.length, 12) + (list.length > 12 ? " of " + list.length : "") + "." : "Sorry, nothing by that name. Try another spelling.";
       $("results").innerHTML = list.slice(0, 12).map(function (it) {
         return '<button class="pick" data-m="open" data-id="' + esc(it.id) + '"><span class="why">' + (it.type === "series" ? "TV" : "Movie") + '</span><span class="pt">' + esc(it.name) +
           '</span><span class="pn">' + esc([it.year, (it.genres || [])[0]].filter(Boolean).join(" · ")) + "</span></button>";
       }).join("");
-      if ($("q") && ($("q").value || "").trim() !== q) return;   // a newer search is on its way
       refreshModalEls();
       if (list.length && !liveTyping) { modal.idx = modal.els.indexOf(overlay.querySelector("#results .pick")); modalFocus(true); }
     });
@@ -3196,9 +3452,11 @@ body.osk-open .overlay { align-items: flex-start; padding-bottom: 48vh; }
       '<div class="actions">' +
       '<button class="btn" data-m="toggle-sound">Store sounds: ' + (!prefs.sound ? "Off" : prefs.quiet ? "Quiet" : "On") + "</button>" +
       '<button class="btn" data-m="toggle-crt">CRT: ' + (prefs.trailers ? "Trailers" : "Stills only") + "</button>" +
+      '<button class="btn" data-m="toggle-calm">Atmosphere: ' + ({ full: "Full", calm: "Calm · no flashing or flicker", light: "Light · fastest, mostly still" })[prefs.atmos] + "</button>" +
       '<button class="btn" data-m="account">Stremio: ' + (account ? "Signed in" : "Sign in") + "</button>" +
       '<button class="btn" data-m="toggle-outside">Front door: ' + ({ sunset: "Always sunset", clock: "Follows the clock", skip: "Skip it" }[prefs.outside || "sunset"]) + "</button>" +
       '<button class="btn" data-m="outside">Outside: weather &amp; decorations</button>' +
+      '<button class="btn" data-m="diag">Diagnostics</button>' +
       '<button class="btn" data-m="psettings">Player settings</button>' +
       '<button class="btn" data-m="checks">Test my setup</button>' +
       '<button class="btn" data-m="lists">Clerks &amp; back room</button>' +
@@ -3207,6 +3465,31 @@ body.osk-open .overlay { align-items: flex-start; padding-bottom: 48vh; }
       '<button class="btn" data-m="close">Back to the aisles</button></div>' +
       '<p class="note">' + "Version " + APP_VERSION + " · updated " + APP_UPDATED + "</p></div>");
     if (idx) { modal.idx = Math.min(idx, modal.els.length - 1); modalFocus(true); }
+  }
+  function ago(t) {
+    if (!t) return "never";
+    var s = Math.round((Date.now() - t) / 1000);
+    return s < 60 ? s + "s ago" : s < 3600 ? Math.round(s / 60) + " min ago" : Math.round(s / 3600) + " h ago";
+  }
+  function diagnosticsPanel() {
+    var ca = diag.catalog, ac = diag.account, lp = diag.lastPlay, ls = diag.lastSearch;
+    var rows = [
+      ["Version", APP_VERSION + " · " + (window.tizen ? "Tizen" : "browser") + " · up " + ago(diag.started).replace(" ago", "")],
+      ["Right now", landingOn ? "Outside" : P ? "Playing a tape" : modal ? "At a panel" : "In the aisles"],
+      ["Shelves", (onSample ? "sample shelf" : live ? "live" : "last time's") + " · " + items.length + " tapes · aisle " + ((allAisles().filter(function (a) { return a.key === aisle; })[0] || {}).label || aisle)],
+      ["Catalog", !ca ? "still checking" : ca.ok ? "answering (" + ago(ca.t) + ")" : "didn't answer (" + ago(ca.t) + ")"],
+      ["Stremio account", !account ? "not signed in" : !ac ? "signed in · loading" : ac.ok ? "signed in · " + ac.info : "signed in · didn't load (" + ago(ac.t) + ")"],
+      ["Add-ons", installedAddons.length ? installedAddons.map(function (ad) { var n = diag.clean((ad.manifest && ad.manifest.name) || "Add-on"), f = diag.addons[n]; return n + (f ? " ✗ " + f.what + " " + ago(f.t) : " ✓"); }).join(" · ") : "none loaded"],
+      ["Last copy search", ls ? ls.n + " copies from " + (ls.total - ls.failed.length) + " of " + ls.total + " add-ons" + (ls.failed.length ? " · no answer: " + ls.failed.join(", ") : "") + " (" + ago(ls.t) + ")" : "none yet"],
+      ["Last tape", lp ? lp.result + " · " + lp.copy + (lp.engine ? " · " + lp.engine + " player" : "") + " (" + ago(lp.t) + ")" : "none yet"],
+      ["Streaming server", prefs.server ? (lanHost((parseUrl(prefs.server) || {}).hostname) ? "set (home network)" : "set") : "not set"],
+      ["Atmosphere", prefs.atmos + " · sound " + (!prefs.sound ? "off" : prefs.quiet ? "quiet" : "on")]
+    ];
+    var errs = diag.errors.length ? diag.errors.map(function (e) { return "<li><b>" + esc(ago(e.t)) + "</b> " + esc(e.msg) + "</li>"; }).join("") : "<li>Nothing has gone wrong since the store opened.</li>";
+    openModal('<div class="panel diag" role="dialog" aria-label="Diagnostics"><div class="clerk-head"><div class="clerk-face" aria-hidden="true">i</div><p>How the store is doing. If something\'s not right, take a photo of this screen.</p></div>' +
+      '<dl class="diag-list">' + rows.map(function (r) { return "<dt>" + esc(r[0]) + "</dt><dd>" + esc(r[1]) + "</dd>"; }).join("") + "</dl>" +
+      '<h4 class="diag-h">Recent problems</h4><ol class="diag-errs">' + errs + "</ol>" +
+      '<div class="actions"><button class="btn" data-m="diag">Refresh</button><button class="btn" data-m="desk">Back to the front desk</button></div></div>', function () { frontDesk(0); });
   }
   function outsidePanel(idx) {
     var typed = $("wxPlace") && modal && modal.view === "outside" ? $("wxPlace").value : null;
@@ -3269,7 +3552,7 @@ body.osk-open .overlay { align-items: flex-start; padding-bottom: 48vh; }
     var sn = ($("storeName").value || "").trim(), mn = ($("memberName").value || "").trim();
     prefs.storeName = sn || "Friday Night Video"; prefs.memberName = mn;
     save("fnv-prefs", prefs); applyStoreName(); updateCounter(); sfx("chime");
-    renderShelves(); rebuildRows(); clampFocus();
+    redrawShelves(); clampFocus();
     if ($("oSvg")) updateLanding();
     frontDesk(0); toast("Welcome to " + prefs.storeName + "!");
   }
@@ -3371,24 +3654,26 @@ body.osk-open .overlay { align-items: flex-start; padding-bottom: 48vh; }
     clearTimeout(demoT); clearTimeout(demoTrailerT);
     var pool = items.filter(function (it) { return it.aisles.length && it.type !== "series" && visible(it); });
     if (!pool.length || !demoOn) return;
-    var it = pickOne(pool);
+    var it = pickOne(pool), seq = ++demoSeq;
+    function current() { return demoOn && demoSeq === seq; }
     $("dFrame").innerHTML = ""; $("dStill").style.backgroundImage = "";
     var card = $("dCard"); card.style.display = "";
     card.innerHTML = '<span class="k">NOW PLAYING AT ' + esc(prefs.storeName.toUpperCase()) + '</span><span class="t">' + esc(it.name) + '</span><span class="s">' +
       esc([it.year, it.director || (it.genres || [])[0]].filter(Boolean).join(" · ")) + "</span>";
     if (live) getMeta(it).then(function (m) {
-      if (!demoOn) return;
-      if (m.background) { var img = new Image(); img.onload = function () { if (!demoOn) return; $("dStill").style.backgroundImage = cssUrl(m.background); card.style.display = "none"; }; img.src = m.background; }
-      if (prefs.trailers && m.trailers.length) demoTrailerT = setTimeout(function () {
-        if (!demoOn) return;
+      if (!current()) return;
+      if (m.background) { var img = new Image(); img.onload = function () { if (!current()) return; $("dStill").style.backgroundImage = cssUrl(m.background); card.style.display = "none"; }; img.src = m.background; }
+      if (prefs.trailers && !isLight() && m.trailers.length) demoTrailerT = setTimeout(function () {
+        if (!current()) return;
         var yt = encodeURIComponent(m.trailers[0]);
-        $("dFrame").innerHTML = '<iframe allow="autoplay; encrypted-media" src="https://www.youtube-nocookie.com/embed/' + yt + "?autoplay=1&mute=" + (prefs.sound ? 0 : 1) + '&controls=0&rel=0&modestbranding=1&playsinline=1&iv_load_policy=3"></iframe>';
+        $("dFrame").innerHTML = '<iframe title="' + esc("Trailer: " + it.name) + '" allow="autoplay; encrypted-media" src="https://www.youtube-nocookie.com/embed/' + yt + "?autoplay=1&mute=" + (prefs.sound ? 0 : 1) + '&controls=0&rel=0&modestbranding=1&playsinline=1&iv_load_policy=3"></iframe>';
       }, 2500);
     });
     demoT = setTimeout(demoNext, live ? 45000 : 12000);
   }
+  var demoSeq = 0;
   function stopDemo() {
-    demoOn = false; clearTimeout(demoT); clearTimeout(demoTrailerT);
+    demoOn = false; demoSeq++; clearTimeout(demoT); clearTimeout(demoTrailerT);
     var d = $("demo"); d.hidden = true; d.innerHTML = "";
     lastInput = Date.now(); tvCurrent = null; applyFocus(true);
   }
@@ -3523,11 +3808,12 @@ body.osk-open .overlay { align-items: flex-start; padding-bottom: 48vh; }
   var copyCache = {};                 // "type|id|ranking" -> { t, copies, note }
   function copyKey(type, vid) { return type + "|" + vid; }
   var COPY_TTL = 5 * 60 * 1000;
-  function clearCopyCache() { copyCache = {}; }
+  function clearCopyCache() { copyCache = {}; copyFlights = {}; }
   // Asks every stream addon at once and reports as answers arrive.
   // onUpdate({ copies, note, ready, done, answered, total }) — "ready" means the best copy is settled:
   // Torrentio has answered (or, without Torrentio, 1.5s after the first answer), or everyone has.
   // Copies are ranked within each addon and appended in arrival order, so the first one never moves.
+  var copyFlights = {};
   function streamCopies(it, vid, onUpdate) {
     var type = it.type === "series" ? "series" : "movie", key = copyKey(type, vid);
     var hit = copyCache[key];
@@ -3537,24 +3823,31 @@ body.osk-open .overlay { align-items: flex-start; padding-bottom: 48vh; }
       return;
     }
     if (!account) { onUpdate({ copies: [], note: "signin", ready: true, done: true, answered: 0, total: 0 }); return; }
+    // already asking the add-ons for this one (say, since you picked up the box): join that search instead of starting another
+    var fl = copyFlights[key];
+    if (fl) { fl.subs.push(onUpdate); if (fl.last) onUpdate(fl.last); return; }
     var sources = installedAddons.filter(function (ad) { return addonOK(ad.transportUrl) && addonHas(ad, "stream", type, vid); });
     if (!sources.length) { onUpdate({ copies: [], note: "noaddons", ready: true, done: true, answered: 0, total: 0 }); return; }
-    var shown = [], all = [], answered = 0, ready = false, graceStarted = false, graceFired = false, finished = false, bestChanged = false;
+    fl = copyFlights[key] = { subs: [onUpdate], last: null };
+    function send(u) { fl.last = u; fl.subs.slice().forEach(function (f) { try { f(u); } catch (e) {} }); }
+    var failedSources = [], shown = [], all = [], answered = 0, ready = false, graceStarted = false, graceFired = false, finished = false, bestChanged = false;
     function emit() {
       var done = answered === sources.length;
       // settle on a best copy once a cached debrid one is in, or after a few seconds if what we have is playable, or when everyone's answered
       if (!ready && (done || (shown[0] && tierOf(shown[0]) === 0) || (answered > 0 && graceFired && shown[0] && tierOf(shown[0]) <= 2))) ready = true;
-      onUpdate({ copies: shown.slice(), note: "", ready: ready, done: done, answered: answered, total: sources.length, bestChanged: bestChanged });
-      bestChanged = false;
       if (done && !finished) {
         finished = true;
         copyCache[key] = { t: Date.now(), raw: all.slice(), note: "" };
+        if (copyFlights[key] === fl) delete copyFlights[key];
+        diag.copies(all.length, sources.length, failedSources);
       }
+      send({ copies: shown.slice(), note: "", ready: ready, done: done, answered: answered, total: sources.length, bestChanged: bestChanged });
+      bestChanged = false;
     }
     sources.forEach(function (ad) {
       var name = (ad.manifest && ad.manifest.name) || "Addon";
       getJSON(addonBase(ad.transportUrl) + "/stream/" + type + "/" + idPath(vid) + ".json", 20000)
-        .then(function (j) { return (j.streams || []).map(function (st) { return parseCopy(st, name, ad.transportUrl); }); }, function () { return []; })
+        .then(function (j) { return (j.streams || []).map(function (st) { return parseCopy(st, name, ad.transportUrl); }); }, function (e) { failedSources.push(name); diag.addonFail(name, "copies", e); return []; })
         .then(function (list) {
           answered++;
           var ranked = rankCopies(list);
@@ -3730,7 +4023,7 @@ body.osk-open .overlay { align-items: flex-start; padding-bottom: 48vh; }
       '<button class="btn" data-m="toggle-remux">Big remux files: ' + (prefs.remux === "avoid" ? "Avoid (lighter copies first)" : "Allow (biggest copy first)") + "</button>" +
       '<button class="btn" data-m="toggle-vhs">VHS look on films: ' + (prefs.vhs ? "On" : "Off") + "</button>" +
       '<button class="btn" data-m="toggle-previews">Coming attractions before films: ' + (prefs.previews ? "On" : "Off") + "</button>" +
-      '<button class="btn" data-m="toggle-autonext">Next episode countdown: ' + (prefs.noAutoNext ? "Off" : "On") + "</button>" +
+      '<button class="btn" data-m="toggle-autonext">Next episode: ' + ({ auto: "Plays after a 10-second countdown", ask: "Asks first", off: "Off" })[nextEpMode()] + "</button>" +
       '<button class="btn" data-m="audio-lang">Preferred audio: ' + esc(langName(prefs.audioLang || "en")) + "</button></div>" +
       '<div class="desk-side"><label for="serverUrl">Streaming server for plain torrents (optional)</label>' +
       '<input class="field" id="serverUrl" data-m="input" data-submit="saveserver" value="' + esc(prefs.server || "") + '" placeholder="http://192.168.1.20:11470">' +
@@ -3742,8 +4035,9 @@ body.osk-open .overlay { align-items: flex-start; padding-bottom: 48vh; }
   // --- box sets ---
   function episodesView(it, season) {
     openModal('<div class="panel" role="dialog" aria-label="Box set"><h3 class="details" style="margin:0;font-family:var(--f-spine);font-weight:400;text-transform:uppercase;color:var(--blue);font-size:30px">' + esc(it.name) + '</h3><p class="note">Opening the box set…</p><div class="actions"><button class="btn" data-m="close">Back to the aisles</button></div></div>');
+    var view = modal.seq;
     getMeta(it).then(function (m) {
-      if (!modal) return;
+      if (!sameView(view)) return;
       var vids = (m.videos || []).filter(function (v) { return v.season !== undefined && v.season !== null; });
       if (!vids.length) {
         overlay.querySelector(".note").textContent = "This box set came without an episode list. Try opening it in the Stremio app.";
@@ -3757,12 +4051,13 @@ body.osk-open .overlay { align-items: flex-start; padding-bottom: 48vh; }
       var lp = progressMap[it.id];
       openModal('<div class="panel" role="dialog" aria-label="Box set"><div class="details" style="max-width:none"><h3>' + esc(it.name) + "</h3></div>" +
         '<div class="seasons">' + seasons.map(function (x) {
-          return '<button class="btn' + (x === sn ? " on" : "") + '" data-m="season" data-id="' + esc(it.id) + '" data-s="' + x + '">' + (x === 0 ? "Specials" : "Season " + x) + "</button>";
+          return '<button class="btn' + (x === sn ? " on" : "") + '" data-m="season" data-id="' + esc(it.id) + '" data-s="' + esc(x) + '">' + (x === 0 ? "Specials" : "Season " + esc(x)) + "</button>";
         }).join("") + '</div><div class="eps">' + eps.map(function (v) {
           var mark = it.videoId === v.id ? " · up to here" : ((lp && lp.v === v.id) || progressMap["ep:" + v.id] ? " · started" : "");
-          return '<button class="ep" data-m="ep" data-id="' + esc(it.id) + '" data-vid="' + esc(v.id) + '"><b>E' + v.episode + "</b>" + esc(v.title || "Episode " + v.episode) + esc(mark) + "</button>";
+          var en = v.episode === null ? "?" : String(v.episode);
+          return '<button class="ep" data-m="ep" data-id="' + esc(it.id) + '" data-vid="' + esc(v.id) + '"><b>E' + esc(en) + "</b>" + esc(v.title || "Episode " + en) + esc(mark) + "</button>";
         }).join("") + '</div><div class="actions"><button class="btn" data-m="close">Back to the aisles</button></div></div>');
-      var focusEp = overlay.querySelector('.ep[data-vid="' + (it.videoId || "") + '"]') || (season !== undefined ? overlay.querySelector(".seasons .btn.on") : overlay.querySelector(".ep"));
+      var focusEp = Array.prototype.filter.call(overlay.querySelectorAll(".ep"), function (b) { return it.videoId && b.getAttribute("data-vid") === it.videoId; })[0] || (season !== undefined ? overlay.querySelector(".seasons .btn.on") : overlay.querySelector(".ep"));
       if (focusEp) { modal.idx = modal.els.indexOf(focusEp); modalFocus(true); }
     });
   }
@@ -3984,20 +4279,24 @@ body.osk-open .overlay { align-items: flex-start; padding-bottom: 48vh; }
 
   // --- the player itself ---
   var P = null;   // the tape in the machine
+  // every tape gets its own number, so a timer left over from the last one can never act on the next
+  var playSeq = 0;
+  function samePlay(seq) { return !!P && P.seq === seq; }
   function beginPlayback(resumeMs) {
     if (!co) return;
     var c = co.copies[co.idx || 0];
     closeModal();
     stopHum(); $("tvFrame").innerHTML = ""; clearTimeout(trailerTimer);
-    P = { it: co.it, vid: co.vid, copies: co.copies, idx: co.idx || 0, start: resumeMs || 0, eng: null, menu: null, intro: null,
+    P = { seq: ++playSeq, it: co.it, vid: co.vid, copies: co.copies, idx: co.idx || 0, start: resumeMs || 0, eng: null, menu: null, intro: null,
           lastSave: 0, lastSync: Date.now(), watched: 0, pend: 0, seekT: null, osdT: null, barT: null, subs: [], cues: null, cueLabel: "Off", ended: false };
     var pl = $("player"); pl.hidden = false; pl.classList.toggle("vhs", !!prefs.vhs);
     $("pTitle").textContent = P.it.name + (P.it.type === "series" ? " · " + epLabel(P.vid) : "");
     $("pSubs").innerHTML = ""; $("pCenter").innerHTML = ""; $("pMenu").hidden = true;
     P.subOffset = (prefs.subOffsets || {})[P.it.id] || 0;
+    applySubStyle();
     P.introDone = false; P.ready = false; P.started = false; P.failed = false;
     // with no trailers before the film, the tape loads behind the VCR animation
-    var parallel = !(prefs.previews && live && !P.start);
+    var parallel = !(prefs.previews && !isLight() && live && !P.start);
     if (parallel) openCopy(P.idx, P.start);
     insertTape(function () {
       comingAttractions(function () {
@@ -4029,7 +4328,7 @@ body.osk-open .overlay { align-items: flex-start; padding-bottom: 48vh; }
     if (!P) return;
     var intro = $("pIntro"); intro.hidden = false; intro.className = "p-intro";
     var it = P.it, title = it.name + (it.type === "series" ? " " + epLabel(P.vid) : "");
-    var reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+    var reduce = isCalm() || (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
     intro.innerHTML =
       '<div class="ins" id="ins"><div class="scene" id="insScene"><div class="world">' +
         '<div class="pl cab"></div><div class="pl cab-edge"></div>' +
@@ -4077,7 +4376,7 @@ body.osk-open .overlay { align-items: flex-start; padding-bottom: 48vh; }
     at(5000, finish);
   }
   function comingAttractions(next) {
-    if (!P || !prefs.previews || !live || P.start) return next();
+    if (!P || !prefs.previews || isLight() || !live || P.start) return next();
     var pool = items.filter(function (x) { return x !== P.it && x.type !== "series" && (x.aisles.indexOf("new") !== -1 || x.aisles.indexOf("season") !== -1); });
     var pick = pool.length ? pickOne(pool) : null;
     if (!pick) return next();
@@ -4085,7 +4384,7 @@ body.osk-open .overlay { align-items: flex-start; padding-bottom: 48vh; }
       if (!P) return;
       if (!m.trailers.length) return next();
       var intro = $("pIntro"); intro.hidden = false; intro.className = "p-intro";
-      intro.innerHTML = '<iframe class="intro-frame" tabindex="-1" allow="autoplay; encrypted-media" src="https://www.youtube-nocookie.com/embed/' + encodeURIComponent(m.trailers[0]) +
+      intro.innerHTML = '<iframe class="intro-frame" tabindex="-1" title="' + esc("Coming attractions: " + pick.name) + '" allow="autoplay; encrypted-media" src="https://www.youtube-nocookie.com/embed/' + encodeURIComponent(m.trailers[0]) +
         '?autoplay=1&controls=0&rel=0&modestbranding=1&playsinline=1&iv_load_policy=3"></iframe><div class="intro-osd" style="pointer-events:none"><span>COMING ATTRACTIONS</span><span>OK SKIP ▶▶</span></div>';
       var t = setTimeout(done, 150000), fin = false;
       function done() { if (fin) return; fin = true; clearTimeout(t); if (!P) return; P.intro = null; intro.hidden = true; intro.innerHTML = ""; next(); }
@@ -4108,13 +4407,14 @@ body.osk-open .overlay { align-items: flex-start; padding-bottom: 48vh; }
     var cb = {
       ready: function () { if (!mine()) return; P.ready = true; maybeStart(); },
       buffering: function (on) { if (!mine()) return; $("pCenter").innerHTML = on ? "<div>TRACKING…</div><small>Buffering</small>" : ""; },
-      playing: function () { if (!mine()) return; $("pCenter").innerHTML = ""; osd("PLAY ▶"); showBar(); },
+      playing: function () { if (!mine()) return; $("pCenter").innerHTML = ""; osd("PLAY ▶"); showBar(); if (!play.diagPlayed) { play.diagPlayed = true; diag.play(c, "playing", P.eng && P.eng.kind); } },
       audio: function (a) { if (mine()) osd("AUDIO " + trackName(a).toUpperCase(), 3000); },
       ended: function () { if (mine()) tapeEnded(); },
       error: function (msg) {
         if (!mine()) return;
         var at = P.eng ? P.eng.time() : startMs;
         if (P.copies[P.idx] !== c) return;
+        diag.play(c, "wouldn't play: " + msg);
         if (i + 1 < P.copies.length) { toast("That copy wouldn't play (" + msg + "). Trying the next best copy…", 4000); openCopy(i + 1, at || startMs); }
         else playerFail("That copy wouldn't play on this TV (" + msg + ").");
       }
@@ -4225,14 +4525,15 @@ body.osk-open .overlay { align-items: flex-start; padding-bottom: 48vh; }
     P.sleeping = true; closeMenu();
     $("player").classList.add("sleeping");
     osd("GOODNIGHT", 9000);
-    var steps = 16, n = 0;
+    var steps = 16, n = 0, seq = P.seq;
     P.fadeT = setInterval(function () {
-      if (!P) return;
+      if (!samePlay(seq)) return;
       n++; if (P.eng && P.eng.volume) P.eng.volume(Math.max(0, 1 - n / steps));
       if (n >= steps) {
         clearInterval(P.fadeT);
         sleepHold = true;
         stopTape(true);
+        if (samePlay(seq)) { closePlayer(); redrawShelves(); clampFocus(); applyFocus(true); }   // belt and braces
         stopHum(); $("player").classList.remove("sleeping");
       }
     }, 500);
@@ -4324,9 +4625,18 @@ body.osk-open .overlay { align-items: flex-start; padding-bottom: 48vh; }
     }
     playerMenu("Audio", list);
   }
+  // subtitle size and height, for every film (sitting across the room is the same for all of them)
+  var SUB_SIZES = { s: { label: "Small", k: 0.8 }, m: { label: "Medium", k: 1 }, l: { label: "Large", k: 1.25 }, xl: { label: "Extra large", k: 1.5 } };
+  var SUB_POS = { low: { label: "Low", b: "5vh" }, mid: { label: "Standard", b: "9vh" }, high: { label: "High", b: "18vh" } };
+  function subSize() { return SUB_SIZES[prefs.subSize] ? prefs.subSize : "m"; }
+  function subPos() { return SUB_POS[prefs.subPos] ? prefs.subPos : "mid"; }
+  function applySubStyle() { var pl = $("player"); pl.style.setProperty("--sub-scale", SUB_SIZES[subSize()].k); pl.style.setProperty("--sub-bottom", SUB_POS[subPos()].b); }
+  function reopenSubs() { var idx = P && P.menu ? P.menu.idx : 0; subtitleMenu(); if (P && P.menu) { P.menu.idx = idx; menuFocus(); } }
   function subtitleMenu() {
     var list = [{ label: "Off", fn: function () { P.cues = null; P.cueLabel = "Off"; prefs.subLang = ""; save("fnv-prefs", prefs); $("pSubs").innerHTML = ""; closeMenu(); } }];
     if (P.cues) list.push({ label: "Timing: " + fmtOffset(P.subOffset) + "  (adjust)", fn: function () { timingMenu(false); } });
+    list.push({ label: "Size: " + SUB_SIZES[subSize()].label, fn: function () { var k = Object.keys(SUB_SIZES); prefs.subSize = k[(k.indexOf(subSize()) + 1) % k.length]; save("fnv-prefs", prefs); applySubStyle(); osd("CC SIZE " + SUB_SIZES[subSize()].label.toUpperCase()); reopenSubs(); } });
+    list.push({ label: "Height: " + SUB_POS[subPos()].label, fn: function () { var k = Object.keys(SUB_POS); prefs.subPos = k[(k.indexOf(subPos()) + 1) % k.length]; save("fnv-prefs", prefs); applySubStyle(); osd("CC " + SUB_POS[subPos()].label.toUpperCase()); reopenSubs(); } });
     // your language first, then the rest
     var want = prefs.subLang || "eng";
     var subs = P.subs.slice().sort(function (a, b) { return (normLang(b.lang) === normLang(want)) - (normLang(a.lang) === normLang(want)); });
@@ -4478,27 +4788,33 @@ body.osk-open .overlay { align-items: flex-start; padding-bottom: 48vh; }
     P.ended = true;
     saveLocalProgress(true); syncStremio(true);
     if (P.sleep && P.sleep.mode === "end") return goToSleep();
-    if (P.it.type === "series" && !prefs.noAutoNext) {
-      nextEpisode(function (nx) { if (!P) return; if (nx) countdown(nx); else rewindEnding(); });
+    if (P.it.type === "series" && nextEpMode() !== "off") {
+      var seq = P.seq;
+      nextEpisode(function (nx) { if (!samePlay(seq) || P.intro || !P.ended) return; if (nx) countdown(nx, nextEpMode() === "ask"); else rewindEnding(); });
     } else rewindEnding();
   }
-  function countdown(nx) {
+  function nextEpMode() { return ["auto", "ask", "off"].indexOf(prefs.nextEp) !== -1 ? prefs.nextEp : prefs.noAutoNext ? "off" : "auto"; }
+  function countdown(nx, ask) {
     var intro = $("pIntro"); intro.hidden = false; intro.className = "p-intro blue";
     var n = 10, it = P.it;
     function draw() {
       intro.innerHTML = '<div class="tracking"></div><div class="intro-osd"><span>STOP ■</span><span>' + epLabel(nx.id) + '</span></div><div class="intro-msg">NEXT EPISODE<b>' + esc(nx.title || "Episode " + nx.episode) +
-        "</b>STARTING IN " + n + "<small>OK play now · BACK stop</small></div>";
+        "</b>" + (ask ? "READY WHEN YOU ARE" : "STARTING IN " + n) + "<small>OK play" + (ask ? "" : " now") + " · BACK stop</small></div>";
     }
     draw();
-    var iv = setInterval(function () { n--; if (n <= 0) go(); else draw(); }, 1000);
-    function go() { clearInterval(iv); if (!P) return; P.intro = null; playNext(it, nx.id); }
-    P.intro = { skip: go, cancel: function () { clearInterval(iv); P.intro = null; rewindEnding(); } };
+    // "Ask" waits for you; "Auto" counts down from 10
+    var seq = P.seq, iv = P.introIv = ask ? null : setInterval(function () { n--; if (n <= 0) go(); else draw(); }, 1000);
+    function go() { clearInterval(iv); if (!samePlay(seq)) return; P.intro = null; playNext(it, nx.id); }
+    P.intro = { skip: go, cancel: function () { clearInterval(iv); if (!samePlay(seq)) return; P.intro = null; rewindEnding(); } };
   }
   function playNext(it, vid) {
     var intro = $("pIntro");
-    intro.innerHTML = '<div class="tracking"></div><div class="intro-msg">FINDING THE NEXT TAPE…</div>';
+    intro.innerHTML = '<div class="tracking"></div><div class="intro-msg">FINDING THE NEXT TAPE…<small>BACK stop</small></div>';
+    var seq = P.seq;
+    P.intro = { skip: function () {}, cancel: function () { stopTape(false); } };
     fetchCopies(it, vid).then(function (r) {
-      if (!P) return;
+      if (!samePlay(seq)) return;
+      P.intro = null;
       var c0 = r.copies.filter(function (c) { return c.fake || copyUrl(c); });
       if (!c0.length) { intro.hidden = true; return playerFail("No copies of " + epLabel(vid) + " right now."); }
       if (P.eng) { try { P.eng.close(); } catch (e) {} P.eng = null; }
@@ -4523,38 +4839,42 @@ body.osk-open .overlay { align-items: flex-start; padding-bottom: 48vh; }
     var t0 = Date.now(), dur = 1800;
     var skip = false;
     P.intro = { skip: function () { skip = true; } };
+    var seq = P.seq;
     (function frame() {
-      if (!P) return;
+      if (!samePlay(seq)) return;
       var k = Math.min(1, (Date.now() - t0) / dur);
       var el = $("rwc"); if (el) el.textContent = fmtTime(from * (1 - k));
       if (k < 1 && !skip) return requestAnimationFrame(frame);
       sfx("clunk");
       intro.innerHTML = '<div class="intro-osd"><span>STOP ■</span><span>0:00:00</span></div><div class="intro-msg">THANKS FOR RENTING<b>' + esc(it.name) + "</b>PLEASE COME AGAIN</div>";
-      setTimeout(function () {
+      P.endT = setTimeout(function () {
+        if (!samePlay(seq)) return;
         if (watched.indexOf(it.id) === -1 && it.type !== "series") { watched.push(it.id); syncWatched(); save("fnv-watched", watched); }
         closePlayer();
-        renderShelves(); rebuildRows(); updateCounter(); clampFocus(); applyFocus(true);
+        redrawShelves(); updateCounter(); clampFocus(); applyFocus(true);
         clerk("Thanks for bringing back " + it.name + " on time. Here's what I'd watch next.");
       }, 1600);
     })();
   }
   function stopTape(save2) {
     if (!P) return;
-    if (P.eng && save2 !== false) {
+    if (P.eng && save2 !== false && !P.ended) {
       var t = P.eng.time(), d = P.eng.duration();
-      if (d && t / d > 0.92) { closeMenu(); return tapeEnded(); }
+      // stopping in the credits counts as finishing, but only once, and not when the sleep timer is turning things off
+      if (d && t / d > 0.92 && !P.sleeping) { closeMenu(); return tapeEnded(); }
       saveLocalProgress(false); syncStremio(false);
     }
     if (P.eng && !P.sleeping) sfx("eject");
     closePlayer();
-    renderShelves(); rebuildRows(); clampFocus(); applyFocus(true);
+    redrawShelves(); clampFocus(); applyFocus(true);
   }
   function closePlayer() {
     if (!P) return;
     if (P.eng) { try { P.eng.close(); } catch (e) {} }
-    clearTimeout(P.seekT); clearTimeout(P.osdT); clearTimeout(P.barT);
+    clearTimeout(P.seekT); clearTimeout(P.osdT); clearTimeout(P.barT); clearTimeout(P.endT);
+    clearInterval(P.fadeT); clearInterval(P.introIv);
     P = null;
-    var pl = $("player"); pl.hidden = true; pl.classList.remove("bar-on", "vhs", "av");
+    var pl = $("player"); pl.hidden = true; pl.classList.remove("bar-on", "vhs", "av", "sleeping");
     $("pIntro").hidden = true; $("pIntro").innerHTML = ""; $("pMenu").hidden = true; $("pSubs").innerHTML = ""; lastCue = "";
     lastInput = Date.now(); tvCurrent = null;
     if (prefs.sound && !sleepHold) startHum(true);
@@ -4573,7 +4893,8 @@ body.osk-open .overlay { align-items: flex-start; padding-bottom: 48vh; }
       if (k === KEY.UP) { if (P.menu.idx > 0) { P.menu.idx--; menuFocus(); } }
       else if (k === KEY.DOWN) { if (P.menu.idx < P.menu.els.length - 1) { P.menu.idx++; menuFocus(); } }
       else if (k === KEY.OK) { var item = P.menu.list[P.menu.idx]; if (item) item.fn(); }
-      else if (k === KEY.BACK || k === KEY.ESC || k === KEY.BKSP || k === KEY.LEFT) { if (P.eng) closeMenu(); }
+      // with a tape running, Back closes the menu; with nothing playing (the "won't play" card), it goes back to the store
+      else if (k === KEY.BACK || k === KEY.ESC || k === KEY.BKSP || k === KEY.LEFT) { if (P.eng) closeMenu(); else if (k !== KEY.LEFT) stopTape(false); }
       return true;
     }
     if (!P.eng) { if (k === KEY.BACK || k === KEY.ESC || k === KEY.BKSP) stopTape(false); return true; }
@@ -4841,7 +5162,7 @@ body.osk-open .overlay { align-items: flex-start; padding-bottom: 48vh; }
   }
 
   // ---- live weather from Open-Meteo (free, no account) ----
-  var wxNow = store("fnv-wx", null), wxBusy = false;
+  var wxNow = store("fnv-wx", null, function (w) { return numIn(w.t, 0, 1e13) && typeof w.key === "string" ? w : null; }), wxBusy = false;
   var WX_MODES = ["live", "clear", "drizzle", "rain", "storm", "fog", "snow"];
   var WX_WORDS = { clear: "clear skies", cloudy: "a few clouds", overcast: "grey and overcast", drizzle: "drizzle", rain: "rain", storm: "a thunderstorm", fog: "fog", snow: "snow" };
   var WX_TONE = { day: { sky: "#9aa4b4", cloud: "#cdd2dc" }, golden: { sky: "#9b8f98", cloud: "#bcaeb3" }, sunset: { sky: "#5b4d6c", cloud: "#7d6880" }, night: { sky: "#14162a", cloud: "#2b2c42" } };
@@ -4909,6 +5230,7 @@ body.osk-open .overlay { align-items: flex-start; padding-bottom: 48vh; }
   function landLoops() {
     clearTimeout(neonT); clearTimeout(boltT);
     if (!landingOn) return;
+    if (isCalm()) return;
     neonT = setTimeout(function stutter() {
       if (!landingOn) return;
       var g = document.querySelector("#oSvg .o-neon");
@@ -4927,6 +5249,7 @@ body.osk-open .overlay { align-items: flex-start; padding-bottom: 48vh; }
   var shootT = null;
   function shootingStars() {
     clearTimeout(shootT);
+    if (isCalm()) return;
     shootT = setTimeout(function () {
       if (!landingOn) return;
       var land = $("land"), g = $("oShoot");
@@ -5417,10 +5740,10 @@ body.osk-open .overlay { align-items: flex-start; padding-bottom: 48vh; }
       else return;
       e.preventDefault(); return;
     }
-    if (k === KEY.LEFT) move(0, -1);
-    else if (k === KEY.RIGHT) move(0, 1);
-    else if (k === KEY.UP) move(-1, 0);
-    else if (k === KEY.DOWN) move(1, 0);
+    if (k === KEY.LEFT) paced(0, -1);
+    else if (k === KEY.RIGHT) paced(0, 1);
+    else if (k === KEY.UP) paced(-1, 0);
+    else if (k === KEY.DOWN) paced(1, 0);
     else if (k === KEY.OK) activateStore(rows[focus.r][focus.c]);
     else if (k === MEDIA.PLAY || k === MEDIA.PLAYPAUSE) {
       var pe = rows[focus.r] && rows[focus.r][focus.c];
@@ -5476,26 +5799,32 @@ body.osk-open .overlay { align-items: flex-start; padding-bottom: 48vh; }
   if (!prefs.outside) prefs.outside = "sunset";
   showLanding();
   if (prefs.sound) startHum();
-  loadLive().then(function () {
+  // The catalog (Cinemeta) and your account load independently: a catalog hiccup no longer skips your library and lists.
+  loadLive().then(function () { return true; }, function (e) { diag.err("Stremio's catalog didn't answer", e); return false; }).then(function (catalogOK) {
+    diag.catalog = { ok: catalogOK, t: Date.now() };
+    var status = $("status");
+    if (!catalogOK && onSample && account) {
+      // no catalog and no saved shelves: drop the sample's pretend progress before your own arrives
+      items.forEach(function (it) { it.aisles = it.aisles.filter(function (a) { return a !== "cw"; }); it.progress = 0; it.lastWatched = 0; });
+    }
     if (account) {
-      // keep showing last time's shelves until your own aisles have arrived too, so nothing blinks out
       return refreshAccount(false).then(function () {
         if (!account) { tagSpecial(); renderAll(true); }
-        landStatus((storeClosed() ? "After hours" : "Open until midnight") + " · " + items.length + " tapes in stock");
+        if (!catalogOK) status.textContent = account ? "Stremio's catalog isn't answering · your own shelves are up to date" : "Couldn't reach Stremio · showing last time's shelves";
         if (landingOn) updateLanding();
       });
+    }
+    if (!catalogOK) {
+      if (fromSnap) { status.textContent = "Couldn't reach Stremio · showing last time's shelves"; return; }
+      status.textContent = "Sample shelf (" + items.length + " tapes, example progress on Continue Watching) · on the TV it stocks itself from Stremio";
+      return;
     }
     tagSpecial();
     renderAll(true);
     saveSnapshot();
     status.textContent = "Stocked live from Stremio · " + items.length + " tapes";
-    landStatus((storeClosed() ? "After hours" : "Open until midnight") + " · " + items.length + (items.length === 1 ? " tape" : " tapes") + " in stock");
     if (landingOn) updateLanding();
-  }).catch(function () {
-    if (fromSnap) { status.textContent = "Couldn't reach Stremio · showing last time's shelves"; landStatus("Last time's shelves · Stremio isn't answering right now"); return; }
-    status.textContent = "Sample shelf (" + items.length + " tapes, example progress on Continue Watching) · on the TV it stocks itself from Stremio";
-    landStatus("Sample shelf tonight · on the TV the store stocks itself from Stremio");
-  });
+  }).catch(function () {});
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { applyFocus(true); });
 })();
 </script>
