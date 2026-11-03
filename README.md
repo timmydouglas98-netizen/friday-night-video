@@ -4,8 +4,12 @@ A 90s video store front-end for Stremio, built to run on a Samsung TV through Ti
 
 ## What's in here
 
-- `app/index.html` – the whole store (one file). Open it in any browser to try it with the arrow keys.
+- `app/store.html` – the whole store (one file). Open it in any browser to try it with the arrow keys.
+- `app/index.html` – the loader TizenBrew opens: a title card while it fetches the store, and the safety net described under "Updating".
+- `release.json` – which tagged release the TVs run.
 - `package.json` – tells TizenBrew the app's name and which remote buttons it uses.
+
+Nothing else belongs at the top level: the store always lives in `app/store.html`.
 
 ## Remote controls
 
@@ -15,11 +19,12 @@ A 90s video store front-end for Stremio, built to run on a Samsung TV through Ti
 - Red: Ask the clerk (with double features) · Green: Rewind Night · Yellow: Return slot · Blue: store sounds on/off
 - On a box: Flip the box to read the back (synopsis, cast, director and IMDb rating from Stremio)
 - Search: "Do you have…?" at the counter searches Stremio for movies and TV
-- Front desk: rename the store, put your name on your membership card, sounds, CRT trailers or stills, Stremio sign-in, and Test my setup
+- Front desk: rename the store, your membership card (with your rental stats), Stremio sign-in, sounds, atmosphere, weather and the front door
+- Front desk > Staff only: back office: player settings, corner TV trailers or stills, the clerks' lists, Test my setup, Diagnostics, Reset this TV
 
 ## Outside the store
 
-The app opens in the parking lot at dusk, with your store's name on the pole sign and this week's new release on the marquee. Press OK to walk in; Back from the shelves takes you outside again, and Back outside closes the app. The shelves stock themselves while you're outside. At the Front desk, "Front door" switches between Always sunset, Follows the clock (day, golden hour, sunset, night, closed after midnight) and Skip it.
+The whole app is drawn like a late-90s TV cartoon: painted backgrounds, inked cels, animation on twos, film grain. It opens on a title card, then the camera eases down from the sky onto the parking lot at dusk, with your store's name on the pole sign and this week's new release on the marquee. Whoever is on shift (Dave by day, Gus by night) is behind the counter in the window. Press OK and the camera pushes in on the door and irises through to the shop floor; Back from the shelves takes you outside again, and Back outside closes the app. The shelves stock themselves while you're outside. At the Front desk, "Front door" switches between Always sunset, Follows the clock (day, golden hour, sunset, night, closed after midnight) and Skip it.
 
 ## Around the store
 
@@ -48,8 +53,19 @@ Install the Stremboxd addon in Stremio (stremboxd.com/configure, username-only m
 ## Putting it on the TV
 
 1. Make a free GitHub account and a new **public** repository called `friday-night-video`.
-2. Upload `package.json`, `README.md` and the `app` folder to it.
-3. On the TV, open TizenBrew, add a module, choose GitHub and type `your-username/friday-night-video`.
-4. Launch Friday Night Video from TizenBrew.
+2. Upload `package.json`, `release.json`, `README.md` and the `app` folder to it.
+3. Publish a release: on the repository page choose **Releases > Draft a new release**, type `v2` as the tag, and **Publish**.
+4. On the TV, open TizenBrew, add a module, choose GitHub and type `your-username/friday-night-video`, then pick release `v2`.
+5. Launch Friday Night Video from TizenBrew.
 
-When you change something, upload the new files to GitHub and refresh the module in TizenBrew.
+## Updating
+
+TVs run the release named in `release.json`, not whatever was uploaded last, so a half-finished upload never reaches the TV.
+
+1. Upload the new `app/store.html` (into the `app` folder, replacing the old one). Bump `APP_VERSION` near the top of its script, e.g. `0.17.1`.
+2. Publish a new release with the next tag (`v3`, `v4`, …).
+3. Edit `release.json` so `ref` is the new tag and `version` matches `APP_VERSION`, and commit it.
+
+Each TV picks the release up the next time it opens. It keeps the store saved, so opening the app doesn't download it again until there's a new release. A new release only replaces the saved copy once it has opened and stayed up for a few seconds. If it fails to open twice, the TV skips it and goes on using the last good one; Front desk > back office > Diagnostics shows which release the TV is on and whether it skipped one.
+
+You only need to change the release TizenBrew points at when `app/index.html` itself changes.
