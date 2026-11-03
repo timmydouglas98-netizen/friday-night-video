@@ -1599,6 +1599,16 @@ body.night .logo { z-index: 6; }
   linear-gradient(transparent 0, transparent 61.5%, #2a1c18 61.5%, #2a1c18 62.1%, transparent 62.1%),
   #5c4260; }
 
+/* ---------- On hold: a name slip, held on by a red rubber band ---------- */
+.hold-slip { position: absolute; z-index: 4; left: 8%; right: 8%; top: 46%; pointer-events: none;
+  background: #fff3d6; border: 2px solid var(--cel-ink); box-shadow: 2px 3px 0 var(--cel-drop); transform: rotate(-4deg);
+  text-align: center; padding: calc(var(--case-h) * .012) 4px calc(var(--case-h) * .016); line-height: 1; }
+.hold-slip::after { content: ""; position: absolute; left: -14%; right: -14%; top: 56%; height: calc(var(--case-h) * .018); min-height: 3px;
+  background: #c8402e; border-top: 1px solid var(--cel-ink); border-bottom: 1px solid var(--cel-ink); transform: rotate(4deg); }
+.hold-slip b { display: block; font-family: var(--f-toon); font-weight: 400; color: var(--cel-ink); font-size: calc(var(--case-h) * .08); letter-spacing: .04em; }
+.hold-slip span { display: block; margin-top: calc(var(--case-h) * .03); font-family: var(--f-ui); font-weight: 700; color: #c8402e; font-size: calc(var(--case-h) * .045); letter-spacing: .08em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.face.front .hold-slip { top: 50%; }
+
 </style>
 
 <div class="store">
@@ -1765,6 +1775,7 @@ body.night .logo { z-index: 6; }
   var season = SEASONS[new Date().getMonth()] || null;
   var AISLES = [
     { key: "cw", label: "Continue Watching" },
+    { key: "hold", label: "On Hold" },
     { key: "season", label: season ? season.aisle : "Seasonal" },
     { key: "new", label: "New Releases" },
     { key: "staff", label: "Staff Picks" },
@@ -1776,9 +1787,11 @@ body.night .logo { z-index: 6; }
     { key: "Sci-Fi", label: "Sci-Fi" },
     { key: "Horror", label: "Horror" },
     { key: "Family", label: "Family" },
+    { key: "Animation", label: "Animation" },
     { key: "Romance", label: "Romance" },
     { key: "Thriller", label: "Suspense" },
-    { key: "Drama", label: "Drama" }
+    { key: "Drama", label: "Drama" },
+    { key: "classic", label: "Classics" }
   ];
   var REWIND_YEARS = [0, 1985, 1990, 1995, 1999, 2001];
   var CINEMETA = "https://v3-cinemeta.strem.io";
@@ -1788,7 +1801,7 @@ body.night .logo { z-index: 6; }
   var extraAisles = [];      // catalogs from the person's installed addons
   var pager = {};            // aisle key -> { base, extras, type, skip, done, loading }
   var MAX_PER_AISLE = 600;
-  var APP_VERSION = "0.17.0", APP_UPDATED = "3 Nov 2026";
+  var APP_VERSION = "0.18.0", APP_UPDATED = "3 Nov 2026";
   var staffConnected = false;
   function staffOn() { return staffConnected || !!(account && prefs.staffSeen); }
   var account = store("fnv-auth", null, function (a) { return typeof a.authKey === "string" && a.authKey ? a : null; });   // { authKey }
@@ -1890,7 +1903,8 @@ body.night .logo { z-index: 6; }
   function syncWatched() { watchedSet = new Set(watched); }
   function isWatched(id) { return watchedSet.has(id) || !!(byId[id] && byId[id].seen); }
   function allAisles() {
-    var base = AISLES.slice(0, 6).concat(extraAisles).concat(AISLES.slice(6));
+    var cut = 0; while (cut < AISLES.length && AISLES[cut].key !== "tv") cut++;
+    var base = AISLES.slice(0, cut).concat(extraAisles).concat(AISLES.slice(cut));
     return base;
   }
   function $(id) { return document.getElementById(id); }
@@ -1976,7 +1990,7 @@ body.night .logo { z-index: 6; }
         t: Date.now(), extra: extraAisles, choices: catalogChoices,
         roles: { day: (roleItems.day || []).map(function (x) { return x.id; }), night: (roleItems.night || []).map(function (x) { return x.id; }), back: (roleItems.back || []).map(function (x) { return x.id; }) },
         items: keep.map(function (it) {
-          return [it.id, it.type, it.name, it.year || 0, it.genres || [], it.poster || "", (it.blurb || "").slice(0, 400), it.aisles, it.progress || 0, it.videoId || "", it.seen ? 1 : 0, it.lastWatched || 0, it.runtime || 0, it.fromList || ""];
+          return [it.id, it.type, it.name, it.year || 0, it.genres || [], it.poster || "", (it.blurb || "").slice(0, 400), it.aisles, it.progress || 0, it.videoId || "", it.seen ? 1 : 0, it.lastWatched || 0, it.runtime || 0, it.fromList || "", it.rk || 0];
         })
       };
       var str = JSON.stringify(snap);
@@ -1997,6 +2011,7 @@ body.night .logo { z-index: 6; }
         genres: strList(a[4], 12), poster: webUrl(a[5]), blurb: typeof a[6] === "string" ? a[6] : "", progress: numIn(a[8], 0, 1) ? a[8] : 0,
         videoId: typeof a[9] === "string" ? a[9] : "", seen: !!a[10], lastWatched: numIn(a[11], 0, 1e13) ? a[11] : 0, runtime: numIn(a[12], 0, 10000) ? a[12] : undefined };
       if (typeof a[13] === "string") it.fromList = a[13];
+      if (isObj(a[14])) { it.rk = {}; Object.keys(a[14]).forEach(function (k) { if (RANKED[k] && numIn(a[14][k], -1e13, 1e8)) it.rk[k] = a[14][k]; }); }
       it.aisles = strList(a[7], 40);
       ids[it.id] = it; its.push(it);
     });
@@ -2009,27 +2024,101 @@ body.night .logo { z-index: 6; }
     live = true;
     return true;
   }
-  function loadLive() {
-    var base = CINEMETA + "/catalog/movie/top";
-    pager = {
-      "new": { base: base, extras: "", type: "movie", skip: 0 },
-      tv: { base: CINEMETA + "/catalog/series/top", extras: "", type: "series", skip: 0 }
+  // ---------- the stock: where each aisle's tapes come from ----------
+  // Each aisle draws on several of Cinemeta's lists in turn: this week's popular titles, the featured list and, for
+  // Classics, popular films from a handful of older years. New Releases come from this year's and last year's lists only.
+  // Every tape gets a place on the shelf when it arrives; later deliveries go behind it, so nothing jumps under you.
+  // The order is shuffled a little each day and the featured lists start at a different page, so the store restocks.
+  var RANKED = { "new": 1, tv: 1, classic: 1, hold: 1, rewind: 1, Animation: 1 };
+  GENRE_KEYS.forEach(function (g) { RANKED[g] = 1; });
+  var HOME_ORDER = ["Animation", "Horror", "Sci-Fi", "Family", "Romance", "Comedy", "Thriller", "Action", "Drama"];
+  function dayNo() { var d = new Date(); return Math.floor((d.getTime() - d.getTimezoneOffset() * 60000) / 864e5); }
+  function daily(n) { var x = Math.sin((n + 1) * 12.9898 + dayNo() * 78.233) * 43758.5453; return x - Math.floor(x); }
+  // the one section a tape lives in, the way a real store shelves each title once: it drifts to the back of the others
+  function homeOf(it) {
+    var g = it.genres || [];
+    for (var i = 0; i < HOME_ORDER.length; i++) {
+      var k = HOME_ORDER[i];
+      if (g.indexOf(k) !== -1 || (k === "Thriller" && (g.indexOf("Crime") !== -1 || g.indexOf("Mystery") !== -1))) return k;
+    }
+    return "";
+  }
+  function feed(base, extras, start) { return { base: base, extras: extras || "", skip: start || 0, start: start || 0, done: false, pages: 0, fails: 0 }; }
+  function stockPlan() {
+    var Y = new Date().getFullYear(), M = CINEMETA + "/catalog/movie/", S = CINEMETA + "/catalog/series/", d = dayNo();
+    var plan = {
+      "new": { type: "movie", feeds: [feed(M + "year", "genre=" + Y), feed(M + "year", "genre=" + (Y - 1))], tail: 0 },
+      tv: { type: "series", feeds: [feed(S + "top"), feed(S + "imdbRating", "", 50 * (d % 3))], tail: 0 },
+      classic: { type: "movie", feeds: [], tail: 0 }
     };
-    var reqs = [getJSON(base + ".json", 5000).then(function (j) { return { a: "new", metas: j.metas }; }),
-      getJSON(CINEMETA + "/catalog/series/top.json", 6000).then(function (j) { return { a: "tv", metas: (j.metas || []).map(function (m) { m.type = "series"; return m; }) }; }, function () { return null; })];
-    GENRE_KEYS.forEach(function (g) { pager[g] = { base: base, extras: "genre=" + encodeURIComponent(g), type: "movie", skip: 0 }; });
-    GENRE_KEYS.forEach(function (g) {
-      var a = { key: g };
-      reqs.push(getJSON(base + "/genre=" + encodeURIComponent(a.key) + ".json", 6000)
-        .then(function (j) { return { a: a.key, metas: j.metas }; }, function () { return null; }));
+    GENRE_KEYS.concat(["Animation"]).forEach(function (g, i) {
+      plan[g] = { type: "movie", tail: 0, feeds: [feed(M + "top", "genre=" + encodeURIComponent(g)), feed(M + "imdbRating", "genre=" + encodeURIComponent(g), 50 * ((d + i) % 4))] };
     });
-    return Promise.all(reqs).then(function (res) {
-      items = []; byId = {};
-      res.forEach(function (r) {
-        if (!r || !r.metas) return;
-        r.metas.forEach(function (m) { add(fromMeta(m), r.a); });
-        if (pager[r.a]) { pager[r.a].skip = r.metas.length; if (!r.metas.length) pager[r.a].done = true; }
+    // Classics: popular films from eight years between 1960 and 1999, a different eight each day
+    var pool = [], years = [];
+    for (var y = 1960; y <= 1999; y++) pool.push(y);
+    while (years.length < 8) years.push(pool.splice(Math.floor(daily(years.length + 7) * pool.length), 1)[0]);
+    plan.classic.feeds = years.map(function (yr) { return feed(M + "year", "genre=" + yr); });
+    return plan;
+  }
+  function feedUrl(f) {
+    var q = [f.extras, f.skip ? "skip=" + f.skip : ""].filter(Boolean).join("&");
+    return f.base + (q ? "/" + q : "") + ".json";
+  }
+  function rankIn(key, it, r) { if (!it.rk) it.rk = {}; if (it.rk[key] === undefined || r < it.rk[key]) it.rk[key] = r; }
+  function placeBatch(key, batches) {
+    // batches: one list of metas per feed; interleaved so the front of the shelf mixes every list
+    var pg = pager[key], n = batches.length, base = pg.tail, top = base, gen = GENRE_KEYS.indexOf(key) !== -1 || key === "Animation";
+    batches.forEach(function (metas, s) {
+      (metas || []).forEach(function (m, i) {
+        var it0 = fromMeta(m); if (!it0.id || !it0.name) return;
+        // a New Release has to be out already: this year's list also carries films still to come
+        if (key === "new" && m.released && Date.parse(m.released) > Date.now()) return;
+        if (pg.type) it0.type = m.type || pg.type;
+        var it = add(it0, key);
+        var r = base + i * n + s + Math.floor(daily(hash(it.id) % 997) * 12) + (gen && homeOf(it) && homeOf(it) !== key ? 40 : 0);
+        rankIn(key, it, r); if (r > top) top = r;
       });
+    });
+    pg.tail = top + 60;
+  }
+  function pullFeed(key, f, ms) {
+    return getJSON(feedUrl(f), ms || 8000).then(function (j) {
+      var metas = (j && j.metas) || [];
+      f.pages++; f.skip += metas.length;
+      if (!metas.length || f.skip - f.start >= MAX_PER_AISLE) f.done = true;
+      return metas;
+    }, function (e) { f.fails++; if (f.fails > 2) f.done = true; throw e; });
+  }
+  // the new releases of the year you rewound to, so Rewind Night's front shelf is full of that year's tapes
+  var rewindHad = {};
+  function rewindStock(ry) {
+    if (!ry || !live || rewindHad[ry] || !pager || !pager["new"]) return;
+    rewindHad[ry] = 1;
+    var M = CINEMETA + "/catalog/movie/";
+    pager.rewind = { type: "movie", tail: 0, feeds: [feed(M + "year", "genre=" + ry), feed(M + "year", "genre=" + (ry - 1))] };
+    Promise.all(pager.rewind.feeds.map(function (f) { return pullFeed("rewind", f, 8000).then(function (m) { return m; }, function () { return []; }); })).then(function (b) {
+      placeBatch("rewind", b); fillPosters();
+      if (rewindYear() === ry && aisle === "new" && !modal) { renderSigns(); renderShelves(); rebuildRows(); clampFocus(); applyFocus(true); }
+    });
+  }
+  function loadLive() {
+    rewindHad = {};
+    pager = stockPlan();
+    var first = [];
+    // the first page of every list, all at once; Classics starts with four of its eight years
+    Object.keys(pager).forEach(function (key) {
+      var pg = pager[key], feeds = key === "classic" ? pg.feeds.slice(0, 4) : pg.feeds;
+      first.push(Promise.all(feeds.map(function (f) {
+        return pullFeed(key, f, key === "new" ? 6000 : 8000).then(function (m) { return m; }, function () { return []; });
+      })).then(function (batches) { return { key: key, batches: batches }; }));
+    });
+    return Promise.all(first).then(function (res) {
+      var got = 0;
+      res.forEach(function (r) { r.batches.forEach(function (b) { got += b.length; }); });
+      if (!got) throw new Error("Cinemeta sent no titles");
+      items = []; byId = {};
+      res.forEach(function (r) { placeBatch(r.key, r.batches); });
       fillPosters();
       live = true; onSample = false;
     });
@@ -2041,18 +2130,22 @@ body.night .logo { z-index: 6; }
   // the next page of an aisle, fetched when you get near the end of its shelves
   function loadMore(key) {
     var pg = pager[key];
-    if (!pg || pg.done || pg.loading || !live || pg.skip >= MAX_PER_AISLE) return;
+    if (!pg || !pg.feeds || pg.loading || !live) return;
+    var open = pg.feeds.filter(function (f) { return !f.done; });
+    if (!open.length) return;
+    var f = open.sort(function (a, b) { return a.pages - b.pages; })[0];
     pg.loading = true;
-    var url = pg.base + "/" + (pg.extras ? pg.extras + "&" : "") + "skip=" + pg.skip + ".json";
-    getJSON(url, 9000).then(function (j) {
+    var before = aisleList(key).length;
+    pullFeed(key, f, 9000).then(function (metas) {
       pg.loading = false;
-      var metas = j.metas || [], before = aisleList(key).length;
-      metas.forEach(function (m) { var it = fromMeta(m); if (pg.type) it.type = m.type || pg.type; add(it, key); });
-      pg.skip += metas.length;
+      var b = pg.feeds.map(function (x) { return x === f ? metas : []; });
+      placeBatch(key, b);
       fillPosters();
-      if (!metas.length || aisleList(key).length === before) pg.done = true;
-      if (aisle === key && !modal && aisleList(key).length !== before) refreshShelvesInPlace();
-    }, function () { pg.loading = false; pg.fails = (pg.fails || 0) + 1; if (pg.fails > 2) pg.done = true; });
+      var after = aisleList(key).length;
+      if (aisle === key && !modal && after !== before) refreshShelvesInPlace();
+      // a page of nothing but tapes already on this shelf: try the next list straight away
+      if (after === before && metas.length) setTimeout(function () { loadMore(key); }, 400);
+    }, function () { pg.loading = false; });
   }
   // re-draw the current aisle without jumping the shelves back to the start
   function refreshShelvesInPlace() {
@@ -2136,7 +2229,22 @@ body.night .logo { z-index: 6; }
     if (it.videoId) return "stremio:///detail/" + t + "/" + it.id + "/" + idPath(it.videoId);
     return t === "movie" ? "stremio:///detail/movie/" + it.id + "/" + it.id : "stremio:///detail/series/" + it.id;
   }
-  function aisleList(key) { return items.filter(function (it) { return it.aisles.indexOf(key) !== -1 && visible(it); }); }
+  function aisleList(key) {
+    var l = items.filter(function (it) { return it.aisles.indexOf(key) !== -1 && visible(it); });
+    var ry = rewindYear();
+    if (key === "new" && ry && !onSample) {
+      l = items.filter(function (it) { return it.type !== "series" && it.year >= ry - 1 && it.year <= ry && it.aisles.length; });
+      var best = function (it) { var b = 1e9; if (it.rk) Object.keys(it.rk).forEach(function (k) { var r = it.rk[k] - (k === "rewind" ? 1e6 : 0); if (r < b) b = r; }); return b; };
+      return l.map(function (it) { return { it: it, r: best(it) }; }).sort(function (a, b) { return a.r - b.r; }).map(function (x) { return x.it; });
+    }
+    if (key === "new" && !onSample) { var Y = new Date().getFullYear(); l = l.filter(function (it) { return !it.year || it.year >= Y - 1; }); }
+    if (key === "classic") l = l.filter(function (it) { return it.year && it.year < 2000; });
+    if (RANKED[key]) {
+      l = l.map(function (it, i) { return { it: it, r: it.rk && it.rk[key] !== undefined ? it.rk[key] : 1e7 + i }; })
+        .sort(function (a, b) { return a.r - b.r; }).map(function (x) { return x.it; });
+    }
+    return l;
+  }
 
   function ctSize(name) {
     var longest = Math.max.apply(null, String(name).split(/\s+/).map(function (w) { return w.length; }));
@@ -2219,6 +2327,7 @@ body.night .logo { z-index: 6; }
     var tease = !full && (it.blurb || "").length > 120 ? it.blurb.slice(0, 117).replace(/\s+\S*$/, "") + "…" : (it.blurb || "Trust us on this one.");
     return '<div class="cover kraft"><span class="stamp">BLIND DATE</span><div class="tease">' + esc(tease) + "<br>· " + esc(g.toUpperCase()) + " · " + (it.year ? String(it.year).slice(0, 3) + "0s" : "") + "</div></div>";
   }
+  function holdSlip() { return '<div class="hold-slip"><b>HOLD</b><span>' + esc((prefs.memberName || "for you").toUpperCase().slice(0, 14)) + "</span></div>"; }
   function tapeHTML(it, isNew, blind, faces) {
     if (blind) return faces ? blindCover(it) : blindHTML(it);
     if (faces) {
@@ -2226,6 +2335,7 @@ body.night .logo { z-index: 6; }
         (isNew && isRecent(it) && !isWatched(it.id) ? '<div class="new-sticker">NEW</div>' : "") +
         (isWatched(it.id) ? '<div class="rewound">Be kind rewind</div>' : "") +
         (daysLate(it) ? '<div class="late">LATE</div>' : "") +
+        (isHeld(it.id) ? holdSlip() : "") +
         (it.progress > 0.01 ? '<div class="prog"><i style="width:' + Math.round(Math.min(1, it.progress) * 100) + '%"></i></div><div class="pbadge">▶ ' + Math.max(1, Math.round(Math.min(1, it.progress) * 100)) + "%</div>" : "");
     }
     var n = it.name.length, longest = Math.max.apply(null, it.name.split(/\s+/).map(function (w) { return w.length; }));
@@ -2327,7 +2437,8 @@ body.night .logo { z-index: 6; }
     var key = a ? a.key : "", name = a ? a.label.toUpperCase() : "";
     var deal = key === "new" ? ["New release", "3 nights", "$3.99"] : key === "lib" ? ["Your shelf", "no late fees", "free"] :
       key === "cw" ? ["Keep watching", "rewind optional", "free"] : key === "blind" ? ["Blind date", "no peeking", "$2.99"] :
-      key === "season" ? [name, "5 nights", "2 for $5"] : [name || "Catalog", "5 nights", "$1.99"];
+      key === "season" ? [name, "5 nights", "2 for $5"] : key === "classic" ? ["Classics", "7 nights", "99¢"] :
+      key === "hold" ? ["On hold", "behind the counter", (prefs.memberName || "your name").toUpperCase()] : [name || "Catalog", "5 nights", "$1.99"];
     var one = "<span>" + esc(deal[0]) + " · " + esc(deal[1]) + "<b>" + esc(deal[2]) + "</b></span>", html = "";
     for (var i = 0; i < 10; i++) html += one;
     Array.prototype.forEach.call(document.querySelectorAll(".strip"), function (st) { st.innerHTML = html; });
@@ -3148,7 +3259,7 @@ body.night .logo { z-index: 6; }
     var facts = [it.year, rating(it)].concat((it.genres || []).slice(0, 2)).filter(Boolean)
       .map(function (f) { return '<span class="chip">' + esc(f) + "</span>"; }).join("");
     openModal('<div class="panel" role="dialog" aria-label="' + esc(it.name) + '"><div class="case-view">' +
-      '<div class="box3d" id="box3d"><div class="card"><div class="face front">' + coverHTML(it) + '</div><div class="face back" id="boxBack">' + backHTML(it, { description: it.blurb, cast: it.cast || [], director: arr(it.director) }) + "</div></div></div>" +
+      '<div class="box3d" id="box3d"><div class="card"><div class="face front">' + coverHTML(it) + (isHeld(it.id) ? holdSlip() : "") + '</div><div class="face back" id="boxBack">' + backHTML(it, { description: it.blurb, cast: it.cast || [], director: arr(it.director) }) + "</div></div></div>" +
       '<div class="details"><h3>' + esc(it.name) + '</h3><div class="facts" id="facts">' + facts + lateChip + "</div>" +
       '<div class="case-info"><p class="cblurb" id="cBlurb">' + esc(it.blurb || "") + '</p><p class="ccred" id="cCred">' + caseCredits(it, { director: arr(it.director), cast: it.cast || [] }) + "</p></div>" +
       talker +
@@ -3159,6 +3270,7 @@ body.night .logo { z-index: 6; }
         : '<button class="btn primary" data-m="rent" data-id="' + esc(it.id) + '">' + (resumePoint(it, it.id) ? "Keep watching" : "Rent it") + "</button>") +
       '<button class="btn" data-m="flip">Flip the box</button>' +
       '<button class="btn" data-m="watched" data-id="' + esc(it.id) + '">' + (w ? "Take it out of returns" : "Mark as watched") + "</button>" +
+      '<button class="btn" data-m="hold" data-id="' + esc(it.id) + '">' + (isHeld(it.id) ? "Take it off hold" : "Put it on hold") + "</button>" +
       (it.aisles.indexOf("cw") !== -1 ? '<button class="btn" data-m="uncw" data-id="' + esc(it.id) + '">Take off Continue Watching</button>'
         : cwUndo && cwUndo.id === it.id ? '<button class="btn" data-m="recw" data-id="' + esc(it.id) + '">Undo · put back on Continue Watching</button>' : "") +
       '<button class="btn" data-m="close">Put it back</button>' +
@@ -3481,6 +3593,12 @@ body.night .logo { z-index: 6; }
     if (act === "input") { if (useBoard()) openBoard(el); else editField(el); return; }
     if (act === "close") { if (modal && modal.onBack === putBack) putBack(); else { sfx("close"); closeModal(); } }
     else if (act === "flip") flipBox();
+    else if (act === "hold" && it) {
+      if (isHeld(it.id)) unholdIt(it); else holdIt(it);
+      el.textContent = isHeld(it.id) ? "Take it off hold" : "Put it on hold";
+      var slip = $("box3d") && $("box3d").querySelector(".face.front");
+      if (slip) { var old = slip.querySelector(".hold-slip"); if (old) old.parentNode.removeChild(old); if (isHeld(it.id)) slip.insertAdjacentHTML("beforeend", holdSlip()); }
+    }
     else if (act === "open" && it) {
       var fromBack = el.classList.contains("bk") && modal && modal.view === "backroom";
       if (fromBack) pickFrom = { rect: rectOf(el), back: { who: modal.who, list: modal.bkList, focus: modal.idx } };
@@ -3615,6 +3733,7 @@ body.night .logo { z-index: 6; }
     else if (a === "trailers") { prefs.trailers = !prefs.trailers; save("fnv-prefs", prefs); updateCounter(); if (!prefs.trailers) $("tvFrame").innerHTML = ""; }
     else if (a === "rewind") {
       rewindIdx = (rewindIdx + 1) % REWIND_YEARS.length;
+      rewindStock(REWIND_YEARS[rewindIdx]);
       var ry = REWIND_YEARS[rewindIdx], wsec = ry ? 0.35 + (new Date().getFullYear() - ry) / 40 : 0.4;
       whirr(wsec); later([wsec * 1000], function () { sfx("clunk"); });
       var r = focus.r;
@@ -3747,7 +3866,7 @@ body.night .logo { z-index: 6; }
           jobs.push(getJSON(cbase + ".json", 8000).then(function (j) {
             var metas = j.metas || [];
             metas.forEach(function (mt) { var it = fromMeta(mt); it.type = mt.type || c.type; add(it, key); });
-            if (pages && metas.length) pager[key] = { base: cbase, extras: "", type: c.type, skip: metas.length };
+            if (pages && metas.length) pager[key] = { type: c.type, tail: 1e6, feeds: [{ base: cbase, extras: "", skip: metas.length, start: 0, done: false, pages: 1, fails: 0 }] };
           }, function (e) { diag.addonFail(m.name || "Add-on", "aisle " + (c.name || c.id), e); }));
         });
       });
@@ -3868,7 +3987,54 @@ body.night .logo { z-index: 6; }
 
   // ---------- seasonal displays, blind dates ----------
   function shuffled2(list) { var a = list.slice(); for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+  var holds = store("fnv-holds", [], function (l) {
+    return l.filter(function (h) { return isObj(h) && typeof h.id === "string" && h.id && typeof h.name === "string" && numIn(h.t, 0, 1e13); }).slice(0, 80);
+  });
+  function isHeld(id) { for (var i = 0; i < holds.length; i++) if (holds[i].id === id) return true; return false; }
+  function applyHolds() {
+    items.forEach(function (it) { var i = it.aisles.indexOf("hold"); if (i !== -1) it.aisles.splice(i, 1); });
+    holds.forEach(function (h, i) {
+      var it = add({ id: h.id, type: h.type === "series" ? "series" : "movie", name: h.name, year: h.year || 0, genres: strList(h.genres, 12), poster: webUrl(h.poster), blurb: typeof h.blurb === "string" ? h.blurb : "" }, "hold");
+      rankIn("hold", it, -h.t);
+    });
+  }
+  function holdIt(it) {
+    if (isHeld(it.id)) return;
+    holds.unshift({ id: it.id, type: it.type, name: it.name, year: it.year || 0, genres: (it.genres || []).slice(0, 4), poster: it.poster || "", blurb: (it.blurb || "").slice(0, 300), t: Date.now() });
+    holds = holds.slice(0, 80); save("fnv-holds", holds);
+    applyHolds();
+    sfx("clack"); later([180], function () { sfx("tick"); });
+    toast("On hold behind the counter · under " + (prefs.memberName ? prefs.memberName.toUpperCase() : "your name") + (account ? " · and in your Stremio library" : ""), 3200);
+    if (account && !(libRaw[it.id] && !libRaw[it.id].removed)) {
+      var now = new Date().toISOString(), li = libRaw[it.id] ? JSON.parse(JSON.stringify(libRaw[it.id])) : {
+        _id: it.id, name: it.name, type: it.type === "series" ? "series" : "movie", poster: it.poster || "", posterShape: "poster", _ctime: now,
+        behaviorHints: { defaultVideoId: null, featuredVideoId: null, hasScheduledVideos: false },
+        state: { lastWatched: null, timeWatched: 0, timeOffset: 0, overallTimeWatched: 0, timesWatched: 0, flaggedWatched: 0, duration: 0, video_id: null, watched: null, noNotif: false }
+      };
+      li.removed = false; li.temp = false; li._mtime = now;
+      libRaw[it.id] = li; holds[0].lib = true; save("fnv-holds", holds);
+      add(it, "lib");
+      api("datastorePut", { authKey: account.authKey, collection: "libraryItem", changes: [li] }).catch(function (e) { diag.err("Couldn't add " + it.name + " to your Stremio library", e); });
+    }
+    renderSigns(); setTimeout(saveSnapshot, 0);
+  }
+  function unholdIt(it, quiet) {
+    var h = null; holds = holds.filter(function (x) { if (x.id === it.id) { h = x; return false; } return true; });
+    if (!h) return;
+    save("fnv-holds", holds);
+    var i = it.aisles.indexOf("hold"); if (i !== -1) it.aisles.splice(i, 1);
+    // only take it back out of the Stremio library if putting it on hold is what put it there
+    if (h.lib && account && libRaw[it.id] && !(libRaw[it.id].state && libRaw[it.id].state.timeOffset > 0)) {
+      var li = JSON.parse(JSON.stringify(libRaw[it.id])); li.removed = true; li._mtime = new Date().toISOString(); libRaw[it.id] = li;
+      var j = it.aisles.indexOf("lib"); if (j !== -1) it.aisles.splice(j, 1);
+      api("datastorePut", { authKey: account.authKey, collection: "libraryItem", changes: [li] }).catch(function () {});
+    }
+    if (!quiet) { sfx("close"); toast("Back on the shelf", 2200); }
+    if (aisle === "hold" && !aisleList("hold").length) aisle = "new";
+    renderSigns(); setTimeout(saveSnapshot, 0);
+  }
   function tagSpecial() {
+    applyHolds();
     items.forEach(function (it) { it.aisles = it.aisles.filter(function (a) { return a !== "season" && a !== "blind"; }); });
     if (season) {
       items.filter(function (it) { return it.aisles.length && it.type !== "series" && season.match(it); }).slice(0, 30)
@@ -4904,6 +5070,7 @@ body.night .logo { z-index: 6; }
   function samePlay(seq) { return !!P && P.seq === seq; }
   function beginPlayback(resumeMs) {
     if (!co) return;
+    if (co.it && isHeld(co.it.id)) { unholdIt(co.it, true); toast("Picked up your hold. Enjoy!", 2400); }
     var c = co.copies[co.idx || 0];
     closeModal();
     stopHum(); $("tvFrame").innerHTML = ""; clearTimeout(trailerTimer);
@@ -7397,7 +7564,25 @@ body.night .logo { z-index: 6; }
     saveSnapshot();
     status.textContent = items.length + " tapes on the shelves tonight";
     if (landingOn) updateLanding();
+    restockLater();
   }).catch(function () {});
+  function restockLater() {
+    var jobs = [];
+    ["classic"].forEach(function (key) { var pg = pager[key]; if (pg) pg.feeds.slice(4).forEach(function (f) { jobs.push([key, f]); }); });
+    Object.keys(pager).forEach(function (key) { var pg = pager[key]; pg.feeds.forEach(function (f) { if (!f.done && f.pages < 2) jobs.push([key, f]); }); });
+    var n = 0;
+    (function next() {
+      if (n >= jobs.length) { tagSpecial(); renderSigns(); saveSnapshot(); return; }
+      var key = jobs[n][0], f = jobs[n][1]; n++;
+      if (f.done || (P && P.eng)) { setTimeout(next, P && P.eng ? 30000 : 50); return; }
+      var before = aisleList(key).length;
+      pullFeed(key, f, 9000).then(function (metas) {
+        var pg = pager[key]; placeBatch(key, pg.feeds.map(function (x) { return x === f ? metas : []; }));
+        fillPosters();
+        if (aisle === key && !modal && aisleList(key).length !== before) refreshShelvesInPlace();
+      }, function () {}).then(function () { setTimeout(next, 900); });
+    })();
+  }
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { applyFocus(true); });
   // The loader (app/index.html) tries a new release once. If the store gets this far and stays up for a few seconds,
   // that release is kept as the known-good copy; if it never gets here, the loader goes back to the last good one.

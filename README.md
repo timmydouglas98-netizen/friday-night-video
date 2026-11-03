@@ -30,6 +30,10 @@ The whole app is drawn like a late-90s TV cartoon: painted backgrounds, inked ce
 
 - Television aisle, plus a seasonal aisle, banner and cardboard standee (Halloween in October, Holiday Hits in December, Summer Blockbusters in January, Date Night in February)
 - Blind Date: brown-paper tapes showing only the blurb. Unwrap or rent unseen
+- Put it on hold: on any box, "Put it on hold" slips a name card under a rubber band and keeps the tape behind the counter in the On Hold aisle. Signed in to Stremio, it also goes into your Stremio library so it's waiting on your phone too. Renting it picks it up
+- Fresh stock: every aisle draws on several of Stremio's lists (this week's popular titles plus the featured list), restocks a little differently each day, and fills in more as you browse to the end. Each title lives in one section, so the same blockbusters don't front every aisle
+- New Releases are this year's and last year's films only. Rewind Night turns them into the new releases of the year you rewound to
+- Classics: popular films from eight years between 1960 and 1999, a different eight each day. Animation has its own aisle
 - Late fees: anything in Continue Watching untouched for two weeks gets a LATE sticker
 - After 10pm the store dims; at 11:45pm there's a closing announcement
 - Leave the remote for 3 minutes and the CRT goes full screen as a demo loop

@@ -1,5 +1,5 @@
 {
-  "ref": "v2",
-  "version": "0.17.0",
+  "ref": "v3",
+  "version": "0.18.0",
   "note": "Which tagged release the TVs run. To ship an update: upload app/store.html, publish a new release (tag v3, v4...), then change ref and version here."
 }
