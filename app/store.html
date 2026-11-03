@@ -742,15 +742,16 @@ html.calm .wx-rain i, html.calm .wx-snow i { opacity: .35; }
 /* --- moths round the streetlight --- */
 .land .o-moths { display: none; }
 .land[data-lit="1"][data-wet="0"] .o-moths { display: inline; }
-.land .moth { animation: moth1 3.1s steps(9) infinite; }
-.land .moth.b { animation-name: moth2; animation-duration: 2.6s; }
-.land .moth.c { animation-name: moth3; animation-duration: 3.7s; }
-.land .moth.d { animation-name: moth2; animation-duration: 4.3s; animation-direction: reverse; }
-.land .moth .mw { transform-box: fill-box; transform-origin: center; animation: flutter .17s steps(2) infinite; }
-@keyframes flutter { from { transform: scaleX(1); } to { transform: scaleX(.3); } }
-@keyframes moth1 { 0%, 100% { transform: translate(0, 0); } 20% { transform: translate(26px, -14px); } 40% { transform: translate(8px, 18px); } 55% { transform: translate(-22px, 4px); } 75% { transform: translate(-8px, -20px); } }
-@keyframes moth2 { 0%, 100% { transform: translate(0, 0); } 15% { transform: translate(-18px, 12px); } 35% { transform: translate(14px, 22px); } 50% { transform: translate(28px, -6px); } 70% { transform: translate(-6px, -18px); } 85% { transform: translate(-24px, -4px); } }
-@keyframes moth3 { 0%, 100% { transform: translate(0, 0); } 25% { transform: translate(20px, 10px); } 45% { transform: translate(-14px, 20px); } 65% { transform: translate(-26px, -12px); } 85% { transform: translate(10px, -22px); } }
+.land .moth { animation: moth1 1.9s steps(23) infinite; }
+.land .moth.b { animation-name: moth2; animation-duration: 1.6s; animation-timing-function: steps(19); }
+.land .moth.c { animation-name: moth3; animation-duration: 2.3s; animation-timing-function: steps(28); }
+.land .moth.d { animation-name: moth2; animation-duration: 2.1s; animation-direction: reverse; animation-timing-function: steps(25); }
+.land .moth.e { animation-name: moth3; animation-duration: 1.4s; animation-direction: reverse; animation-timing-function: steps(17); }
+.land .moth .mw { transform-box: fill-box; transform-origin: center; animation: flutter .17s steps(1) infinite; }
+@keyframes flutter { 0% { transform: scaleX(1); } 50% { transform: scaleX(.3); } }
+@keyframes moth1 { 0%, 100% { transform: translate(0px, 0px); } 14% { transform: translate(44px, -22px); } 30% { transform: translate(18px, 30px); } 46% { transform: translate(-40px, 12px); } 62% { transform: translate(-22px, -30px); } 80% { transform: translate(30px, 8px); } }
+@keyframes moth2 { 0%, 100% { transform: translate(0px, 0px); } 18% { transform: translate(-36px, 24px); } 36% { transform: translate(26px, 36px); } 52% { transform: translate(48px, -10px); } 70% { transform: translate(-8px, -32px); } 86% { transform: translate(-44px, -6px); } }
+@keyframes moth3 { 0%, 100% { transform: translate(0px, 0px); } 20% { transform: translate(34px, 20px); } 40% { transform: translate(-26px, 34px); } 60% { transform: translate(-46px, -18px); } 80% { transform: translate(20px, -34px); } }
 /* --- Halloween and Christmas --- */
 .land .o-deco-h, .land .o-deco-x, .land .o-bats { display: none; }
 .land[data-deco="halloween"] .o-deco-h, .land[data-deco="xmas"] .o-deco-x { display: inline; }
@@ -5273,7 +5274,7 @@ body.osk-open .overlay { align-items: flex-start; padding-bottom: 48vh; }
     for (var y = 470; y < 600; y += 9) o += R(40, y, 210, 1.4, Hz(P, Sc(P, OB.siding), .2), op(".5"));
     o += Pg([26, 466, 70, 420, 220, 420, 264, 466], Hz(P, Mc(P, OB.roof), .18)) + Pg([26, 466, 264, 466, 264, 471, 26, 471], Hz(P, Sc(P, OB.roof), .2));
     o += R(206, 396, 18, 30, Hz(P, Sc(P, OB.hbrick), .18)) + R(204, 393, 22, 5, Hz(P, Sc(P, OB.hbrick), .25));
-    o += houseWin(P, 74, 488, 36, 40) + houseWin(P, 156, 488, 36, 40);
+    o += houseWin(P, 106, 488, 36, 40) + houseWin(P, 182, 488, 36, 40);
     // TV aerial on the ridge
     var ae = Hz(P, Sc(P, "#3a3a44"), .2);
     o += Ln(110, 420, 110, 368, ae, 2) + Ln(92, 380, 128, 380, ae, 1.6) + Ln(96, 390, 124, 390, ae, 1.6) + Ln(100, 372, 120, 372, ae, 1.4) + Ln(110, 368, 132, 352, ae, 1.2);
@@ -5290,7 +5291,7 @@ body.osk-open .overlay { align-items: flex-start; padding-bottom: 48vh; }
     wall = Hz(P, Lc(P, "#cfd6cf"), .2);
     o += R(668, 458, 210, 144, wall) + R(668, 458, 30, 144, Hz(P, Sc(P, "#cfd6cf"), .2));
     o += Pg([654, 462, 694, 424, 852, 424, 892, 462], Hz(P, Mc(P, OB.roof), .2)) + R(654, 461, 238, 5, Hz(P, Sc(P, OB.roof), .22));
-    o += houseWin(P, 712, 478, 34, 38) + houseWin(P, 794, 478, 34, 38);
+    o += houseWin(P, 684, 478, 34, 38) + houseWin(P, 794, 478, 34, 38);
     o += snowCap(P, 660, 424, 228, 8);
     // the privacy fence along the back of the lot
     o += fence(P, -10, 872, 584, 642);
@@ -5736,7 +5737,7 @@ body.osk-open .overlay { align-items: flex-start; padding-bottom: 48vh; }
   function frontCels(P) {
     var o = "", lit = P.lit, day = P.mode === "day" || P.mode === "golden", L = OUT_MODES[P.mode];
     // upstairs windows lighting up across the back fence (one has the TV on)
-    [[74, 488, 36, 40], [156, 488, 36, 40], [712, 478, 34, 38], [794, 478, 34, 38]].forEach(function (w, i) {
+    [[106, 488, 36, 40], [182, 488, 36, 40], [684, 478, 34, 38], [794, 478, 34, 38]].forEach(function (w, i) {
       var c = i === 2 ? "#9fc4ff" : "#ffd88a", g = '<g class="o-hw' + (i === 2 ? " o-tv" : "") + '">';
       var pw = w[2] / 2 - 1, ph = w[3] / 2 - 1;
       g += R(w[0], w[1], pw, ph, c) + R(w[0] + pw + 2, w[1], pw, ph, c) + R(w[0], w[1] + ph + 2, pw, ph, c) + R(w[0] + pw + 2, w[1] + ph + 2, pw, ph, c);
@@ -5827,9 +5828,11 @@ body.osk-open .overlay { align-items: flex-start; padding-bottom: 48vh; }
     o += El(470, 906, 250, 44, c, op((.1 * a).toFixed(3))) + El(470, 906, 170, 30, c, op((.12 * a).toFixed(3))) + El(470, 906, 96, 17, "#ffe1a6", op((.14 * a).toFixed(3)));
     o += halo(474, 240, 90, 50, "#ffd892", .8 * a) + El(474, 240, 30, 6, "#fff4d4") + "</g>";
     if (!P.wet) {
-      o += '<g class="o-moths" transform="translate(474,262)">';
-      [["a", -14, 0], ["b", 16, -6], ["c", 2, 12], ["d", -6, -16]].forEach(function (m) {
-        o += '<g class="moth ' + m[0] + '"><g transform="translate(' + m[1] + "," + m[2] + ')"><path class="mw" d="M0,0 L-4,-3 L-4,3 Z M0,0 L4,-3 L4,3 Z" fill="#f6efd8"/></g></g>';
+      o += '<g class="o-moths" transform="translate(474,270)">';
+      [["a", -18, 2], ["b", 20, -8], ["c", 4, 18], ["d", -10, -14], ["e", 30, 10]].forEach(function (m) {
+        o += '<g class="moth ' + m[0] + '"><g transform="translate(' + m[1] + "," + m[2] + ')"><g class="mw">' +
+          '<path d="M0,0 C-3,-7 -10,-8 -10,-2 C-10,3 -4,3 0,0 Z M0,0 C3,-7 10,-8 10,-2 C10,3 4,3 0,0 Z" fill="#fff4d8" stroke="#6a5a3a" stroke-width=".8"/>' +
+          '<ellipse cx="0" cy="0" rx="1.4" ry="3.4" fill="#7a6a48"/></g></g></g>';
       });
       o += "</g>";
     }
