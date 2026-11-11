@@ -122,7 +122,8 @@ html, body { margin: 0; height: 100%; background: #1d2558; overflow: hidden; }
     if (!rel || typeof rel.ref !== "string" || !/^[A-Za-z0-9._\-\/]{1,80}$/.test(rel.ref)) return fallback();
     if (rel.ref === bad) return fallback();
     var cached = lget("fnv-store-cache");
-    if (good && good.ref === rel.ref && looksRight(cached)) return show(cached);
+    // the saved copy must really be the version this release promises, not an older one left behind
+    if (good && good.ref === rel.ref && looksRight(cached) && (!rel.version || cached.indexOf('APP_VERSION = "' + rel.version + '"') !== -1)) return show(cached);
     get(RAW + rel.ref + "/app/store.html", 20000, function (html) {
       if (!looksRight(html)) return fallback();
       if (rel.version && html.indexOf('APP_VERSION = "' + rel.version + '"') === -1) return fallback();

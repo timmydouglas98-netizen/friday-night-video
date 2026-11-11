@@ -17,7 +17,8 @@ Nothing else belongs at the top level: the store always lives in `app/store.html
 - OK: pick up a case, then Rent it
 - Back: put it back (from the shelves, Back steps outside)
 - Red: Ask the clerk (with double features) · Green: Rewind Night · Yellow: Return slot · Blue: store sounds on/off
-- On a box: Flip the box to read the back (synopsis, cast, director and IMDb rating from Stremio)
+- On a box: Flip the box to read the back (synopsis, cast, director and IMDb rating from Stremio). The Info button flips it too
+- Mark as watched on a film also marks it in your Stremio account
 - Search: "Do you have…?" at the counter searches Stremio for movies and TV
 - Front desk: rename the store, your membership card (with your rental stats), Stremio sign-in, sounds, atmosphere, weather and the front door
 - Front desk > Staff only: back office: player settings, corner TV trailers or stills, the clerks' lists, Test my setup, Diagnostics, Reset this TV
@@ -42,7 +43,7 @@ The whole app is drawn like a late-90s TV cartoon: painted backgrounds, inked ce
 
 Everything plays inside the store. When you rent a tape, the store asks your Stremio addons (Torrentio with Real-Debrid included) for copies and ranks them: instant 4K non-HDR first, then the highest-quality instant copy, then plain torrents, then debrid copies that aren't cached yet. Dolby Vision-only files go to the back because Samsung TVs can't show Dolby Vision. Change the order in Front desk > Player settings.
 
-While a tape plays: OK pauses, left and right skip 10 and 30 seconds, rewind and fast-forward jump a minute, down opens options (subtitles, audio, another copy, VHS look), and Back stops. Progress saves to your Stremio account so Continue Watching stays in sync.
+While a tape plays: OK pauses, left and right skip 10 and 30 seconds, rewind and fast-forward jump a minute, down opens options (subtitles, audio, another copy, VHS look), Caption turns subtitles on and off, Info shows playback info, and Back stops. The store picks your preferred audio language when a copy has several. Progress saves to your Stremio account so Continue Watching stays in sync, and if you leave the app mid-film (Home, Source) the tape is saved and waits paused for you. In a box set, the next episode's copies are found during the last few minutes of the one you're watching, and episodes that haven't aired yet show their air date.
 
 Plain torrents (no debrid) need Stremio's streaming server: run Stremio on a computer at home and enter `http://that-computer's-address:11470` in Player settings.
 
@@ -67,8 +68,8 @@ Install the Stremboxd addon in Stremio (stremboxd.com/configure, username-only m
 TVs run the release named in `release.json`, not whatever was uploaded last, so a half-finished upload never reaches the TV.
 
 1. Upload the new `app/store.html` (into the `app` folder, replacing the old one). Bump `APP_VERSION` near the top of its script, e.g. `0.17.1`.
-2. Publish a new release with the next tag (`v3`, `v4`, …).
-3. Edit `release.json` so `ref` is the new tag and `version` matches `APP_VERSION`, and commit it.
+2. Publish a new release with the next tag (`v3`, `v4`, …), or just note the full commit id of that upload.
+3. Edit `release.json` so `ref` is the new tag (or the full commit id) and `version` matches `APP_VERSION`, and commit it.
 
 Each TV picks the release up the next time it opens. It keeps the store saved, so opening the app doesn't download it again until there's a new release. A new release only replaces the saved copy once it has opened and stayed up for a few seconds. If it fails to open twice, the TV skips it and goes on using the last good one; Front desk > back office > Diagnostics shows which release the TV is on and whether it skipped one.
 

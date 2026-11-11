@@ -1801,7 +1801,7 @@ body.night .logo { z-index: 6; }
   var extraAisles = [];      // catalogs from the person's installed addons
   var pager = {};            // aisle key -> { base, extras, type, skip, done, loading }
   var MAX_PER_AISLE = 600;
-  var APP_VERSION = "0.18.0", APP_UPDATED = "3 Nov 2026";
+  var APP_VERSION = "0.18.1", APP_UPDATED = "11 Nov 2026";
   var staffConnected = false;
   function staffOn() { return staffConnected || !!(account && prefs.staffSeen); }
   var account = store("fnv-auth", null, function (a) { return typeof a.authKey === "string" && a.authKey ? a : null; });   // { authKey }
@@ -1882,7 +1882,7 @@ body.night .logo { z-index: 6; }
   function strList(a, max) { return (Array.isArray(a) ? a : []).filter(function (x) { return typeof x === "string" && x.length < 300; }).slice(0, max); }
   function fixPrefs(p) {
     ["sound", "quiet", "trailers", "vhs", "staffSeen", "noAutoNext", "previews", "stillsOnTV", "calm"].forEach(function (k) { if (p[k] !== undefined && typeof p[k] !== "boolean") delete p[k]; });
-    ["storeName", "server", "atmos", "nextEp", "subSize", "subPos", "outside", "wxMode", "pick", "audioLang", "subLang", "memberName", "memberSince", "remux", "deco"].forEach(function (k) { if (p[k] !== undefined && typeof p[k] !== "string") delete p[k]; });
+    ["storeName", "server", "atmos", "nextEp", "subSize", "subPos", "outside", "wxMode", "pick", "audioLang", "subLang", "lastSubLang", "memberName", "memberSince", "remux", "deco"].forEach(function (k) { if (p[k] !== undefined && typeof p[k] !== "string") delete p[k]; });
     if (p.storeName) p.storeName = p.storeName.slice(0, 60);
     if (p.server && !parseUrl(p.server)) p.server = "";
     p.recentSearches = strList(p.recentSearches, 6);
@@ -2173,8 +2173,8 @@ body.night .logo { z-index: 6; }
       description: it.blurb || "", director: arr(it.director), cast: it.cast || [],
       imdbRating: "", runtime: it.runtime ? it.runtime + " min" : "", trailers: [], background: "", videos: []
     };
-    if (it.type === "series") {
-      // the sample shelf has no episode list, so the preview gets a pretend box set
+    if (it.type === "series" && !live) {
+      // the sample shelf has no episode list, so the preview gets a pretend box set (never a real show: those wait for Stremio's list)
       for (var se = 1; se <= 2; se++) for (var ep = 1; ep <= 6; ep++)
         base.videos.push({ id: it.id + ":" + se + ":" + ep, season: se, episode: ep, title: "Episode " + ep, overview: "" });
     }
@@ -3611,6 +3611,7 @@ body.night .logo { z-index: 6; }
     else if (act === "episodes" && it) episodesView(it);
     else if (act === "season" && it) episodesView(it, parseInt(el.getAttribute("data-s"), 10));
     else if (act === "ep" && it) checkoutView(it, el.getAttribute("data-vid"));
+    else if (act === "askagain" && co) { delete copyCache[copyKey(co.it.type === "series" ? "series" : "movie", co.vid)]; checkoutView(co.it, co.vid); }
     else if (act === "playbest") playFromCheckout(0);
     else if (act === "copies") copiesView();
     else if (act === "copy") playFromCheckout(parseInt(el.getAttribute("data-i"), 10));
@@ -3646,9 +3647,13 @@ body.night .logo { z-index: 6; }
       modal.idx = Math.max(0, modal.els.indexOf(again)); modalFocus(true);
     }
     else if (act === "watched" && it) {
-      if (watched.indexOf(id) !== -1) watched.splice(watched.indexOf(id), 1); else watched.push(id);
+      // goes by what the box shows: watched here, or watched according to your Stremio account
+      var nowOn = !isWatched(id), wi = watched.indexOf(id);
+      if (nowOn) { if (wi === -1) watched.push(id); }
+      else { if (wi !== -1) watched.splice(wi, 1); it.seen = false; }
       syncWatched();
       save("fnv-watched", watched);
+      markWatchedInStremio(it, nowOn);
       var keep = lastStoreFocus; if (keep) focus = { r: keep.r, c: keep.c };
       redrawShelves(); updateCounter(); lastStoreFocus = keep ? { r: focus.r, c: focus.c } : keep;
       sfx("tap"); caseView(it, true, modal && modal.from); modal.idx = Math.max(0, modal.els.indexOf(overlay.querySelector('[data-m="watched"]'))); modalFocus(true);
@@ -3818,8 +3823,20 @@ body.night .logo { z-index: 6; }
       cw.slice(0, 30).forEach(function (it) { var x = add(it, "cw"); x.progress = it.progress; x.videoId = it.videoId; x.lastWatched = it.lastWatched; });
       lib.forEach(function (it) { add(it, "lib"); });
       fillPosters();
+      libLoadedAt = Date.now();
       return lib.length;
     });
+  }
+  // Continue Watching from your account again (say, after watching on your phone), without moving you off your aisle
+  var libLoadedAt = 0;
+  function refreshLibraryQuietly(minAge) {
+    if (!account || !live || P || Date.now() - libLoadedAt < (minAge || 120000)) return;
+    libLoadedAt = Date.now();
+    loadLibrary().then(function () {
+      if (P) return;
+      tagSpecial(); setTimeout(saveSnapshot, 0);
+      if (!modal) { renderSigns(); redrawShelves(); clampFocus(); if (!landingOn && !demoOn) applyFocus(true); }
+    }, function (e) { diag.err("Couldn't refresh Continue Watching", e); });
   }
   function catalogUsable(c) {
     if (!c || (c.type !== "movie" && c.type !== "series")) return false;
@@ -4407,8 +4424,9 @@ body.night .logo { z-index: 6; }
   // ---------- demo loop screensaver ----------
   var lastInput = Date.now(), demoOn = false, demoT = null, demoTrailerT = null;
   var IDLE_MS = 180000;
+  var DEMO_MAX_MS = 30 * 60000, demoStart = 0;
   function startDemo() {
-    demoOn = true;
+    demoOn = true; demoStart = Date.now();
     var d = $("demo"); d.hidden = false;
     d.innerHTML = '<div class="crt"><div class="screen"><div class="tv-still" id="dStill"></div><div class="tv-frame" id="dFrame"></div>' +
       '<div class="tv-card" id="dCard"></div><div class="scan"></div><div class="tv-osd"><span>PLAY ▶</span><span>' + esc(prefs.storeName.toUpperCase()) + '</span></div></div>' +
@@ -4424,6 +4442,11 @@ body.night .logo { z-index: 6; }
     function current() { return demoOn && demoSeq === seq; }
     $("dFrame").innerHTML = ""; $("dStill").style.backgroundImage = "";
     var card = $("dCard"); card.style.display = "";
+    // nobody's watched for half an hour: stop the trailers and leave a still card, so the TV's own screensaver can take over
+    if (Date.now() - demoStart > DEMO_MAX_MS) {
+      card.innerHTML = '<span class="k">' + esc(prefs.storeName.toUpperCase()) + '</span><span class="t">Back in a bit</span><span class="s">Press any button to come back in</span>';
+      return;
+    }
     card.innerHTML = '<span class="k">NOW PLAYING AT ' + esc(prefs.storeName.toUpperCase()) + '</span><span class="t">' + esc(it.name) + '</span><span class="s">' +
       esc([it.year, it.director || (it.genres || [])[0]].filter(Boolean).join(" · ")) + "</span>";
     if (live) getMeta(it).then(function (m) {
@@ -4431,8 +4454,8 @@ body.night .logo { z-index: 6; }
       if (m.background) { var img = new Image(); img.onload = function () { if (!current()) return; $("dStill").style.backgroundImage = cssUrl(m.background); card.style.display = "none"; }; img.src = m.background; }
       if (prefs.trailers && !isLight() && m.trailers.length) demoTrailerT = setTimeout(function () {
         if (!current()) return;
-        var yt = encodeURIComponent(m.trailers[0]);
-        $("dFrame").innerHTML = '<iframe title="' + esc("Trailer: " + it.name) + '" allow="autoplay; encrypted-media" src="https://www.youtube-nocookie.com/embed/' + yt + "?autoplay=1&mute=" + (prefs.sound ? 0 : 1) + '&controls=0&rel=0&modestbranding=1&playsinline=1&iv_load_policy=3"></iframe>';
+        var yt = encodeURIComponent(m.trailers[0]), hr = new Date().getHours(), hush = !prefs.sound || hr >= 22 || hr < 7;   // no trailer sound late at night
+        $("dFrame").innerHTML = '<iframe title="' + esc("Trailer: " + it.name) + '" allow="autoplay; encrypted-media" src="https://www.youtube-nocookie.com/embed/' + yt + "?autoplay=1&mute=" + (hush ? 1 : 0) + '&controls=0&rel=0&modestbranding=1&playsinline=1&iv_load_policy=3"></iframe>';
       }, 2500);
     });
     demoT = setTimeout(demoNext, live ? 45000 : 12000);
@@ -4603,11 +4626,12 @@ body.night .logo { z-index: 6; }
       if (!ready && (done || (shown[0] && tierOf(shown[0]) === 0) || (answered > 0 && graceFired && shown[0] && tierOf(shown[0]) <= 2))) ready = true;
       if (done && !finished) {
         finished = true;
-        copyCache[key] = { t: Date.now(), raw: all.slice(), note: "" };
+        // only a full answer is kept: if an addon timed out, the next try asks everyone again
+        if (!failedSources.length) copyCache[key] = { t: Date.now(), raw: all.slice(), note: "" };
         if (copyFlights[key] === fl) delete copyFlights[key];
         diag.copies(all.length, sources.length, failedSources);
       }
-      send({ copies: shown.slice(), note: "", ready: ready, done: done, answered: answered, total: sources.length, bestChanged: bestChanged });
+      send({ copies: shown.slice(), note: "", ready: ready, done: done, answered: answered, total: sources.length, failed: failedSources.length, bestChanged: bestChanged });
       bestChanged = false;
     }
     sources.forEach(function (ad) {
@@ -4627,7 +4651,8 @@ body.night .logo { z-index: 6; }
           } else {
             shown = shown.concat(ranked);
           }
-          if (!graceStarted) { graceStarted = true; setTimeout(function () { graceFired = true; emit(); }, 4000); }
+          // (once everyone has answered there's nothing left to settle, so the grace timer stays quiet)
+          if (!graceStarted) { graceStarted = true; setTimeout(function () { graceFired = true; if (!finished) emit(); }, 4000); }
           emit();
         });
     });
@@ -4674,7 +4699,7 @@ body.night .logo { z-index: 6; }
   var co = null;   // the rental in progress: { it, vid, copies, note }
   function checkoutView(it, vid) {
     vid = vid || it.id;
-    co = { it: it, vid: vid, copies: null };
+    var mine = co = { it: it, vid: vid, copies: null };
     sfx("receipt");
     var due = new Date(Date.now() + 3 * 864e5);
     var months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
@@ -4689,7 +4714,7 @@ body.night .logo { z-index: 6; }
       '<div class="actions col"><button class="btn" data-m="play" data-id="' + esc(it.id) + '">Open in the Stremio app instead</button><button class="btn" data-m="close">Back to the aisles</button></div></div></div></div>');
     var drawn = false;
     streamCopies(it, vid, function (r) {
-      if (!co || co.it !== it || co.vid !== vid || !$("coSide")) return;
+      if (co !== mine || !$("coSide")) return;   // only this visit to the counter, not an earlier one for the same tape
       co.copies = r.copies;
       var side = $("coSide"), html = "<h3>" + esc(title) + "</h3>";
       var back = '<button class="btn" data-m="play" data-id="' + esc(it.id) + '">Open in the Stremio app instead</button><button class="btn" data-m="close">Back to the aisles</button>';
@@ -4714,9 +4739,11 @@ body.night .logo { z-index: 6; }
       if (!r.copies.length) {
         var why = r.note === "signin" ? "Sign in to Stremio at the front desk so I can use your addons to find a copy."
           : r.note === "noaddons" ? "None of your Stremio addons provide copies for this one."
+          : r.failed ? (r.failed === r.total ? "I couldn't reach any of your addons just now." : r.failed + " of your addons didn't answer, and the rest had nothing.") + " Give it a moment and ask again."
           : "Every copy is out. None of your addons had this one right now.";
         side.innerHTML = html + '<p class="note">' + esc(why) + '</p><div class="actions col">' +
-          (r.note === "signin" ? '<button class="btn primary" data-m="account">Sign in to Stremio</button>' : "") + back + "</div>";
+          (r.note === "signin" ? '<button class="btn primary" data-m="account">Sign in to Stremio</button>'
+            : r.note === "noaddons" ? "" : '<button class="btn primary" data-m="askagain">Ask again</button>') + back + "</div>";
       } else {
         var b = r.copies[0], torrentsWaiting = !prefs.server && r.copies.some(function (c) { return c.kind === "torrent"; });
         side.innerHTML = html + '<p class="note">Best copy for you:</p><div class="best">' + stickers(b) + "</div>" +
@@ -4799,6 +4826,13 @@ body.night .logo { z-index: 6; }
   }
 
   // --- box sets ---
+  // an episode that hasn't aired yet: its air date ("14 Nov"), otherwise ""
+  function notAired(v) {
+    var t = v && v.released ? Date.parse(v.released) : NaN;
+    if (!isFinite(t) || t <= Date.now()) return "";
+    var d = new Date(t), mo = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][d.getMonth()];
+    return d.getDate() + " " + mo + (d.getFullYear() !== new Date().getFullYear() ? " " + d.getFullYear() : "");
+  }
   function episodesView(it, season) {
     openModal('<div class="panel" role="dialog" aria-label="Box set"><h3 class="details" style="margin:0;font-family:var(--f-spine);font-weight:400;text-transform:uppercase;color:var(--blue);font-size:30px">' + esc(it.name) + '</h3><p class="note">Opening the box set…</p><div class="actions"><button class="btn" data-m="close">Back to the aisles</button></div></div>');
     var view = modal.seq;
@@ -4806,7 +4840,9 @@ body.night .logo { z-index: 6; }
       if (!sameView(view)) return;
       var vids = (m.videos || []).filter(function (v) { return v.season !== undefined && v.season !== null; });
       if (!vids.length) {
-        overlay.querySelector(".note").textContent = "This box set came without an episode list. Try opening it in the Stremio app.";
+        overlay.querySelector(".note").textContent = m.failedAt ? "I couldn't get the episode list from Stremio just now. Give it a minute and open the box set again."
+          : "This box set came without an episode list. Try opening it in the Stremio app.";
+        if (m.failedAt) delete metaCache[it.id];
         return;
       }
       var seasons = []; vids.forEach(function (v) { if (seasons.indexOf(v.season) === -1) seasons.push(v.season); });
@@ -4819,7 +4855,8 @@ body.night .logo { z-index: 6; }
         '<div class="seasons">' + seasons.map(function (x) {
           return '<button class="btn' + (x === sn ? " on" : "") + '" data-m="season" data-id="' + esc(it.id) + '" data-s="' + esc(x) + '">' + (x === 0 ? "Specials" : "Season " + esc(x)) + "</button>";
         }).join("") + '</div><div class="eps">' + eps.map(function (v) {
-          var mark = it.videoId === v.id ? " · up to here" : ((lp && lp.v === v.id) || progressMap["ep:" + v.id] ? " · started" : "");
+          var air = notAired(v);
+          var mark = air ? " · airs " + air : it.videoId === v.id ? " · up to here" : ((lp && lp.v === v.id) || progressMap["ep:" + v.id] ? " · started" : "");
           var en = v.episode === null ? "?" : String(v.episode);
           return '<button class="ep" data-m="ep" data-id="' + esc(it.id) + '" data-vid="' + esc(v.id) + '"><b>E' + esc(en) + "</b>" + esc(v.title || "Episode " + en) + esc(mark) + "</button>";
         }).join("") + '</div><div class="actions"><button class="btn" data-m="close">Back to the aisles</button></div></div>');
@@ -4843,18 +4880,43 @@ body.night .logo { z-index: 6; }
     document.head.appendChild(sc);
     setTimeout(function () { fin(!!(window.webapis && webapis.avplay)); }, 3000);
   }
-  function avEngine(url, startMs, is4k, cb) {
+  function avEngine(url, startMs, is4k, cb, heavy) {
     var av = webapis.avplay, stage = $("pStage");
     var avAudio = -1; // AVPlay never says which audio track is playing, so remember the one we picked
     stage.innerHTML = '<object id="avobj" type="application/avplayer"></object>';
     $("player").classList.add("av");
     document.documentElement.style.background = "transparent"; document.body.style.background = "transparent";
-    var paused = false;
+    var paused = false, suspended = false;
+    function avTracks() {
+      try {
+        return av.getTotalTrackInfo().map(function (t) {
+          var info = {}; try { info = JSON.parse(t.extra_info); } catch (e) {}
+          return { type: t.type, index: t.index, lang: String(info.language || info.track_lang || "").toLowerCase(), label: "", on: t.type === "AUDIO" && t.index === avAudio };
+        });
+      } catch (e) { return []; }
+    }
+    // the web player picks your language itself; AVPlay has to be told, before the tape starts
+    function pickAudio() {
+      try {
+        var aud = avTracks().filter(function (t) { return t.type === "AUDIO"; });
+        if (aud.length < 2) return;
+        var want = prefs.audioLang || "en";
+        var best = aud.filter(function (t) { return langMatches(t.lang, t.label, want); })[0];
+        if (!best) return;
+        av.setSelectTrack("AUDIO", best.index); avAudio = best.index;
+        if (best !== aud[0] && cb.audio) cb.audio(best);
+      } catch (e) {}
+    }
     try {
       av.open(url);
       try { av.setDisplayRect(0, 0, 1920, 1080); } catch (e) {}
       try { av.setDisplayMethod("PLAYER_DISPLAY_MODE_LETTER_BOX"); } catch (e) {}
       if (is4k) { try { av.setStreamingProperty("SET_MODE_4K", "TRUE"); } catch (e) {} }
+      // big files over Wi-Fi: a deeper buffer before starting and after a stall, so the picture stutters less
+      if (heavy) {
+        try { av.setBufferingParam("PLAYER_BUFFER_FOR_PLAY", "PLAYER_BUFFER_SIZE_IN_SECOND", 8); } catch (e) {}
+        try { av.setBufferingParam("PLAYER_BUFFER_FOR_RESUME", "PLAYER_BUFFER_SIZE_IN_SECOND", 15); } catch (e) {}
+      }
       av.setListener({
         onbufferingstart: function () { cb.buffering(true); },
         onbufferingcomplete: function () { cb.buffering(false); },
@@ -4865,6 +4927,7 @@ body.night .logo { z-index: 6; }
       var prepT = setTimeout(function () { try { av.stop(); } catch (e) {} cb.error("prepare timeout"); }, 25000);
       av.prepareAsync(function () {
         clearTimeout(prepT);
+        pickAudio();
         function rdy() { cb.ready(); }
         if (startMs) { try { av.seekTo(startMs, rdy, rdy); } catch (e) { rdy(); } } else rdy();
       }, function (e) { clearTimeout(prepT); cb.error(String(e && e.name || e)); });
@@ -4878,14 +4941,14 @@ body.night .logo { z-index: 6; }
       time: function () { try { return av.getCurrentTime(); } catch (e) { return 0; } },
       duration: function () { try { return av.getDuration(); } catch (e) { return 0; } },
       seek: function (ms) { try { av.seekTo(Math.max(0, Math.round(ms))); } catch (e) {} },
-      tracks: function () {
-        try {
-          return av.getTotalTrackInfo().map(function (t) {
-            var info = {}; try { info = JSON.parse(t.extra_info); } catch (e) {}
-            return { type: t.type, index: t.index, lang: String(info.language || info.track_lang || "").toLowerCase(), label: "", on: t.type === "AUDIO" && t.index === avAudio };
-          });
-        } catch (e) { return []; }
+      // Samsung's player has to be put away when the TV leaves the app (Home, Source) and brought back after
+      suspend: function () { try { av.pause(); paused = true; } catch (e) {} try { av.suspend(); suspended = true; } catch (e) {} },
+      restore: function () {
+        if (suspended) { suspended = false; try { av.restore(); } catch (e) { return false; } }
+        try { av.pause(); paused = true; } catch (e) {}
+        return true;
       },
+      tracks: avTracks,
       setTrack: function (type, index) { try { av.setSelectTrack(type, index); if (type === "AUDIO") avAudio = index; } catch (e) {} },
       info: function () {
         var out = {};
@@ -5075,7 +5138,8 @@ body.night .logo { z-index: 6; }
     closeModal();
     stopHum(); $("tvFrame").innerHTML = ""; clearTimeout(trailerTimer);
     P = { seq: ++playSeq, it: co.it, vid: co.vid, copies: co.copies, idx: co.idx || 0, start: resumeMs || 0, eng: null, menu: null, intro: null,
-          lastSave: 0, lastSync: Date.now(), watched: 0, pend: 0, seekT: null, osdT: null, barT: null, subs: [], cues: null, cueLabel: "Off", ended: false };
+          lastSave: 0, lastSync: Date.now(), watched: 0, pend: 0, seekT: null, osdT: null, barT: null, subs: [], cues: null, cueLabel: "Off", ended: false,
+          autoTries: 0, lastAt: 0, nextPre: false };
     var pl = $("player"); pl.hidden = false; pl.classList.toggle("vhs", !!prefs.vhs);
     $("pTitle").textContent = P.it.name + (P.it.type === "series" ? " · " + epLabel(P.vid) : "");
     $("pSubs").innerHTML = ""; $("pCenter").innerHTML = ""; $("pMenu").hidden = true;
@@ -5184,7 +5248,7 @@ body.night .logo { z-index: 6; }
     if (!c) return playerFail("Every copy we tried wouldn't play on this TV.");
     var url = copyUrl(c);
     if (!c.fake && !url) return openCopy(i + 1, startMs);
-    P.idx = i; P.ended = false; P.ready = false; P.started = false;
+    P.idx = i; P.ended = false; P.ready = false; P.started = false; P.failed = false;
     var tok = P.openTok = (P.openTok || 0) + 1, play = P;
     function mine() { return P && P === play && P.openTok === tok; }
     refreshSubs(c);
@@ -5202,15 +5266,22 @@ body.night .logo { z-index: 6; }
         var at = P.eng ? P.eng.time() : startMs;
         if (P.copies[P.idx] !== c) return;
         diag.play(c, "wouldn't play: " + msg);
-        if (i + 1 < P.copies.length) { toast("That copy wouldn't play (" + msg + "). Trying the next best copy…", 4000); openCopy(i + 1, at || startMs); }
+        P.lastAt = at || startMs || 0;
+        // try up to two more ready-to-play copies by itself, never ones still downloading (they'd be added to your debrid account)
+        var nx = P.autoTries < 2 ? nextAutoCopy(i) : -1;
+        if (nx !== -1) { P.autoTries++; toast("That copy wouldn't play (" + msg + "). Trying the next best copy…", 4000); openCopy(nx, P.lastAt); }
         else playerFail("That copy wouldn't play on this TV (" + msg + ").");
       }
     };
     if (c.fake) { P.eng = fakeEngine(P.it, startMs, cb); return; }
     ensureWebapis(function (ok) {
       if (!mine()) return;
-      P.eng = ok ? avEngine(url, startMs, c.res === 2160, cb) : htmlEngine(url, startMs, cb);
+      P.eng = ok ? avEngine(url, startMs, c.res === 2160, cb, c.res === 2160 || c.remux || c.size >= 15) : htmlEngine(url, startMs, cb);
     });
+  }
+  function nextAutoCopy(i) {
+    for (var j = i + 1; j < P.copies.length; j++) { var c = P.copies[j]; if (c.fake || (copyUrl(c) && tierOf(c) < 3)) return j; }
+    return -1;
   }
   function playerFail(msg) {
     if (!P) return;
@@ -5218,10 +5289,12 @@ body.night .logo { z-index: 6; }
     if (P.intro && P.intro.loading) { var intro = $("pIntro"); intro.hidden = true; intro.innerHTML = ""; P.intro = null; }
     if (P.eng) { try { P.eng.close(); } catch (e) {} P.eng = null; }
     $("pCenter").innerHTML = "<div>NO SIGNAL</div><small>" + esc(msg) + "</small>";
-    playerMenu("This tape won't play", [
+    var menu = [];
+    if (P.copies.length > 1) menu.push({ label: "Choose another copy", fn: copyMenu });
+    playerMenu("This tape won't play", menu.concat([
       { label: "Open in the Stremio app", fn: function () { var it = P.it; stopTape(false); launchStremio(it); } },
       { label: "Back to the store", fn: function () { stopTape(false); } }
-    ]);
+    ]));
   }
   function osd(text, ms) {
     var o = $("pOsd"); $("pOsdL").textContent = text; o.classList.remove("off");
@@ -5251,21 +5324,36 @@ body.night .logo { z-index: 6; }
     if (now - P.lastSave > 10000) { P.lastSave = now; saveLocalProgress(false); save("fnv-stats", stats); }
     if (now - P.lastSync > 60000) { P.lastSync = now; syncStremio(false); }
     if (P.sleep && P.sleep.mode === "mins" && now >= P.sleep.at) goToSleep();
+    // the last few minutes of an episode: find the next one's copies now, so it starts straight after the countdown
+    if (!P.nextPre && P.it.type === "series" && nextEpMode() !== "off" && live && account) {
+      var pd = P.eng.duration(), pt = P.eng.time();
+      if (pd > 120000 && pt > 60000 && pd - pt < 240000) {
+        P.nextPre = true;
+        var preIt = P.it, preSeq = P.seq;
+        nextEpisode(function (nx) { if (nx && samePlay(preSeq)) streamCopies(preIt, nx.id, function () {}); });
+      }
+    }
     if (P.menu && P.menu.info && now - (P.infoT || 0) > 1000) {
       P.infoT = now;
       infoLines().forEach(function (l, i) { if (P.menu.els[i]) P.menu.els[i].textContent = l; });
     }
   }, 500);
 
+  // subtitles get their own quicker clock, so lines come and go on time rather than up to half a second late
+  setInterval(function () {
+    if (P && P.eng && P.cues && P.started && !P.intro) renderSubs(P.eng.time());
+  }, 100);
+  // never skip past the end of the tape: stop a few seconds short and let it finish properly
+  function seekLimit(ms) { var d = P.eng.duration(); return Math.max(0, d ? Math.min(ms, d - 5000) : ms); }
   function queueSeek(delta) {
     if (!P || !P.eng) return;
     P.pend += delta;
-    var target = Math.max(0, P.eng.time() + P.pend);
+    var target = seekLimit(P.eng.time() + P.pend);
     osd((P.pend < 0 ? "◀◀ " : "▶▶ ") + (P.pend < 0 ? "-" : "+") + fmtTime(Math.abs(P.pend)).replace(/^0:/, ""), 1800);
     $("pCur").textContent = fmtTime(target); showBar();
     sfx(delta < 0 ? "rew" : "ff");
     clearTimeout(P.seekT);
-    P.seekT = setTimeout(function () { if (!P || !P.eng) return; P.eng.seek(Math.max(0, P.eng.time() + P.pend)); P.pend = 0; }, 700);
+    P.seekT = setTimeout(function () { if (!P || !P.eng) return; P.eng.seek(seekLimit(P.eng.time() + P.pend)); P.pend = 0; }, 700);
   }
   function infoLines() {
     var c = P.copies[P.idx] || {}, inf = P.eng && P.eng.info ? P.eng.info() : {}, d = P.eng ? P.eng.duration() : 0;
@@ -5420,7 +5508,7 @@ body.night .logo { z-index: 6; }
   function applySubStyle() { var pl = $("player"); pl.style.setProperty("--sub-scale", SUB_SIZES[subSize()].k); pl.style.setProperty("--sub-bottom", SUB_POS[subPos()].b); }
   function reopenSubs() { var idx = P && P.menu ? P.menu.idx : 0; subtitleMenu(); if (P && P.menu) { P.menu.idx = idx; menuFocus(); } }
   function subtitleMenu() {
-    var list = [{ label: "Off", fn: function () { P.cues = null; P.cueLabel = "Off"; prefs.subLang = ""; save("fnv-prefs", prefs); $("pSubs").innerHTML = ""; closeMenu(); } }];
+    var list = [{ label: "Off", fn: function () { P.lastSub = P.subPick || P.lastSub; P.cues = null; P.subToken = null; P.subPick = null; P.cueLabel = "Off"; prefs.subLang = ""; save("fnv-prefs", prefs); $("pSubs").innerHTML = ""; lastCue = ""; closeMenu(); } }];
     if (P.cues) list.push({ label: "Timing: " + fmtOffset(P.subOffset) + "  (adjust)", fn: function () { timingMenu(false); } });
     list.push({ label: "Size: " + SUB_SIZES[subSize()].label, fn: function () { var k = Object.keys(SUB_SIZES); prefs.subSize = k[(k.indexOf(subSize()) + 1) % k.length]; save("fnv-prefs", prefs); applySubStyle(); osd("CC SIZE " + SUB_SIZES[subSize()].label.toUpperCase()); reopenSubs(); } });
     list.push({ label: "Height: " + SUB_POS[subPos()].label, fn: function () { var k = Object.keys(SUB_POS); prefs.subPos = k[(k.indexOf(subPos()) + 1) % k.length]; save("fnv-prefs", prefs); applySubStyle(); osd("CC " + SUB_POS[subPos()].label.toUpperCase()); reopenSubs(); } });
@@ -5428,10 +5516,24 @@ body.night .logo { z-index: 6; }
     var want = prefs.subLang || "eng";
     var subs = P.subs.slice().sort(function (a, b) { return (normLang(b.lang) === normLang(want)) - (normLang(a.lang) === normLang(want)); });
     subs.slice(0, 40).forEach(function (sb) {
-      list.push({ label: (P.subPick === sb.url ? "▶ " : "") + langName(sb.lang) + " · option " + sb.n, fn: function () { loadSubs(sb); prefs.subLang = sb.lang; save("fnv-prefs", prefs); closeMenu(); } });
+      list.push({ label: (P.subPick === sb.url ? "▶ " : "") + langName(sb.lang) + " · option " + sb.n, fn: function () { loadSubs(sb); prefs.subLang = prefs.lastSubLang = sb.lang; save("fnv-prefs", prefs); closeMenu(); } });
     });
     if (!P.subs.length) list.push({ label: "No subtitles from your addons", fn: closeMenu });
     playerMenu("Subtitles", list);
+  }
+  // the remote's Caption button: subtitles off, or back on in the last (or your usual) language
+  function toggleCaptions() {
+    if (!P) return;
+    if (P.cues || (P.subPick && P.cueLabel !== "Off")) {
+      P.lastSub = P.subPick || P.lastSub; P.cues = null; P.subToken = null; P.subPick = null; P.cueLabel = "Off";
+      prefs.subLang = ""; save("fnv-prefs", prefs); renderSubs(0); osd("CC OFF", 2000);
+      return;
+    }
+    var want = normLang(prefs.lastSubLang || "eng");
+    var sb = (P.lastSub && P.subs.filter(function (x) { return x.url === P.lastSub; })[0]) || P.subs.filter(function (x) { return normLang(x.lang) === want; })[0];
+    if (sb) { loadSubs(sb); prefs.subLang = prefs.lastSubLang = sb.lang; save("fnv-prefs", prefs); osd("CC " + langName(sb.lang).toUpperCase() + "…", 2000); }
+    else if (P.subs.length) subtitleMenu();
+    else osd(P.subsKey && P.cueLabel === "Looking…" ? "CC LOOKING…" : "NO CAPTIONS", 2500);
   }
   function fmtOffset(ms) { ms = ms || 0; return (ms > 0 ? "+" : ms < 0 ? "−" : "") + (Math.abs(ms) / 1000).toFixed(1) + "s"; }
   function setOffset(ms) {
@@ -5458,7 +5560,7 @@ body.night .logo { z-index: 6; }
       var lp = langPenalty(c), L = (c.langs || []).filter(function (x) { return x !== "multi"; });
       var label = (i === P.idx ? "▶ " : "") + (c.fake ? "Preview tape" : [c.res === 2160 ? "4K" : c.res ? c.res + "p" : "?", c.dvOnly ? "DV only" : c.hdr ? "HDR" : "SDR", c.size ? c.size.toFixed(1) + "GB" : "", c.kind === "instant" ? "instant" : c.kind,
         lp === 2 ? L.map(langName).join("/") + " audio" : (c.langs || []).indexOf("multi") !== -1 ? "multi audio" : ""].filter(Boolean).join(" · "));
-      return { label: label, fn: function () { closeMenu(); var at = P.eng ? P.eng.time() : 0; openCopy(i, at); } };
+      return { label: label, fn: function () { closeMenu(); var at = P.eng ? P.eng.time() : (P.lastAt || P.start || 0); P.autoTries = 0; openCopy(i, at); } };
     }));
   }
 
@@ -5537,16 +5639,35 @@ body.night .logo { z-index: 6; }
     if (finished) { it.progress = 0; it.aisles = it.aisles.filter(function (a) { return a !== "cw"; }); }
     else if (d) { it.progress = t / d; it.lastWatched = Date.now(); if (it.type === "series") it.videoId = P.vid; if (it.aisles.indexOf("cw") === -1) it.aisles.push("cw"); }
   }
-  function syncStremio(finished) {
-    if (!P || !P.eng || !account || P.eng.kind === "fake") return;
-    var it = P.it, now = new Date().toISOString(), t = Math.round(P.eng.time()), d = Math.round(P.eng.duration());
+  // a copy of this title's Stremio library entry to change and send back (a hidden one if it isn't in your library,
+  // which is what Stremio itself does for things you watch without adding them)
+  function libItemFor(it) {
+    var now = new Date().toISOString();
     var li = libRaw[it.id] ? JSON.parse(JSON.stringify(libRaw[it.id])) : {
       _id: it.id, name: it.name, type: it.type === "series" ? "series" : "movie", poster: it.poster || "", posterShape: "poster",
       removed: true, temp: true, _ctime: now,
       behaviorHints: { defaultVideoId: null, featuredVideoId: null, hasScheduledVideos: false },
       state: { lastWatched: now, timeWatched: 0, timeOffset: 0, overallTimeWatched: 0, timesWatched: 0, flaggedWatched: 0, duration: 0, video_id: null, watched: null, noNotif: false }
     };
-    var st = li.state || (li.state = {});
+    if (!li.state) li.state = {};
+    return li;
+  }
+  // "Mark as watched" on a film goes to your Stremio account too, so your phone and other devices agree
+  function markWatchedInStremio(it, on) {
+    if (!account || !live || it.type !== "movie" || !/^tt\d+$/.test(it.id)) return;
+    var li = libItemFor(it), st = li.state, now = new Date().toISOString();
+    st.flaggedWatched = on ? 1 : 0;
+    st.timesWatched = on ? Math.max(1, st.timesWatched || 0) : 0;
+    if (on) st.lastWatched = now;
+    li._mtime = now;
+    libRaw[it.id] = li;
+    api("datastorePut", { authKey: account.authKey, collection: "libraryItem", changes: [li] }).catch(function (e) { diag.err("Couldn't tell Stremio about " + it.name, e); });
+  }
+  function syncStremio(finished) {
+    if (!P || !P.eng || !account || P.eng.kind === "fake") return;
+    var it = P.it, now = new Date().toISOString(), t = Math.round(P.eng.time()), d = Math.round(P.eng.duration());
+    var li = libItemFor(it);
+    var st = li.state;
     st.timeOffset = finished ? 0 : t;
     st.duration = d;
     st.lastWatched = now;
@@ -5567,13 +5688,16 @@ body.night .logo { z-index: 6; }
     getMeta(P.it).then(function (m) {
       var vids = (m.videos || []).filter(function (v) { return v.season > 0; }).sort(function (a, b) { return a.season - b.season || a.episode - b.episode; });
       var i = -1; vids.forEach(function (v, k) { if (v.id === vid) i = k; });
-      cb(i >= 0 && vids[i + 1] ? vids[i + 1] : null);
+      var nx = i >= 0 && vids[i + 1] ? vids[i + 1] : null;
+      cb(nx && !notAired(nx) ? nx : null);   // the next one hasn't been on TV yet: nothing to rent
     });
   }
-  function tapeEnded() {
+  // stoppedByYou: you chose Stop in the credits. It still counts as finished, but nothing else starts playing.
+  function tapeEnded(stoppedByYou) {
     if (!P || P.ended) return;
     P.ended = true;
     saveLocalProgress(true); syncStremio(true);
+    if (stoppedByYou) return rewindEnding();
     if (P.sleep && P.sleep.mode === "end") return goToSleep();
     if (P.it.type === "series" && nextEpMode() !== "off") {
       var seq = P.seq;
@@ -5605,7 +5729,7 @@ body.night .logo { z-index: 6; }
       var c0 = r.copies.filter(function (c) { return c.fake || copyUrl(c); });
       if (!c0.length) { intro.hidden = true; return playerFail("No copies of " + epLabel(vid) + " right now."); }
       if (P.eng) { try { P.eng.close(); } catch (e) {} P.eng = null; }
-      P.vid = vid; P.copies = c0; P.idx = 0; P.cues = null; P.cueLabel = "Off"; P.watched = 0;
+      P.vid = vid; P.copies = c0; P.idx = 0; P.cues = null; P.cueLabel = "Off"; P.watched = 0; P.autoTries = 0; P.lastAt = 0; P.start = 0; P.nextPre = false;
       $("pTitle").textContent = it.name + " · " + epLabel(vid);
       intro.hidden = true; intro.innerHTML = "";
       openCopy(0, 0);
@@ -5648,7 +5772,7 @@ body.night .logo { z-index: 6; }
     if (P.eng && save2 !== false && !P.ended) {
       var t = P.eng.time(), d = P.eng.duration();
       // stopping in the credits counts as finishing, but only once, and not when the sleep timer is turning things off
-      if (d && t / d > 0.92 && !P.sleeping) { closeMenu(); return tapeEnded(); }
+      if (d && t / d > 0.92 && !P.sleeping) { closeMenu(); return tapeEnded(true); }
       saveLocalProgress(false); syncStremio(false);
     }
     if (P.eng && !P.sleeping) sfx("eject");
@@ -5677,6 +5801,8 @@ body.night .logo { z-index: 6; }
       return true;
     }
     if (P.menu) {
+      // Info again closes the playback info it opened
+      if (k === KEY.INFO && P.menu.info && P.eng) { closeMenu(); return true; }
       if (k === KEY.UP) { if (P.menu.idx > 0) { P.menu.idx--; menuFocus(); } }
       else if (k === KEY.DOWN) { if (P.menu.idx < P.menu.els.length - 1) { P.menu.idx++; menuFocus(); } }
       else if (k === KEY.OK) { var item = P.menu.list[P.menu.idx]; if (item) item.fn(); }
@@ -5694,6 +5820,8 @@ body.night .logo { z-index: 6; }
     else if (k === MEDIA.FF) queueSeek(60000);
     else if (k === KEY.UP) { showBar(); osd(P.eng.paused() ? "PAUSE ❚❚" : "PLAY ▶"); }
     else if (k === KEY.DOWN) optionsMenu();
+    else if (k === KEY.CAPTION) toggleCaptions();
+    else if (k === KEY.INFO) playbackInfo();
     else if (k === MEDIA.STOP) stopTape(true);
     else if (k === KEY.BACK || k === KEY.ESC || k === KEY.BKSP) {
       playerMenu("Stop the tape?", [
@@ -7411,6 +7539,7 @@ body.night .logo { z-index: 6; }
       stopAmbience();
       if (prefs.sound) startHum();
       lastInput = Date.now(); tvCurrent = null; applyFocus(true);
+      refreshLibraryQuietly(10 * 60000);   // been a while: pick up anything you watched elsewhere
     }
     if (isCalm()) { setTimeout(inside, 300); return; }
     setTimeout(function () { land.classList.add("entering"); }, 240);
@@ -7425,16 +7554,50 @@ body.night .logo { z-index: 6; }
     }, 620);
   }
   function goOutside() {
-    if (!showLanding()) { try { tizen.application.getCurrentApplication().exit(); } catch (x) {} }
+    if (showLanding()) return;
+    // the front door is skipped, so Back from the shelves would close the app: ask for a second press, as outside does
+    if (Date.now() - backArmed < 3000) { try { tizen.application.getCurrentApplication().exit(); } catch (x) {} }
+    else { backArmed = Date.now(); toast("Press Back again to close the store", 3000); }
   }
   $("land").addEventListener("animationend", function (e) { if (e.target && e.target.id === "landCam") $("land").classList.remove("cam-in"); });
   $("land").addEventListener("click", function () { if (prefs.sound && !amb) startAmbience(); enterStore(); });
   setInterval(function () { if (landingOn && !entering) updateLanding(); }, 30000);
   window.addEventListener("resize", function () { if (landingOn && !entering) { fitStage(); updateLanding(); } });
 
+  // ---------- leaving the app (Home, Source, the TV's menus) and coming back ----------
+  // A tape is saved, synced and paused on the way out, so nothing plays on behind the TV's back and nothing is lost
+  // if the TV closes the app while it's in the background. Coming back, it waits paused for you.
+  var hiddenAt = 0;
+  document.addEventListener("visibilitychange", function () {
+    if (document.hidden) {
+      hiddenAt = Date.now();
+      if (P && P.eng && P.started && !P.ended) {
+        saveLocalProgress(false); syncStremio(false); save("fnv-stats", stats);
+        P.lastSync = Date.now();
+        P.bgAt = P.eng.time();
+        if (P.eng.suspend) P.eng.suspend(); else if (!P.eng.paused()) P.eng.pause();
+        P.bgPaused = true;
+      }
+      if (ac && ac.state === "running") { try { ac.suspend(); } catch (e) {} }
+      return;
+    }
+    var away = hiddenAt ? Date.now() - hiddenAt : 0;
+    hiddenAt = 0; lastInput = Date.now();
+    if (ac && ac.state === "suspended" && prefs.sound) { try { ac.resume(); } catch (e) {} }
+    if (P && P.bgPaused) {
+      P.bgPaused = false;
+      // if Samsung's player can't pick up where it was, open the same copy again at the same spot
+      if (P.eng && P.eng.restore && !P.eng.restore()) { openCopy(P.idx, P.bgAt || 0); return; }
+      if (P.eng && !P.eng.paused()) P.eng.pause();
+      if (P.eng) { osd("PAUSE ❚❚", 600000); $("player").classList.add("bar-on"); tickPlayer(); }
+      return;
+    }
+    if (!P && away > 120000) refreshLibraryQuietly();
+  });
+
   // ---------- input: TV remote, keyboard, touch ----------
   var backArmed = 0;
-  var KEY = { LEFT: 37, UP: 38, RIGHT: 39, DOWN: 40, OK: 13, BACK: 10009, ESC: 27, BKSP: 8, RED: 403, GREEN: 404, YELLOW: 405, BLUE: 406, CHUP: 427, CHDOWN: 428 };
+  var KEY = { LEFT: 37, UP: 38, RIGHT: 39, DOWN: 40, OK: 13, BACK: 10009, ESC: 27, BKSP: 8, RED: 403, GREEN: 404, YELLOW: 405, BLUE: 406, CHUP: 427, CHDOWN: 428, INFO: 457, CAPTION: 10221 };
   document.addEventListener("keydown", function (e) {
     var k = e.keyCode;
     if (landingOn) {
@@ -7461,6 +7624,8 @@ body.night .logo { z-index: 6; }
         if (modal.idx < modal.els.length - 1) { modal.idx++; modalFocus(); }
         return;
       }
+      // Info on a box flips it over to read the back
+      if (k === KEY.INFO && !typing) { if ($("box3d")) flipBox(); e.preventDefault(); return; }
       if ((k === MEDIA.PLAY || k === MEDIA.PLAYPAUSE) && !typing) {
         var cur = modal.els[modal.idx], best = overlay.querySelector('[data-m="playbest"]');
         if (best) { modal.idx = modal.els.indexOf(best); activateModal(best); }
@@ -7488,6 +7653,15 @@ body.night .logo { z-index: 6; }
     else if (k === MEDIA.PLAY || k === MEDIA.PLAYPAUSE) {
       var pe = rows[focus.r] && rows[focus.r][focus.c];
       if (pe && pe.classList.contains("tape")) quickPlay(byId[pe.getAttribute("data-id")]);
+    }
+    else if (k === KEY.INFO) {
+      // Info on a tape: pick it up and turn it over
+      var ie = rows[focus.r] && rows[focus.r][focus.c];
+      if (ie && ie.classList.contains("tape") && !ie.getAttribute("data-blind") && byId[ie.getAttribute("data-id")]) {
+        activateStore(ie);
+        var iv = modal && modal.seq;
+        setTimeout(function () { if (modal && modal.seq === iv && $("box3d") && !$("box3d").classList.contains("flipped")) flipBox(); }, 650);
+      }
     }
     else if (k === KEY.CHUP || k === 33) stepAisle(1);
     else if (k === KEY.CHDOWN || k === 34) stepAisle(-1);
@@ -7521,7 +7695,7 @@ body.night .logo { z-index: 6; }
   });
 
   // Samsung remotes only send colour keys to apps that ask for them
-  ["ColorF0Red", "ColorF1Green", "ColorF2Yellow", "ColorF3Blue", "MediaPlayPause", "MediaPlay", "MediaPause", "MediaStop", "MediaRewind", "MediaFastForward", "ChannelUp", "ChannelDown"].forEach(function (k) {
+  ["ColorF0Red", "ColorF1Green", "ColorF2Yellow", "ColorF3Blue", "MediaPlayPause", "MediaPlay", "MediaPause", "MediaStop", "MediaRewind", "MediaFastForward", "ChannelUp", "ChannelDown", "Info", "Caption"].forEach(function (k) {
     try { tizen.tvinputdevice.registerKey(k); } catch (e) {}
   });
   setInterval(updateOSD, 30000);
@@ -7590,11 +7764,13 @@ body.night .logo { z-index: 6; }
     try {
       var pend = localStorage.getItem("fnv-boot-pending");
       if (!pend) return;
-      var html = null; try { html = sessionStorage.getItem("fnv-next-html"); } catch (e) {}
+      var html = null, kept = false; try { html = sessionStorage.getItem("fnv-next-html"); } catch (e) {}
       if (html) {
-        try { localStorage.setItem("fnv-store-cache", html); }
-        catch (e) { try { localStorage.removeItem(SNAP_KEY); localStorage.setItem("fnv-store-cache", html); } catch (x) {} }
+        try { localStorage.setItem("fnv-store-cache", html); kept = true; }
+        catch (e) { try { localStorage.removeItem(SNAP_KEY); localStorage.setItem("fnv-store-cache", html); kept = true; } catch (x) {} }
       }
+      // couldn't save this version: drop the older saved copy too, or the loader would keep opening that one for this release
+      if (!kept) { try { localStorage.removeItem("fnv-store-cache"); } catch (e) {} }
       localStorage.setItem("fnv-good", JSON.stringify({ ref: pend, version: APP_VERSION, t: Date.now() }));
       localStorage.removeItem("fnv-boot-pending");
       localStorage.removeItem("fnv-boot-fails");
