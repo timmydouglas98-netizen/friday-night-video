@@ -1,5 +1,5 @@
 {
-  "ref": "4070b10c2e68c245e9bb2fc722a5f81e41f208d8",
-  "version": "0.18.1",
+  "ref": "b2fd0d5b5db9e3d458ecb4b5df9bff41b3e4c25e",
+  "version": "0.20.0",
   "note": "Which version of app/store.html the TVs run. ref is a release tag (v2, v3...) or a full commit id. To ship an update: commit the new app/store.html, then point ref at its tag or commit and set version to match its APP_VERSION."
 }
