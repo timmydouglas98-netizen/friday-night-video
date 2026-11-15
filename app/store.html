@@ -465,8 +465,11 @@ html.calm .wx-rain i, html.calm .wx-snow i { opacity: .35; }
 .p-menu.info button { text-transform: none; letter-spacing: .02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .p-end { margin-left: auto; margin-right: 2em; color: #ffcf4a; }
 .p-times > span:nth-child(2) { margin-left: 2em; }
-#player .p-stage { transition: opacity 8s linear; }
-#player.sleeping .p-stage, #player.sleeping .p-subs { opacity: 0; }
+/* the sleep fade is a black card laid over the picture: the TV's hardware video can't be faded itself */
+.p-sleep { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: #000; opacity: 0; pointer-events: none; }
+#player.sleeping .p-sleep { opacity: 1; transition: opacity 8s linear; }
+#player.sleeping .p-stage { opacity: 0; transition: opacity 8s linear; }
+#player.sleeping .p-subs { opacity: 0; }
 .p-intro.blue { background: radial-gradient(ellipse at 50% 46%, #1d2757 0%, #121a40 52%, #080b1f 100%); }
 .p-intro.blue::before { content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none;
   background: repeating-linear-gradient(180deg, rgba(0,0,0,0) 0, rgba(0,0,0,0) 2px, rgba(0,0,0,.22) 2px, rgba(0,0,0,.22) 4px); }
@@ -526,7 +529,7 @@ html.calm .wx-rain i, html.calm .wx-snow i { opacity: .35; }
 .ins .c-label .c-store { display: block; background: var(--red); color: #fff; font-family: var(--f-sign); font-size: 10px; letter-spacing: .15em; padding: 3px 8px; }
 .ins .c-label .hand { display: block; font-family: var(--f-toon); font-size: 22px; line-height: 1.25; color: #1b2a80; padding: 2px 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ins .c-win { position: absolute; left: 92px; top: 92px; width: 216px; height: 86px; border-radius: 10px; background: linear-gradient(160deg, rgba(120,120,140,.35), rgba(20,20,26,.85) 60%); box-shadow: inset 0 0 0 3px #1f1f24; overflow: hidden; }
-.ins .reel { position: absolute; top: 50%; border-radius: 50%; background: radial-gradient(circle, #e9e6dc 0 9px, #3b2a1e 10px); }
+.ins .reel { position: absolute; top: 50%; border-radius: 50%; background: radial-gradient(circle, #e9e6dc 0, #e9e6dc 9px, #3b2a1e 10px); }
 .ins .reel.l { width: 112px; height: 112px; left: -6px; margin-top: -56px; }
 .ins .reel.r { width: 56px; height: 56px; right: 26px; margin-top: -28px; }
 .ins .reel::after { content: ""; position: absolute; left: 50%; top: 50%; width: 18px; height: 18px; margin: -9px 0 0 -9px; border-radius: 50%; background: radial-gradient(circle, #1a1a1a 3px, #d9d5c8 4px); }
@@ -1526,7 +1529,7 @@ body.night .logo { box-shadow: 5px 6px 0 var(--cel-drop), 0 0 0 6px rgba(255,90,
 .ins .c-top { background: radial-gradient(circle at 10px 10px, #4a4656 3px, transparent 4px) 0 0 / 380px 200px, #2c2933; box-shadow: inset 0 0 0 4px #2a1c18; }
 .ins .c-label { box-shadow: 0 0 0 3px #2a1c18; }
 .ins .c-win { background: #5a6a80; box-shadow: inset 0 0 0 4px #2a1c18, inset 30px 12px 0 -18px rgba(255,255,255,.28); }
-.ins .reel { background: radial-gradient(circle, #f6ecd2 0 9px, #2a1c18 9px 11px, #6a4630 11px); }
+.ins .reel { background: radial-gradient(circle, #f6ecd2 0, #f6ecd2 9px, #2a1c18 9px, #2a1c18 11px, #6a4630 11px); }
 .ins .c-front { box-shadow: inset 0 0 0 3px #2a1c18; }
 .ins .c-spine { box-shadow: 0 0 0 2px #2a1c18; }
 .ins .sleeve { box-shadow: 0 0 0 4px #2a1c18; }
@@ -1599,6 +1602,71 @@ body.night .logo { z-index: 6; }
   linear-gradient(transparent 0, transparent 61.5%, #2a1c18 61.5%, #2a1c18 62.1%, transparent 62.1%),
   #5c4260; }
 
+/* ---------- review 3: covers you can read from the couch ----------
+   On the shelf a cover is only the poster: the rental sticker, the VHS band, the coloured dot and the plastic glare
+   stay on the box in your hands. The tape you're on is bigger and bright, its neighbours sit back a touch, and its
+   title hangs on a shelf tag right underneath it. */
+.faceout .cover .rs, .faceout .cover .dot2, .faceout .cover.has-poster .band { display: none; }
+.faceout .cover::after { background: rgba(24,12,30,.16); }
+.faceout .tape.focused .cover::after { display: none; }
+.tag { display: none; }
+@media (min-width: 960px) and (min-aspect-ratio: 4/3) {
+  /* room for bigger covers: a lower wall, no letter tiles, a slimmer counter, narrower side aisles */
+  :root { --face-h: 22.7vh; }
+  .top { flex: 0 0 calc(var(--u) * 23); height: calc(var(--u) * 23); }
+  .ceil { height: calc(var(--u) * 5); }
+  .wall { top: calc(var(--u) * 5); }
+  .crt-mount { width: calc(var(--u) * 26); }
+  .tiles { display: none; }
+  .side { flex: 0 0 5vw; width: 5vw; }
+  .floor { flex: 0 0 calc(var(--u) * 13); }
+  .counter .btn { padding-top: calc(var(--u) * .55); padding-bottom: calc(var(--u) * .55); }
+  .hint { font-size: calc(var(--u) * 2.1); }
+  /* the corner TV is a little smaller now, so its lettering is too */
+  .tv-card { padding: 13% 6% 4%; }
+  .tv-card .k { font-size: calc(var(--u) * 1.7); }
+  .tv-card .t { font-size: calc(var(--u) * 3); }
+  .tv-card .s { font-size: calc(var(--u) * 1.8); }
+  .floor-in { padding-top: calc(var(--u) * .9); padding-bottom: calc(var(--u) * .4); }
+  .hint { margin-top: calc(var(--u) * .7); }
+  .strip { height: calc(var(--u) * 1.7); font-size: calc(var(--u) * 1.2); line-height: calc(var(--u) * 1.65); }
+  .fixture.faces .shelf { --shelf-pad: calc(var(--u) * 2.6); }
+  /* the tapes sit above the store's paper grain, so posters stay crisp */
+  .shelf { z-index: 3; }
+  .faceout .tape.focused { transform-origin: 50% 100%; transform: scale(1.08); }
+  .tag { display: block; position: absolute; z-index: 6; bottom: calc(var(--u) * -1.1); height: calc(var(--u) * 3.5); line-height: calc(var(--u) * 3.5 - 6px);
+    padding: 0 calc(var(--u) * 1.4); max-width: 52vh; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none;
+    background: var(--cel-mustard); color: var(--cel-ink); border: 3px solid var(--cel-ink); border-radius: 6px; box-shadow: 3px 4px 0 var(--cel-drop);
+    font-family: var(--f-ui); font-weight: 700; font-size: calc(var(--u) * 2.35); letter-spacing: .03em; text-transform: uppercase; transform: translateX(-50%); }
+  .tag.l { transform: none; }
+  .tag.r { transform: translateX(-100%); }
+  .tag b { font-weight: 600; color: #8f1d16; margin-left: .55em; }
+}
+
+/* ---------- Rewind Night: the year dial, and the rewind itself ---------- */
+.rw-panel { max-width: 880px; }
+.rw-vcr { background-color: #14206e; color: #fff; border: 4px solid #1b151e; border-radius: 10px; padding: 16px 22px 16px; font-family: var(--f-osd); text-shadow: 2px 2px 0 rgba(0,0,0,.45);
+  background-image: repeating-linear-gradient(0deg, rgba(255,255,255,.05) 0, rgba(255,255,255,.05) 2px, transparent 2px, transparent 4px); }
+.rw-top { display: flex; justify-content: space-between; font-size: 30px; letter-spacing: .08em; opacity: .9; }
+.rw-dial { display: flex; align-items: center; justify-content: center; margin: 2px 0; }
+.rw-year { font-size: 150px; line-height: 1; letter-spacing: .12em; padding-left: .12em; min-width: 3em; text-align: center; }
+.rw-arrow { font: inherit; font-size: 56px; color: #ffd75e; background: none; border: 0; padding: 0 14px; cursor: pointer; text-shadow: inherit; }
+.rw-decs { display: flex; justify-content: center; }
+.rw-dec { font: inherit; font-size: 28px; color: rgba(255,255,255,.6); background: none; border: 0; border-bottom: 4px solid rgba(255,255,255,.25); padding: 0 14px 2px; margin: 0 3px; cursor: pointer; text-shadow: inherit; }
+.rw-dec.on { color: #14206e; background: #ffd75e; border-bottom-color: #ffd75e; text-shadow: none; }
+.rw-tease { margin-top: 12px; min-height: 1.15em; font-size: 28px; letter-spacing: .04em; text-align: center; color: #9fe8ff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rw-keys kbd { font-family: var(--f-ui); font-weight: 700; border: 2px solid; border-radius: 5px; padding: 0 .35em; margin: 0 .3em 0 .9em; white-space: nowrap; }
+.rw-keys kbd:first-child { margin-left: 0; }
+.rw-keys kbd.g { background: #46a758; color: #fff; border-color: #2d7a3c; }
+@media (max-width: 700px) { .rw-year { font-size: 84px; } .rw-arrow { font-size: 40px; } .rw-dec { font-size: 20px; padding: 0 6px 2px; } .rw-top, .rw-tease { font-size: 20px; } }
+.rw-veil { position: fixed; z-index: 45; top: 0; left: 0; right: 0; bottom: 0; overflow: hidden; background-color: rgba(16,26,110,.92); color: #fff; font-family: var(--f-osd); text-shadow: 3px 3px 0 rgba(0,0,0,.5);
+  background-image: repeating-linear-gradient(0deg, rgba(255,255,255,.06) 0, rgba(255,255,255,.06) 2px, transparent 2px, transparent 5px); }
+.rw-osd { position: absolute; top: 7vh; left: 6vw; right: 6vw; display: flex; justify-content: space-between; font-size: 8vh; letter-spacing: .08em; }
+.rw-count { position: absolute; left: 0; right: 0; top: 50%; margin-top: -15vh; line-height: 30vh; text-align: center; font-size: 30vh; letter-spacing: .14em; padding-left: .14em; }
+.rw-track { position: absolute; left: 0; right: 0; top: 0; height: 9vh; background: rgba(255,255,255,.16); animation: rwtrack .55s steps(7) infinite; }
+.rw-veil.ff .rw-track { animation-direction: reverse; }
+@keyframes rwtrack { from { transform: translateY(100vh); } to { transform: translateY(-10vh); } }
+
 /* ---------- On hold: a name slip, held on by a red rubber band ---------- */
 .hold-slip { position: absolute; z-index: 4; left: 8%; right: 8%; top: 46%; pointer-events: none;
   background: #fff3d6; border: 2px solid var(--cel-ink); box-shadow: 2px 3px 0 var(--cel-drop); transform: rotate(-4deg);
@@ -1645,9 +1713,9 @@ body.night .logo { z-index: 6; }
     <div class="standee" id="standee" aria-hidden="true" hidden></div>
     <div class="slat" id="slat">
       <div class="tiles" id="tiles" aria-hidden="true"></div>
-      <div class="shelf-wrap"><div class="shelf" id="shelf0"></div><div class="strip" aria-hidden="true"></div></div>
-      <div class="shelf-wrap"><div class="shelf" id="shelf1"></div><div class="strip" aria-hidden="true"></div></div>
-      <div class="shelf-wrap" id="wrap2"><div class="shelf" id="shelf2"></div><div class="strip" aria-hidden="true"></div></div>
+      <div class="shelf-wrap"><div class="shelf" id="shelf0"></div><div class="strip" aria-hidden="true"></div><div class="tag" aria-hidden="true" hidden></div></div>
+      <div class="shelf-wrap"><div class="shelf" id="shelf1"></div><div class="strip" aria-hidden="true"></div><div class="tag" aria-hidden="true" hidden></div></div>
+      <div class="shelf-wrap" id="wrap2"><div class="shelf" id="shelf2"></div><div class="strip" aria-hidden="true"></div><div class="tag" aria-hidden="true" hidden></div></div>
     </div>
     <canvas class="side" id="sideR" aria-hidden="true"></canvas>
   </div>
@@ -1687,6 +1755,7 @@ body.night .logo { z-index: 6; }
 </div>
 <div class="iris" id="iris" aria-hidden="true"></div>
 <div class="overlay" id="overlay" hidden></div>
+<div class="rw-veil" id="rwVeil" aria-hidden="true" hidden></div>
 <div class="osk" id="osk" hidden></div>
 <div class="mood" aria-hidden="true"></div>
 <div class="night-veil" aria-hidden="true"></div>
@@ -1695,6 +1764,7 @@ body.night .logo { z-index: 6; }
 <div class="player" id="player" hidden>
   <div class="p-stage" id="pStage"></div>
   <div class="p-vhs"></div>
+  <div class="p-sleep"></div>
   <div class="p-subs" id="pSubs"></div>
   <div class="p-center" id="pCenter"></div>
   <div class="p-osd" id="pOsd"><span id="pOsdL">PLAY ▶</span><span id="pOsdR"></span></div>
@@ -1793,7 +1863,7 @@ body.night .logo { z-index: 6; }
     { key: "Drama", label: "Drama" },
     { key: "classic", label: "Classics" }
   ];
-  var REWIND_YEARS = [0, 1985, 1990, 1995, 1999, 2001];
+  var REWIND_MIN = 1960;   // Rewind Night goes back this far, and up to two years ago
   var CINEMETA = "https://v3-cinemeta.strem.io";
   var API = "https://api.strem.io/api/";
   var LINK = "https://link.stremio.com/api/v2/";
@@ -1801,7 +1871,7 @@ body.night .logo { z-index: 6; }
   var extraAisles = [];      // catalogs from the person's installed addons
   var pager = {};            // aisle key -> { base, extras, type, skip, done, loading }
   var MAX_PER_AISLE = 600;
-  var APP_VERSION = "0.18.1", APP_UPDATED = "11 Nov 2026";
+  var APP_VERSION = "0.20.0", APP_UPDATED = "15 Nov 2026";
   var staffConnected = false;
   function staffOn() { return staffConnected || !!(account && prefs.staffSeen); }
   var account = store("fnv-auth", null, function (a) { return typeof a.authKey === "string" && a.authKey ? a : null; });   // { authKey }
@@ -1809,7 +1879,7 @@ body.night .logo { z-index: 6; }
 
   // ---------- state ----------
   var items = [], byId = {}, live = false;
-  var aisle = "new", rewindIdx = 0;
+  var aisle = "new", rewindY = 0, rewinding = false;
   var focus = { r: 1, c: 0 };
   var rows = [], rowKinds = [];
   var modal = null, lastStoreFocus = null;
@@ -1900,6 +1970,35 @@ body.night .logo { z-index: 6; }
   }
   function save(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
   var watchedSet = new Set(watched);
+  // ---------- keeping the shelves fresh ----------
+  // Every tape remembers how many days it has sat on the first screen of an aisle without being picked up. After three
+  // days it drifts back for a week to let others have the front of the shelf, then returns with a clean slate.
+  // Tapes you've already watched go to the back of their aisle. Both are worked out once, when the store opens,
+  // so nothing moves under you while you browse.
+  var seen = store("fnv-seen", {}, function (m) {
+    var out = {}, today = dayNo();
+    Object.keys(m).slice(0, 4000).forEach(function (k) { var e = m[k]; if (k.length < 60 && Array.isArray(e) && numIn(e[0], 0, 99) && numIn(e[1], 0, 1e6) && today - e[1] < 30) out[k] = [e[0], e[1]]; });
+    return out;
+  });
+  var tiredAtOpen = {}, watchedAtOpen = {}, seenT = null;
+  (function () {
+    var today = dayNo();
+    Object.keys(seen).forEach(function (k) { var e = seen[k]; if (e[0] > 2 && today - e[1] <= 7) tiredAtOpen[k] = Math.min(150, 50 + (e[0] - 3) * 25); });
+    watched.forEach(function (id) { watchedAtOpen[id] = 1; });
+  })();
+  function staleness(it) { return (tiredAtOpen[it.id] || 0) + (watchedAtOpen[it.id] || it.seen ? 5000 : 0); }
+  function saveSeenSoon() { clearTimeout(seenT); seenT = setTimeout(function () { save("fnv-seen", seen); }, 3000); }
+  // the first screenful of an aisle you've walked into: one more day on show for each of those tapes
+  function noteShown(key) {
+    if (!live || onSample || landingOn || rewindYear() || !RANKED[key] || key === "hold" || key === "rewind") return;
+    var list = aisleList(key), today = dayNo(), dirty = false;
+    for (var i = 0; i < list.length && i < 18; i++) {
+      var id = list[i].id, e = seen[id];
+      if (e && e[1] === today) continue;
+      seen[id] = [e && today - e[1] <= 7 ? Math.min(9, e[0] + 1) : 1, today]; dirty = true;
+    }
+    if (dirty) saveSeenSoon();
+  }
   function syncWatched() { watchedSet = new Set(watched); }
   function isWatched(id) { return watchedSet.has(id) || !!(byId[id] && byId[id].seen); }
   function allAisles() {
@@ -1980,12 +2079,14 @@ body.night .logo { z-index: 6; }
   }
   // the shelves from last time, shown straight away while Stremio is asked for today's stock
   var SNAP_KEY = "fnv-shelves", SNAP_MAX = 600000;
+  // on today's shelves (a tape that only came in for Rewind Night isn't)
+  function stocked(it) { return it.aisles.some(function (a) { return a.indexOf("rw") !== 0; }); }
   function saveSnapshot() {
     if (onSample) return;
     try {
       var inRole = {};
       ["day", "night", "back"].forEach(function (r) { (roleItems[r] || []).forEach(function (it) { inRole[it.id] = 1; }); });
-      var keep = items.filter(function (it) { return it.aisles.length || inRole[it.id]; }).slice(0, 1800);
+      var keep = items.filter(function (it) { return stocked(it) || inRole[it.id]; }).slice(0, 1800);
       var snap = {
         t: Date.now(), extra: extraAisles, choices: catalogChoices,
         roles: { day: (roleItems.day || []).map(function (x) { return x.id; }), night: (roleItems.night || []).map(function (x) { return x.id; }), back: (roleItems.back || []).map(function (x) { return x.id; }) },
@@ -2076,7 +2177,8 @@ body.night .logo { z-index: 6; }
         if (key === "new" && m.released && Date.parse(m.released) > Date.now()) return;
         if (pg.type) it0.type = m.type || pg.type;
         var it = add(it0, key);
-        var r = base + i * n + s + Math.floor(daily(hash(it.id) % 997) * 12) + (gen && homeOf(it) && homeOf(it) !== key ? 40 : 0);
+        // a wide daily shuffle: the front of the shelf is a different draw from the first hundred or so each day
+        var r = base + Math.floor((i * n + s) * 0.4 + daily(hash(it.id) % 997) * 60) + (gen && homeOf(it) && homeOf(it) !== key ? 40 : 0);
         rankIn(key, it, r); if (r > top) top = r;
       });
     });
@@ -2090,20 +2192,96 @@ body.night .logo { z-index: 6; }
       return metas;
     }, function (e) { f.fails++; if (f.fails > 2) f.done = true; throw e; });
   }
-  // the new releases of the year you rewound to, so Rewind Night's front shelf is full of that year's tapes
-  var rewindHad = {};
-  function rewindStock(ry) {
-    if (!ry || !live || rewindHad[ry] || !pager || !pager["new"]) return;
-    rewindHad[ry] = 1;
-    var M = CINEMETA + "/catalog/movie/";
-    pager.rewind = { type: "movie", tail: 0, feeds: [feed(M + "year", "genre=" + ry), feed(M + "year", "genre=" + (ry - 1))] };
-    Promise.all(pager.rewind.feeds.map(function (f) { return pullFeed("rewind", f, 8000).then(function (m) { return m; }, function () { return []; }); })).then(function (b) {
-      placeBatch("rewind", b); fillPosters();
-      if (rewindYear() === ry && aisle === "new" && !modal) { renderSigns(); renderShelves(); rebuildRows(); clampFocus(); applyFocus(true); }
-    });
+  // ---------- Rewind Night: the whole store as it was in the year you pick ----------
+  // Each year gets its own delivery. First that year's and the year before's films, for the New Releases wall: these
+  // are asked for while you're still resting on the year in the dial, so they're usually in before you press OK.
+  // Then four more years of films and five years of television for the other aisles. Cinemeta has no "this genre in
+  // that year" list, so the genre aisles are sorted out here from each film's own genres.
+  var eraPager = {};
+  function eraKey(ry) { return "rw" + ry; }
+  function isEra(it) { return it.aisles.some(function (a) { return a.indexOf("rw") === 0; }); }
+  function eraFeed(type, yr) { var f = feed(CINEMETA + "/catalog/" + type + "/year", "genre=" + yr); f.type = type; f.yr = yr; return f; }
+  function eraPlace(ry, type, batches) {
+    var pg = eraPager[ry]; if (!pg) return;
+    // each year's delivery keeps its own places ("rw1994"), so one era's order never leaks into another's
+    pg.type = type; pager[eraKey(ry)] = pg; placeBatch(eraKey(ry), batches);
+    fillPosters();
   }
+  function eraPull(ry, feeds, type) {
+    return Promise.all(feeds.map(function (f) { return pullFeed("rewind", f, 8000).then(function (m) { return m; }, function () { return []; }); }))
+      .then(function (b) { eraPlace(ry, type, b); return b; });
+  }
+  // the front of the store for that year; the promise settles once those tapes are on the shelf
+  function rewindStock(ry) {
+    if (!ry || !live || onSample || !pager) return Promise.resolve();
+    var pg = eraPager[ry];
+    if (!pg) {
+      pg = eraPager[ry] = { type: "movie", tail: 0, feeds: [eraFeed("movie", ry), eraFeed("movie", ry - 1)], oldest: ry - 1, tease: [], dry: 0 };
+      pg.front = eraPull(ry, pg.feeds.slice(0, 2), "movie").then(function (b) {
+        pg.tease = (b[0] || []).slice(0, 3).map(function (m) { return m && m.name; }).filter(Boolean);
+        if (!b[0].length && !b[1].length && eraPager[ry] === pg) delete eraPager[ry];   // nothing came: ask again next time
+      });
+    }
+    return pg.front;
+  }
+  // the rest of that era, for the genre aisles and Television
+  function rewindRest(ry) {
+    var pg = eraPager[ry]; if (!pg || pg.rest) return;
+    pg.rest = true;
+    var films = [2, 3, 4, 5].map(function (n) { return eraFeed("movie", ry - n); }), shows = [0, 1, 2, 3, 4].map(function (n) { return eraFeed("series", ry - n); });
+    pg.feeds = pg.feeds.concat(films, shows); pg.oldest = ry - 5;
+    var settle = function () {
+      if (rewindY !== ry || modal || P || rewinding || landingOn) return;
+      renderSigns(); refreshShelvesInPlace(); rebuildRows(); clampFocus(); applyFocus(true);
+    };
+    eraPull(ry, films, "movie").then(settle);
+    eraPull(ry, shows, "series").then(settle);
+  }
+  // more of the era as you browse to the end of a shelf; when its lists run out, it reaches further back in time
+  function eraMore(key, ry) {
+    var pg = eraPager[ry]; if (!pg || pg.loading || !live || pg.dry > 4) return;
+    var type = key === "tv" ? "series" : "movie";
+    var open = pg.feeds.filter(function (f) { return !f.done && f.type === type && (key !== "new" || f.yr >= ry - 1); });
+    if (!open.length && key !== "new" && pg.rest && ry - pg.oldest < 14) { pg.oldest--; var nf = eraFeed(type, pg.oldest); pg.feeds.push(nf); open = [nf]; }
+    if (!open.length) return;
+    var f = open.sort(function (a, b) { return a.pages - b.pages || b.yr - a.yr; })[0];
+    pg.loading = true;
+    var before = aisleList(key).length;
+    pullFeed("rewind", f, 9000).then(function (metas) {
+      pg.loading = false;
+      eraPlace(ry, type, [metas]);
+      var after = aisleList(key).length, here = rewindY === ry && aisle === key;
+      pg.dry = after === before ? pg.dry + 1 : 0;
+      if (here && !modal && after !== before) refreshShelvesInPlace();
+      if (here && after === before && metas.length) setTimeout(function () { loadMore(key); }, 400);
+    }, function () { pg.loading = false; });
+  }
+  function isGenreAisle(key) { return key === "Animation" || GENRE_KEYS.indexOf(key) !== -1; }
+  function genreHas(it, key) {
+    var g = it.genres || [];
+    return g.indexOf(key) !== -1 || (key === "Thriller" && (g.indexOf("Crime") !== -1 || g.indexOf("Mystery") !== -1));
+  }
+  // A genre aisle (or Television) in the year you rewound to: the era's own delivery first, newest years at the front
+  // and each film in its home section, then older favourites the store already had.
+  function eraAisle(key, ry) {
+    var l = [], ek = eraKey(ry);
+    items.forEach(function (it) {
+      if (!it.year || it.year > ry || !it.aisles.length) return;
+      var inA = it.aisles.indexOf(key) !== -1, mine = it.rk && it.rk[ek] !== undefined, other = !mine && isEra(it), r;
+      if (key === "tv") {
+        if (it.type !== "series" || !(inA || mine || other)) return;
+      } else if (it.type === "series" || !(inA || ((mine || other) && genreHas(it, key)))) return;
+      var home = key === "tv" ? "" : homeOf(it);
+      // this year's delivery in its own order; tapes that came in for another year by age; then what the store had anyway
+      r = mine ? it.rk[ek] + (home && home !== key ? 150 : 0) + (ry - it.year) * 6 :
+        other ? 220 + (ry - it.year) * 25 + hash(it.id) % 40 : 260 + (it.rk && it.rk[key] !== undefined ? it.rk[key] : 500);
+      l.push({ it: it, r: r });
+    });
+    return l.sort(function (a, b) { return a.r - b.r; }).map(function (x) { return x.it; });
+  }
+  function eraPrice(ry) { return ry < 1980 ? "$1.50" : ry < 1990 ? "$2.49" : ry < 2000 ? "$2.99" : ry < 2010 ? "$3.49" : "$3.99"; }
   function loadLive() {
-    rewindHad = {};
+    eraPager = {};
     pager = stockPlan();
     var first = [];
     // the first page of every list, all at once; Classics starts with four of its eight years
@@ -2117,7 +2295,13 @@ body.night .logo { z-index: 6; }
       var got = 0;
       res.forEach(function (r) { r.batches.forEach(function (b) { got += b.length; }); });
       if (!got) throw new Error("Cinemeta sent no titles");
+      // tapes that came from your account (Continue Watching, Your Shelf, your lists) stay on the shelves until
+      // the account answers; only the catalog's own stock is replaced
+      var mine = function (a) { return a === "cw" || a === "lib" || a === "staff" || a.indexOf("addon") === 0; };
+      var kept = onSample ? [] : items.filter(function (it) { return it.aisles.some(mine); });
+      ["day", "night", "back"].forEach(function (r) { (roleItems[r] || []).forEach(function (it) { if (kept.indexOf(it) === -1) kept.push(it); }); });
       items = []; byId = {};
+      kept.forEach(function (it) { it.aisles = it.aisles.filter(mine); it.rk = {}; byId[it.id] = it; items.push(it); });
       res.forEach(function (r) { placeBatch(r.key, r.batches); });
       fillPosters();
       live = true; onSample = false;
@@ -2129,6 +2313,8 @@ body.night .logo { z-index: 6; }
   }
   // the next page of an aisle, fetched when you get near the end of its shelves
   function loadMore(key) {
+    var ry = rewindYear();
+    if (ry && !onSample && eraPager[ry] && (key === "new" || key === "tv" || isGenreAisle(key))) return eraMore(key, ry);
     var pg = pager[key];
     if (!pg || !pg.feeds || pg.loading || !live) return;
     var open = pg.feeds.filter(function (f) { return !f.done; });
@@ -2199,6 +2385,11 @@ body.night .logo { z-index: 6; }
           return { id: String(v.id || ""), season: intIn(v.season, 0, 9999), episode: intIn(v.episode != null ? v.episode : v.number, 0, 99999), title: v.title || v.name || "", overview: v.overview || v.description || "", released: v.released, thumbnail: webUrl(v.thumbnail) };
         })
       };
+      // tapes from your library arrive without these: fill them in from the details
+      if (!it.genres || !it.genres.length) it.genres = arr(m.genres || m.genre).filter(function (g) { return typeof g === "string"; });
+      if (!it.year) it.year = parseInt(m.releaseInfo || m.year, 10) || 0;
+      if (!it.blurb && d.description) it.blurb = d.description;
+      if (!it.runtime) it.runtime = parseInt(m.runtime, 10) || 0;
       metaCache[it.id] = d; return d;
     }, function (e) { delete metaFlights[id0]; base.failedAt = Date.now(); metaCache[it.id] = base; diag.err("Details for " + it.name + " didn't load", e); return base; });
   }
@@ -2215,7 +2406,7 @@ body.night .logo { z-index: 6; }
   }
   function styleFor(it) { var c = colorsFor(it); return "--c1:" + c.c1 + ";--c2:" + c.c2 + ";--c3:" + c.c3 + ";--c-ink:" + c.ink; }
   function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
-  function rewindYear() { return REWIND_YEARS[rewindIdx]; }
+  function rewindYear() { return rewindY; }
   function visible(it) { var y = rewindYear(); return !y || (it.year && it.year <= y); }
   function rating(it) {
     if (it.type === "series") return "TV";
@@ -2234,13 +2425,15 @@ body.night .logo { z-index: 6; }
     var ry = rewindYear();
     if (key === "new" && ry && !onSample) {
       l = items.filter(function (it) { return it.type !== "series" && it.year >= ry - 1 && it.year <= ry && it.aisles.length; });
-      var best = function (it) { var b = 1e9; if (it.rk) Object.keys(it.rk).forEach(function (k) { var r = it.rk[k] - (k === "rewind" ? 1e6 : 0); if (r < b) b = r; }); return b; };
+      var best = function (it) { var b = 1e9; if (it.rk) Object.keys(it.rk).forEach(function (k) { var r = it.rk[k] - (k === "rw" + ry ? 1e6 : 0); if (r < b) b = r; }); return b; };
       return l.map(function (it) { return { it: it, r: best(it) }; }).sort(function (a, b) { return a.r - b.r; }).map(function (x) { return x.it; });
     }
+    if (ry && !onSample && (key === "tv" || isGenreAisle(key))) return eraAisle(key, ry);
     if (key === "new" && !onSample) { var Y = new Date().getFullYear(); l = l.filter(function (it) { return !it.year || it.year >= Y - 1; }); }
     if (key === "classic") l = l.filter(function (it) { return it.year && it.year < 2000; });
     if (RANKED[key]) {
-      l = l.map(function (it, i) { return { it: it, r: it.rk && it.rk[key] !== undefined ? it.rk[key] : 1e7 + i }; })
+      var fresh = key !== "hold" && !rewindYear();
+      l = l.map(function (it, i) { return { it: it, r: (it.rk && it.rk[key] !== undefined ? it.rk[key] : 1e7 + i) + (fresh ? staleness(it) : 0) }; })
         .sort(function (a, b) { return a.r - b.r; }).map(function (x) { return x.it; });
     }
     return l;
@@ -2310,7 +2503,7 @@ body.night .logo { z-index: 6; }
     pre.onload = function () { if (document.body.contains(img)) img.src = big; };
     pre.src = big;
   }
-  function isRecent(it) { return !it.year || it.year >= new Date().getFullYear() - 1; }
+  function isRecent(it) { var y = rewindYear() || new Date().getFullYear(); return !it.year || (it.year >= y - 1 && it.year <= y); }
   function daysLate(it) {
     if (!(it.progress > 0.01) || !it.lastWatched) return 0;
     var d = Math.floor((Date.now() - it.lastWatched) / 864e5);
@@ -2353,12 +2546,12 @@ body.night .logo { z-index: 6; }
     var html = "";
     allAisles().forEach(function (a) {
       if (a.key !== "new" && a.key !== aisle && !aisleList(a.key).length) return;
-      html += '<button class="sign' + (a.key === "season" ? " seasonal" : "") + (a.key === aisle ? " current" : "") + '" data-aisle="' + a.key + '">' + esc(a.label) + "</button>";
+      html += '<button class="sign' + (a.key === "season" ? " seasonal" : "") + (a.key === aisle ? " current" : "") + '" data-aisle="' + a.key + '">' + esc(a.key === "new" && rewindYear() ? "New in " + rewindYear() : a.label) + "</button>";
     });
     $("signs").innerHTML = html;
   }
   // Your Shelf is shown as spines, like a home collection; everything else faces out
-  function aisleFaces(key) { return key !== "lib"; }
+  function aisleFaces(key) { return key !== "lib" || isTV(); }   // (on the TV it faces out too: spines are too small to read from the couch)
   function copiesFor(it, i, key) {
     if (key === "new" || key === "season") return i < 10 ? 3 : i < 24 ? 2 : 0;
     if (key === "staff" || key === "cw" || key === "blind") return 0;
@@ -2435,7 +2628,8 @@ body.night .logo { z-index: 6; }
   }
   function renderStrips(a) {
     var key = a ? a.key : "", name = a ? a.label.toUpperCase() : "";
-    var deal = key === "new" ? ["New release", "3 nights", "$3.99"] : key === "lib" ? ["Your shelf", "no late fees", "free"] :
+    var ry = rewindYear();
+    var deal = key === "new" ? (ry ? ["New for " + ry, "3 nights", eraPrice(ry)] : ["New release", "3 nights", "$3.99"]) : key === "lib" ? ["Your shelf", "no late fees", "free"] :
       key === "cw" ? ["Keep watching", "rewind optional", "free"] : key === "blind" ? ["Blind date", "no peeking", "$2.99"] :
       key === "season" ? [name, "5 nights", "2 for $5"] : key === "classic" ? ["Classics", "7 nights", "99¢"] :
       key === "hold" ? ["On hold", "behind the counter", (prefs.memberName || "your name").toUpperCase()] : [name || "Catalog", "5 nights", "$1.99"];
@@ -2559,11 +2753,26 @@ body.night .logo { z-index: 6; }
         marqueeFor(it);
       }
     } else marqueeFor(null);
+    showTag(el);
     // phones scroll the page; the TV layout fits on one screen
     if (r && (r.top < 0 || r.bottom > window.innerHeight)) window.scrollTo(0, window.pageYOffset + r.top - window.innerHeight * 0.35);
     if (!quiet) { var nowT = Date.now(); moveStreak = nowT - moveClock < 320 ? moveStreak + 1 : 1; moveClock = nowT; sfx(moveStreak > 4 ? "tickfast" : "tick"); }
   }
 
+  // the shelf tag: the title of the tape you're on, in big letters right under it
+  function showTag(el) {
+    var tags = document.querySelectorAll(".tag");
+    for (var i = 0; i < tags.length; i++) tags[i].hidden = true;
+    if (!el || !el.classList.contains("tape") || !isTV()) return;
+    var sh = el.parentNode, tag = sh.parentNode.querySelector(".tag"), it = byId[el.getAttribute("data-id")];
+    if (!tag || !it) return;
+    tag.innerHTML = el.getAttribute("data-blind") ? "Blind date<b>? ? ?</b>" : esc(it.name) + (it.year ? "<b>" + esc(it.year) + "</b>" : it.type === "series" ? "<b>TV</b>" : "");
+    // centred under the tape; at either end of the shelf it lines up with the tape's edge instead of running off the wall
+    var x = el.offsetLeft - sh.scrollLeft, w = el.offsetWidth, W = sh.clientWidth, cx = x + w / 2, edge = window.innerHeight * 0.28;
+    tag.className = "tag" + (cx < edge ? " l" : cx > W - edge ? " r" : "");
+    tag.style.left = Math.round(cx < edge ? Math.max(0, x) : cx > W - edge ? Math.min(W, x + w) : cx) + "px";
+    tag.hidden = false;
+  }
   function loadCover(el) {
     var cov = el.querySelector(".cover[data-poster]");
     if (!cov || cov.getAttribute("data-loading")) return;
@@ -2624,7 +2833,7 @@ body.night .logo { z-index: 6; }
     Array.prototype.forEach.call(document.querySelectorAll("#signs .sign"), function (s) {
       s.classList.toggle("current", s.getAttribute("data-aisle") === key);
     });
-    renderShelves(); rebuildRows();
+    renderShelves(); rebuildRows(); noteShown(key);
     focus.r = rowKinds.indexOf("signs");
     rows[focus.r].forEach(function (el, i) { if (el.getAttribute("data-aisle") === key) focus.c = i; });
     applyFocus();
@@ -3251,6 +3460,7 @@ body.night .logo { z-index: 6; }
   function caseView(it, quiet, from) {
     if (cwUndo && cwUndo.id !== it.id) cwUndo = null;
     if (!quiet) sfx("clack");
+    if (!quiet && seen[it.id]) { delete seen[it.id]; saveSeenSoon(); }   // picked up: it isn't being walked past
     if (!quiet && daysLate(it)) later([380], function () { sfx("coin"); });
     var w = isWatched(it.id);
     var lateChip = daysLate(it) ? '<span class="chip late-chip">LATE · ' + lateFee(it) + " owing</span>" : "";
@@ -3590,6 +3800,7 @@ body.night .logo { z-index: 6; }
   }
   function activateModal(el) {
     var act = el.getAttribute("data-m"), id = el.getAttribute("data-id"), it = id && byId[id];
+    if (act.indexOf("rw-") === 0) { rewindAct(act, el); return; }
     if (act === "input") { if (useBoard()) openBoard(el); else editField(el); return; }
     if (act === "close") { if (modal && modal.onBack === putBack) putBack(); else { sfx("close"); closeModal(); } }
     else if (act === "flip") flipBox();
@@ -3736,18 +3947,98 @@ body.night .logo { z-index: 6; }
     else if (a === "desk") frontDesk(0);
     else if (a === "sound") { audioReady(); setSound(!prefs.sound); }
     else if (a === "trailers") { prefs.trailers = !prefs.trailers; save("fnv-prefs", prefs); updateCounter(); if (!prefs.trailers) $("tvFrame").innerHTML = ""; }
-    else if (a === "rewind") {
-      rewindIdx = (rewindIdx + 1) % REWIND_YEARS.length;
-      rewindStock(REWIND_YEARS[rewindIdx]);
-      var ry = REWIND_YEARS[rewindIdx], wsec = ry ? 0.35 + (new Date().getFullYear() - ry) / 40 : 0.4;
-      whirr(wsec); later([wsec * 1000], function () { sfx("clunk"); });
-      var r = focus.r;
-      renderSigns(); renderShelves(); rebuildRows(); updateCounter(); updateOSD();
-      var cr = rowKinds.lastIndexOf("counter"), rw = cr !== -1 ? rows[cr].indexOf(document.querySelector('#counter [data-action="rewind"]')) : -1;
-      focus = cr !== -1 ? { r: cr, c: Math.max(0, rw) } : { r: r, c: focus.c };
-      clampFocus(); applyFocus(true);
-      setBanner();
+    else if (a === "rewind") rewindPanel();
+  }
+
+  // ---------- Rewind Night: choosing the year ----------
+  // A VCR counter you wind with the arrows: left and right a year, up and down a decade, OK to go. Green takes you
+  // straight back to tonight. Whichever year the dial rests on has its new releases fetched there and then.
+  var rewindLast = store("fnv-rewind-last", 0, function (n) { return numIn(n, REWIND_MIN, 2100) ? n : 0; });
+  var rwPick = 0, rwDwell = null;
+  function rewindMax() { return new Date().getFullYear() - 2; }
+  function rewindPanel() {
+    var Y = new Date().getFullYear(), tv = isTV(), decs = "";
+    rwPick = Math.max(REWIND_MIN, Math.min(rewindMax(), rewindY || rewindLast || Y - 30));
+    for (var d = Math.floor(REWIND_MIN / 10) * 10; d <= rewindMax(); d += 10)
+      decs += '<button class="rw-dec" data-m="rw-dec" data-d="' + d + '" data-y="' + Math.max(REWIND_MIN, Math.min(rewindMax(), d + 5)) + '">' + String(d).slice(2) + "s</button>";
+    sfx("shuffle");
+    openModal('<div class="panel rw-panel"><div class="rw-vcr"><div class="rw-top"><span>◀◀ REWIND NIGHT</span><span>' + (rewindY ? "NOW IN " + rewindY : "SET THE YEAR") + "</span></div>" +
+      '<div class="rw-dial"><button class="rw-arrow" data-m="rw-prev" aria-label="A year earlier">◀</button><div class="rw-year" id="rwYear"></div><button class="rw-arrow" data-m="rw-next" aria-label="A year later">▶</button></div>' +
+      '<div class="rw-decs" id="rwDecs">' + decs + '</div><div class="rw-tease" id="rwTease"></div></div>' +
+      "<p>Set the store back to any year. Every aisle turns into what was on the shelves then.</p>" +
+      '<div class="actions"><button class="btn primary" data-m="rw-go" id="rwGo"></button>' +
+      (tv ? "" : (rewindY ? '<button class="btn" data-m="rw-off">Back to ' + Y + "</button>" : "") + '<button class="btn" data-m="close">Never mind</button>') + "</div>" +
+      '<p class="rw-keys"><kbd>◀ ▶</kbd>a year<kbd>▲ ▼</kbd>ten years<kbd>OK</kbd>rewind' + (rewindY ? '<kbd class="g">GREEN</kbd>back to ' + Y : "") + "<kbd>BACK</kbd>never mind</p></div>");
+    modal.view = "rewind";
+    modal.keys = function (k) {
+      if (k === KEY.LEFT) rwStep(-1); else if (k === KEY.RIGHT) rwStep(1); else if (k === KEY.UP) rwStep(10); else if (k === KEY.DOWN) rwStep(-10);
+      else if (k === KEY.GREEN && rewindY) setRewind(0);
+      else return false;
+      return true;
+    };
+    rwShow(true);
+  }
+  function rwStep(n) {
+    var y = Math.max(REWIND_MIN, Math.min(rewindMax(), rwPick + n));
+    if (y === rwPick) return;
+    rwPick = y; sfx("tick"); rwShow();
+  }
+  function rwShow(now) {
+    var y = rwPick; if (!$("rwYear")) return;
+    $("rwYear").textContent = String(y);
+    $("rwGo").textContent = y === rewindY ? "Stay in " + y : "Rewind to " + y;
+    Array.prototype.forEach.call($("rwDecs").children, function (b) { b.classList.toggle("on", +b.getAttribute("data-d") === Math.floor(y / 10) * 10); });
+    modal.idx = Math.max(0, modal.els.indexOf($("rwGo"))); modalFocus(true);
+    rwTease(y);
+    clearTimeout(rwDwell);
+    // rest on a year for a moment and its tapes are on their way before you press OK
+    if (live && !onSample) rwDwell = setTimeout(function () {
+      var v = modal && modal.seq;
+      rewindStock(y).then(function () { if (sameView(v) && rwPick === y) rwTease(y, true); });
+    }, now ? 0 : 280);
+  }
+  function rwTease(y, asked) {
+    var el = $("rwTease"), pg = eraPager[y]; if (!el) return;
+    el.textContent = !live || onSample ? "SAMPLE SHELVES · ONLY TAPES OUT BY " + y :
+      pg && pg.tease.length ? "JUST IN · " + pg.tease.join(" · ").toUpperCase() : asked ? "THE DELIVERY'S RUNNING LATE · OK TO TRY ANYWAY" : "CHECKING THE STOCKROOM…";
+  }
+  function rewindAct(act, el) {
+    if (act === "rw-prev") rwStep(-1);
+    else if (act === "rw-next") rwStep(1);
+    else if (act === "rw-dec") { var y = +el.getAttribute("data-y"); if (y && y !== rwPick) { rwPick = y; sfx("tick"); } rwShow(); }
+    else if (act === "rw-off") setRewind(0);
+    else if (act === "rw-go") setRewind(rwPick);
+  }
+  // The rewind itself: a blue VCR screen winds the year counter back (or forward to tonight) while the tapes arrive,
+  // then you're standing at that year's New Releases wall.
+  function setRewind(y) {
+    var Y = new Date().getFullYear(), from = rewindY || Y, to = y || Y;
+    clearTimeout(rwDwell);
+    if (modal) closeModal();
+    if (y === rewindY || rewinding) return;
+    if (y) { rewindLast = y; save("fnv-rewind-last", y); }
+    var back = to < from, dur = Math.max(650, Math.min(1400, 450 + Math.abs(from - to) * 22)), veil = $("rwVeil");
+    veil.className = "rw-veil" + (back ? "" : " ff");
+    veil.innerHTML = '<div class="rw-track"></div><div class="rw-osd"><span>' + (back ? "◀◀ REW" : "FF ▶▶") + "</span><span>" + (y ? "REWIND NIGHT" : "BACK TO TONIGHT") + '</span></div><div class="rw-count" id="rwCount">' + from + "</div>";
+    veil.hidden = false; rewinding = true;
+    whirr(dur / 1000);
+    var t0 = Date.now(), done = false;
+    var tick = setInterval(function () { var k = Math.min(1, (Date.now() - t0) / dur), c = $("rwCount"); if (c) c.textContent = String(Math.round(from + (to - from) * k)); }, 50);
+    function finish() {
+      if (done) return; done = true; clearInterval(tick);
+      rewindY = y;
+      if (y || !aisleList(aisle).length) aisle = "new";
+      renderSigns(); renderShelves(); rebuildRows(); updateCounter(); updateOSD(); setBanner();
+      var sr = rowKinds.indexOf("shelf");
+      focus = { r: sr !== -1 ? sr : 0, c: 0 };
+      clampFocus(); tvCurrent = null; applyFocus(true);
+      veil.hidden = true; veil.innerHTML = ""; rewinding = false;
+      sfx("clunk");
     }
+    var ready = y ? rewindStock(y) : Promise.resolve();
+    if (y) rewindRest(y);
+    ready.then(function () { setTimeout(finish, Math.max(0, dur - (Date.now() - t0))); });
+    setTimeout(finish, 4500);   // a slow delivery doesn't hold you at the blue screen: the tapes fill in when they land
   }
 
   // ---------- your Stremio account ----------
@@ -3757,12 +4048,12 @@ body.night .logo { z-index: 6; }
       p.then(function (v) { clearTimeout(t); resolve(v); }, function (e) { clearTimeout(t); reject(e); });
     });
   }
-  function api(method, body) {
+  function api(method, body, ms) {
     var ctl = window.AbortController ? new AbortController() : null;
     var req = fetch(API + method, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body), signal: ctl ? ctl.signal : undefined })
       .then(function (r) { if (!r.ok) throw new Error("Stremio's servers answered " + r.status + "."); return r.json(); });
-    return timeoutP(req.catch(function (e) { if (e && e.name === "AbortError") throw new Error("Stremio took too long to answer."); throw e; }), 9000, ctl)
-      .then(function (j) { if (j.error) throw new Error(j.error.message || "Stremio said no."); return j.result; });
+    return timeoutP(req.catch(function (e) { if (e && e.name === "AbortError") throw new Error("Stremio took too long to answer."); throw e; }), ms || 9000, ctl)
+      .then(function (j) { if (j.error) { var er = new Error(j.error.message || "Stremio said no."); er.stremio = true; er.code = j.error.code; throw er; } return j.result; });
   }
   function saveAccount(key) { account = { authKey: key }; save("fnv-auth", account); updateCounter(); }
 
@@ -3810,7 +4101,7 @@ body.night .logo { z-index: 6; }
   }
   function loadLibrary() {
     var mine = account.authKey;
-    return api("datastoreGet", { authKey: mine, collection: "libraryItem", ids: [], all: true }).then(function (list) {
+    return api("datastoreGet", { authKey: mine, collection: "libraryItem", ids: [], all: true }, 20000).then(function (list) {
       if (!account || account.authKey !== mine) return 0;
       list = (list || []).filter(function (li) { return li && li._id && li.type !== "other"; });
       libRaw = {}; list.forEach(function (li) { libRaw[li._id] = li; });
@@ -3820,6 +4111,7 @@ body.night .logo { z-index: 6; }
         .map(fromLibrary).sort(function (a, b) { return b.mtime - a.mtime; });
       // drop the example progress from the sample shelf
       items.forEach(function (it) { var i = it.aisles.indexOf("cw"); if (i !== -1) { it.aisles.splice(i, 1); it.progress = 0; } });
+      items.forEach(function (it) { var j = it.aisles.indexOf("lib"); if (j !== -1) it.aisles.splice(j, 1); });
       cw.slice(0, 30).forEach(function (it) { var x = add(it, "cw"); x.progress = it.progress; x.videoId = it.videoId; x.lastWatched = it.lastWatched; });
       lib.forEach(function (it) { add(it, "lib"); });
       fillPosters();
@@ -3851,6 +4143,9 @@ body.night .logo { z-index: 6; }
       installedAddons = addons;
       clearCopyCache();
       var jobs = [], extras = [], staffFound = false;
+      // lists are stocked afresh each time, so a list you've moved or hidden doesn't leave its tapes behind
+      items.forEach(function (it) { it.aisles = it.aisles.filter(function (a) { return a !== "staff" && a.indexOf("addon") !== 0; }); });
+      Object.keys(pager).forEach(function (k) { if (k.indexOf("addon") === 0) delete pager[k]; });
       staffConnected = false;
       var roles = { day: [], night: [], back: [] }, choices = [];
       addons.forEach(function (ad) {
@@ -3895,6 +4190,7 @@ body.night .logo { z-index: 6; }
       });
     });
   }
+  var firstShelves = true;   // the first time your tapes arrive, the store opens on Continue Watching
   function refreshAccount(announce) {
     if (!account) return Promise.resolve();
     $("status").textContent = "Pulling your tapes…";
@@ -3904,14 +4200,18 @@ body.night .logo { z-index: 6; }
       setTimeout(saveSnapshot, 0);
       accountInfo = r[0] + " titles in your library · " + r[1].addons + " addons" + (r[1].staff ? " · Staff Picks from Letterboxd" : "");
       tagSpecial();
-      if (aisleList("cw").length && (aisle === "new" || announce)) aisle = "cw";
+      if (!allAisles().some(function (a) { return a.key === aisle; })) aisle = "new";
+      if (aisleList("cw").length && (announce || (firstShelves && aisle === "new"))) aisle = "cw";
+      firstShelves = false;
       renderAll(!announce);
       $("status").textContent = "Welcome back · your tapes are on the shelves";
       diag.account = { ok: true, t: Date.now(), info: accountInfo };
     }, function (e) {
       diag.account = { ok: false, t: Date.now() }; diag.err("Your Stremio account didn't load", e);
-      if (/auth|session|token/i.test(e.message)) { account = null; save("fnv-auth", null); updateCounter(); }
+      // only Stremio itself saying the sign-in is no good signs you out (not a hotel wi-fi page or a garbled answer)
+      if (e && e.stremio && (e.code === 1 || /auth|session|token/i.test(e.message))) { account = null; save("fnv-auth", null); updateCounter(); }
       $("status").textContent = "Couldn't pull your tapes just now · try Refresh at the front desk";
+      tagSpecial(); renderAll(true);
     });
   }
 
@@ -4003,6 +4303,7 @@ body.night .logo { z-index: 6; }
   }
 
   // ---------- seasonal displays, blind dates ----------
+  function dayShuffle(list) { return list.map(function (it) { return { it: it, k: daily(hash(it.id) % 99991) }; }).sort(function (a, b) { return a.k - b.k; }).map(function (x) { return x.it; }); }
   function shuffled2(list) { var a = list.slice(); for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
   var holds = store("fnv-holds", [], function (l) {
     return l.filter(function (h) { return isObj(h) && typeof h.id === "string" && h.id && typeof h.name === "string" && numIn(h.t, 0, 1e13); }).slice(0, 80);
@@ -4057,13 +4358,13 @@ body.night .logo { z-index: 6; }
       items.filter(function (it) { return it.aisles.length && it.type !== "series" && season.match(it); }).slice(0, 30)
         .forEach(function (it) { it.aisles.push("season"); });
     }
-    shuffled2(items.filter(function (it) { return it.aisles.length && it.type !== "series" && it.blurb && !isWatched(it.id) && !(it.progress > 0.01); })).slice(0, 12)
+    dayShuffle(items.filter(function (it) { return stocked(it) && visible(it) && it.type !== "series" && it.blurb && !isWatched(it.id) && !(it.progress > 0.01); })).slice(0, 12)
       .forEach(function (it) { it.aisles.push("blind"); });
     updateSeasonDecor();
   }
   function setBanner() {
     var b = $("banner");
-    if (rewindYear()) b.innerHTML = "<b>" + String(rewindYear()).slice(2) + "</b><span>REWIND<br>NIGHT</span><em>only tapes out by " + rewindYear() + "</em>";
+    if (rewindYear()) b.innerHTML = "<b>" + String(rewindYear()).slice(2) + "</b><span>REWIND<br>NIGHT</span><em>the shelves of " + rewindYear() + "</em>";
     else if (season) b.innerHTML = season.banner;
     else b.innerHTML = "<b>3</b><span>NIGHTS<br>$3.99</span><em>every new release</em>";
   }
@@ -4777,7 +5078,7 @@ body.night .logo { z-index: 6; }
   function quickPlay(it, epVid) {
     if (!it) return;
     if (it.type === "series" && !it.videoId && !epVid) { sfx("press"); return episodesView(it); }
-    if (account && live && !installedAddons.length) { toast("Still opening up, one moment…", 2500); return; }
+    if (account && live && !installedAddons.length && !diag.account) { toast("Still opening up, one moment…", 2500); return; }
     var vid = epVid || (it.type === "series" ? it.videoId : it.id), started = false;
     sfx("press"); toast("Getting " + it.name + " ready…", 4000);
     co = { it: it, vid: vid, copies: null };
@@ -5622,7 +5923,7 @@ body.night .logo { z-index: 6; }
     if (eps.length <= 400) return;
     eps.sort(function (a, b) { return progressMap[a].at - progressMap[b].at; }).slice(0, eps.length - 400).forEach(function (k) { delete progressMap[k]; });
   }
-  function saveLocalProgress(finished) {
+  function saveLocalProgress(finished, nextId) {
     if (!P || !P.eng) return;
     var t = P.eng.time(), d = P.eng.duration();
     var epKey = "ep:" + P.vid;
@@ -5636,7 +5937,8 @@ body.night .logo { z-index: 6; }
     save("fnv-progress", progressMap);
     // keep Continue Watching on the shelf in step
     var it = P.it;
-    if (finished) { it.progress = 0; it.aisles = it.aisles.filter(function (a) { return a !== "cw"; }); }
+    if (finished && nextId) { it.progress = 0; it.videoId = nextId; it.lastWatched = Date.now(); if (it.aisles.indexOf("cw") === -1) it.aisles.push("cw"); }
+    else if (finished) { it.progress = 0; it.aisles = it.aisles.filter(function (a) { return a !== "cw"; }); }
     else if (d) { it.progress = t / d; it.lastWatched = Date.now(); if (it.type === "series") it.videoId = P.vid; if (it.aisles.indexOf("cw") === -1) it.aisles.push("cw"); }
   }
   // a copy of this title's Stremio library entry to change and send back (a hidden one if it isn't in your library,
@@ -5663,15 +5965,15 @@ body.night .logo { z-index: 6; }
     libRaw[it.id] = li;
     api("datastorePut", { authKey: account.authKey, collection: "libraryItem", changes: [li] }).catch(function (e) { diag.err("Couldn't tell Stremio about " + it.name, e); });
   }
-  function syncStremio(finished) {
+  function syncStremio(finished, nextId) {
     if (!P || !P.eng || !account || P.eng.kind === "fake") return;
     var it = P.it, now = new Date().toISOString(), t = Math.round(P.eng.time()), d = Math.round(P.eng.duration());
     var li = libItemFor(it);
     var st = li.state;
-    st.timeOffset = finished ? 0 : t;
+    st.timeOffset = finished ? (nextId ? 1 : 0) : t;
     st.duration = d;
     st.lastWatched = now;
-    st.video_id = P.vid;
+    st.video_id = finished && nextId ? nextId : P.vid;
     st.timeWatched = (st.timeWatched || 0) + P.watched;
     st.overallTimeWatched = (st.overallTimeWatched || 0) + P.watched;
     if (finished) { st.timesWatched = (st.timesWatched || 0) + 1; if (li.type === "movie") st.flaggedWatched = 1; }
@@ -5682,6 +5984,13 @@ body.night .logo { z-index: 6; }
   }
 
   // --- endings ---
+  // the episode after this one, from details already in hand (null if there isn't one, it hasn't aired, or we haven't looked)
+  function nextAfter(m, vid) {
+    var vids = ((m && m.videos) || []).filter(function (v) { return v.season > 0; }).sort(function (a, b) { return a.season - b.season || a.episode - b.episode; });
+    var i = -1; vids.forEach(function (v, k) { if (v.id === vid) i = k; });
+    var nx = i >= 0 && vids[i + 1] ? vids[i + 1] : null;
+    return nx && !notAired(nx) ? nx : null;
+  }
   function nextEpisode(cb) {
     if (!P || P.it.type !== "series") return cb(null);
     var vid = P.vid;
@@ -5696,7 +6005,9 @@ body.night .logo { z-index: 6; }
   function tapeEnded(stoppedByYou) {
     if (!P || P.ended) return;
     P.ended = true;
-    saveLocalProgress(true); syncStremio(true);
+    // a finished episode leaves the show on Continue Watching, pointing at the next one (as Stremio's own apps do)
+    var upNext = P.it.type === "series" ? nextAfter(metaCache[P.it.id], P.vid) : null, upId = upNext ? upNext.id : "";
+    saveLocalProgress(true, upId); syncStremio(true, upId);
     if (stoppedByYou) return rewindEnding();
     if (P.sleep && P.sleep.mode === "end") return goToSleep();
     if (P.it.type === "series" && nextEpMode() !== "off") {
@@ -7538,7 +7849,7 @@ body.night .logo { z-index: 6; }
       land.hidden = true; land.className = "land"; zoom.style.transformOrigin = "";
       stopAmbience();
       if (prefs.sound) startHum();
-      lastInput = Date.now(); tvCurrent = null; applyFocus(true);
+      lastInput = Date.now(); tvCurrent = null; applyFocus(true); noteShown(aisle);
       refreshLibraryQuietly(10 * 60000);   // been a while: pick up anything you watched elsewhere
     }
     if (isCalm()) { setTimeout(inside, 300); return; }
@@ -7611,6 +7922,7 @@ body.night .logo { z-index: 6; }
     }
     if (P) { if (playerKey(k)) e.preventDefault(); return; }
     if (prefs.sound && !hum) startHum();
+    if (rewinding) { e.preventDefault(); return; }
     if (osk) { if (boardKey(e)) e.preventDefault(); return; }
     if (modal) {
       var typing = document.activeElement && document.activeElement.tagName === "INPUT";
@@ -7624,6 +7936,7 @@ body.night .logo { z-index: 6; }
         if (modal.idx < modal.els.length - 1) { modal.idx++; modalFocus(); }
         return;
       }
+      if (modal.keys && !typing && modal.keys(k)) { e.preventDefault(); return; }
       // Info on a box flips it over to read the back
       if (k === KEY.INFO && !typing) { if ($("box3d")) flipBox(); e.preventDefault(); return; }
       if ((k === MEDIA.PLAY || k === MEDIA.PLAYPAUSE) && !typing) {
@@ -7666,7 +7979,7 @@ body.night .logo { z-index: 6; }
     else if (k === KEY.CHUP || k === 33) stepAisle(1);
     else if (k === KEY.CHDOWN || k === 34) stepAisle(-1);
     else if (k === KEY.RED) clerk();
-    else if (k === KEY.GREEN) activateStore(document.querySelector('[data-action="rewind"]'));
+    else if (k === KEY.GREEN) { if (rewindY) setRewind(0); else rewindPanel(); }
     else if (k === KEY.YELLOW) returns();
     else if (k === KEY.BLUE) {
       audioReady();
@@ -7712,6 +8025,7 @@ body.night .logo { z-index: 6; }
   $("tvCard").querySelector(".t").textContent = prefs.storeName;
   if (!prefs.outside) prefs.outside = "sunset";
   showLanding();
+  if (!landingOn) noteShown(aisle);
   if (prefs.sound) startHum();
   // The catalog (Cinemeta) and your account load independently: a catalog hiccup no longer skips your library and lists.
   loadLive().then(function () { return true; }, function (e) { diag.err("Stremio's catalog didn't answer", e); return false; }).then(function (catalogOK) {
@@ -7722,7 +8036,9 @@ body.night .logo { z-index: 6; }
       items.forEach(function (it) { it.aisles = it.aisles.filter(function (a) { return a !== "cw"; }); it.progress = 0; it.lastWatched = 0; });
     }
     if (account) {
+      if (catalogOK) { tagSpecial(); renderAll(true); }   // today's stock goes on the shelves straight away
       return refreshAccount(false).then(function () {
+        if (catalogOK) restockLater();
         if (!account) { tagSpecial(); renderAll(true); }
         if (!catalogOK) status.textContent = account ? "Tonight's delivery is late · your own tapes are on the shelves" : "Tonight's delivery is late · showing last night's shelves";
         if (landingOn) updateLanding();
@@ -7743,7 +8059,7 @@ body.night .logo { z-index: 6; }
   function restockLater() {
     var jobs = [];
     ["classic"].forEach(function (key) { var pg = pager[key]; if (pg) pg.feeds.slice(4).forEach(function (f) { jobs.push([key, f]); }); });
-    Object.keys(pager).forEach(function (key) { var pg = pager[key]; pg.feeds.forEach(function (f) { if (!f.done && f.pages < 2) jobs.push([key, f]); }); });
+    Object.keys(pager).forEach(function (key) { if (key.indexOf("addon") === 0) return; var pg = pager[key]; pg.feeds.forEach(function (f) { if (!f.done && f.pages < 2) jobs.push([key, f]); }); });
     var n = 0;
     (function next() {
       if (n >= jobs.length) { tagSpecial(); renderSigns(); saveSnapshot(); return; }
@@ -7751,7 +8067,7 @@ body.night .logo { z-index: 6; }
       if (f.done || (P && P.eng)) { setTimeout(next, P && P.eng ? 30000 : 50); return; }
       var before = aisleList(key).length;
       pullFeed(key, f, 9000).then(function (metas) {
-        var pg = pager[key]; placeBatch(key, pg.feeds.map(function (x) { return x === f ? metas : []; }));
+        var pg = pager[key]; if (!pg) return; placeBatch(key, pg.feeds.map(function (x) { return x === f ? metas : []; }));
         fillPosters();
         if (aisle === key && !modal && aisleList(key).length !== before) refreshShelvesInPlace();
       }, function () {}).then(function () { setTimeout(next, 900); });
@@ -7774,6 +8090,8 @@ body.night .logo { z-index: 6; }
       localStorage.setItem("fnv-good", JSON.stringify({ ref: pend, version: APP_VERSION, t: Date.now() }));
       localStorage.removeItem("fnv-boot-pending");
       localStorage.removeItem("fnv-boot-fails");
+      // a newer release has opened fine: forget the one that was skipped, so it can be tried again if it's ever re-issued
+      if (localStorage.getItem("fnv-bad-ref") && localStorage.getItem("fnv-bad-ref") !== pend) localStorage.removeItem("fnv-bad-ref");
       try { sessionStorage.removeItem("fnv-next-html"); } catch (e) {}
     } catch (e) {}
   }, 4000);

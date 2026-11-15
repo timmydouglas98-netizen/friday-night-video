@@ -16,7 +16,7 @@ Nothing else belongs at the top level: the store always lives in `app/store.html
 - Arrows: browse the shelves
 - OK: pick up a case, then Rent it
 - Back: put it back (from the shelves, Back steps outside)
-- Red: Ask the clerk (with double features) · Green: Rewind Night · Yellow: Return slot · Blue: store sounds on/off
+- Red: Ask the clerk (with double features) · Green: Rewind Night (press again to come back to tonight) · Yellow: Return slot · Blue: store sounds on/off
 - On a box: Flip the box to read the back (synopsis, cast, director and IMDb rating from Stremio). The Info button flips it too
 - Mark as watched on a film also marks it in your Stremio account
 - Search: "Do you have…?" at the counter searches Stremio for movies and TV
@@ -33,7 +33,8 @@ The whole app is drawn like a late-90s TV cartoon: painted backgrounds, inked ce
 - Blind Date: brown-paper tapes showing only the blurb. Unwrap or rent unseen
 - Put it on hold: on any box, "Put it on hold" slips a name card under a rubber band and keeps the tape behind the counter in the On Hold aisle. Signed in to Stremio, it also goes into your Stremio library so it's waiting on your phone too. Renting it picks it up
 - Fresh stock: every aisle draws on several of Stremio's lists (this week's popular titles plus the featured list), restocks a little differently each day, and fills in more as you browse to the end. Each title lives in one section, so the same blockbusters don't front every aisle
-- New Releases are this year's and last year's films only. Rewind Night turns them into the new releases of the year you rewound to
+- New Releases are this year's and last year's films only
+- Rewind Night: pick any year from 1960 to two years ago on the VCR dial (left and right a year, up and down a decade, OK to go). The whole store becomes that year: its new releases on the front wall, and every genre aisle and Television stocked from that year and the few before it. The year's tapes start arriving while you're still on the dial
 - Classics: popular films from eight years between 1960 and 1999, a different eight each day. Animation has its own aisle
 - Late fees: anything in Continue Watching untouched for two weeks gets a LATE sticker
 - After 10pm the store dims; at 11:45pm there's a closing announcement
