@@ -101,6 +101,11 @@ button { font: inherit; color: inherit; }
 .screen > * { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
 .tv-still { background-size: cover; background-position: center; filter: saturate(1.25) contrast(1.05); }
 .tv-frame iframe { width: 100%; height: 100%; border: 0; }
+/* A trailer's frame is taller than its window, so YouTube's title bar and logo fall outside the picture
+   (the film itself keeps its full width). Nothing in it can be clicked or focused. */
+.tv-frame, .intro-yt { overflow: hidden; }
+.intro-yt { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: #000; }
+.tv-frame iframe.yt, .intro-yt iframe.yt { position: absolute; left: 0; top: -30%; width: 100%; height: 160%; border: 0; pointer-events: none; }
 .tv-card {
   display: -webkit-box; display: flex; flex-direction: column; justify-content: center; align-items: center;
   text-align: center; padding: 6%;
@@ -568,6 +573,31 @@ html.calm .wx-rain i, html.calm .wx-snow i { opacity: .35; }
   92.5% { transform: translateZ(-4px) rotateX(-12deg); }
   95%, 100% { transform: translateZ(-4px) rotateX(0deg); }
 }
+/* ---------- loading the tape: two inked shots, animated on twos like the rest of the store ----------
+   1. on the coffee table, the tape slides out of its case   2. under the TV, it goes into the VCR */
+.tape2 { background: #120f18; }
+.t2-stage { position: absolute; left: 50%; top: 50%; width: 1920px; height: 1080px; margin: -540px 0 0 -960px; }
+.t2-shot { position: absolute; top: 0; left: 0; width: 1920px; height: 1080px; overflow: hidden; }
+.t2-shot svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: block; }
+.t2-s2 { display: none; color: #b4b2c6; }
+.tape2.shot2 .t2-s1 { display: none; }
+.tape2.shot2 .t2-s2 { display: block; }
+.t2-s2.blue { color: #4d6dff; }
+.t2-sleeve { position: absolute; left: 318px; top: 148px; width: 470px; height: 758px; --case-h: 758px; transform: rotate(-4deg); border: 5px solid #1b151e; border-radius: 7px; overflow: hidden; background: #2a2630; box-shadow: 16px 20px 0 rgba(18,10,22,.5); }
+.t2-sleeve .cover { opacity: 1; position: absolute; top: 0; left: 0; right: 0; bottom: 0; width: auto; height: auto; }
+.t2-cas1 { animation: t2out 1.2s forwards; animation-timing-function: steps(3); }
+@keyframes t2out { 0%, 16% { transform: translate(0, 0); } 30% { transform: translate(70px, 4px); } 52% { transform: translate(360px, 14px); } 72% { transform: translate(560px, 20px); } 84%, 100% { transform: translate(612px, 22px); } }
+.tape2.still .t2-cas1 { animation: none; transform: translate(612px, 22px); }
+.t2-screen { animation: t2snow .24s steps(2) infinite; }
+@keyframes t2snow { from { fill-opacity: .72; } to { fill-opacity: 1; } }
+.t2-s2.blue .t2-screen, .tape2.still .t2-screen { animation: none; fill-opacity: 1; }
+.t2-vfd { font-family: "VT323", "Courier New", monospace; font-size: 62px; fill: #24523a; }
+.t2-vfd.on { fill: #6dffa0; }
+.t2-led.on { fill: #ff4b3a; }
+.t2-vcr.thunk { animation: thunk .28s ease-out; }
+html.calm .t2-screen, html.calm .t2-cas1 { animation: none; }
+html.calm .t2-cas1 { transform: translate(612px, 22px); }
+
 .tracking { position: absolute; left: 0; right: 0; height: 9vh; top: -10vh; background: linear-gradient(transparent, rgba(255,255,255,.35) 30%, rgba(255,255,255,.12) 50%, rgba(0,0,0,.4) 70%, transparent); animation: track 1.1s linear infinite; }
 @keyframes track { from { top: -10vh; } to { top: 100vh; } }
 .intro-osd { position: absolute; top: 5vh; left: 5vw; right: 5vw; display: flex; justify-content: space-between; font-family: var(--f-osd); font-size: 6vh; color: #fff; text-shadow: 2px 2px 0 #000; }
@@ -1871,7 +1901,7 @@ body.night .logo { z-index: 6; }
   var extraAisles = [];      // catalogs from the person's installed addons
   var pager = {};            // aisle key -> { base, extras, type, skip, done, loading }
   var MAX_PER_AISLE = 600;
-  var APP_VERSION = "0.20.0", APP_UPDATED = "15 Nov 2026";
+  var APP_VERSION = "0.21.0", APP_UPDATED = "15 Nov 2026";
   var staffConnected = false;
   function staffOn() { return staffConnected || !!(account && prefs.staffSeen); }
   var account = store("fnv-auth", null, function (a) { return typeof a.authKey === "string" && a.authKey ? a : null; });   // { authKey }
@@ -2008,9 +2038,12 @@ body.night .logo { z-index: 6; }
   }
   function $(id) { return document.getElementById(id); }
 
+  var seqNo = 0;
+  // ties on a shelf are settled by the order tapes arrived in, so the same list always sorts the same way
+  function byRank(a, b) { return a.r - b.r || (a.it.seq || 0) - (b.it.seq || 0); }
   function add(it, a) {
     var ex = byId[it.id];
-    if (!ex) { ex = it; ex.aisles = []; byId[it.id] = ex; items.push(ex); }
+    if (!ex) { ex = it; ex.aisles = []; ex.seq = ++seqNo; byId[it.id] = ex; items.push(ex); }
     else {
       ["poster", "blurb", "year", "progress", "videoId", "seen", "type"].forEach(function (k) { if (!ex[k] && it[k]) ex[k] = it[k]; });
       if (!ex.genres || !ex.genres.length) ex.genres = it.genres;
@@ -2112,9 +2145,9 @@ body.night .logo { z-index: 6; }
         genres: strList(a[4], 12), poster: webUrl(a[5]), blurb: typeof a[6] === "string" ? a[6] : "", progress: numIn(a[8], 0, 1) ? a[8] : 0,
         videoId: typeof a[9] === "string" ? a[9] : "", seen: !!a[10], lastWatched: numIn(a[11], 0, 1e13) ? a[11] : 0, runtime: numIn(a[12], 0, 10000) ? a[12] : undefined };
       if (typeof a[13] === "string") it.fromList = a[13];
-      if (isObj(a[14])) { it.rk = {}; Object.keys(a[14]).forEach(function (k) { if (RANKED[k] && numIn(a[14][k], -1e13, 1e8)) it.rk[k] = a[14][k]; }); }
+      if (isObj(a[14])) { it.rk = {}; Object.keys(a[14]).forEach(function (k) { if ((RANKED[k] || k === "staff" || k.indexOf("addon") === 0) && numIn(a[14][k], -1e13, 1e8)) it.rk[k] = a[14][k]; }); }
       it.aisles = strList(a[7], 40);
-      ids[it.id] = it; its.push(it);
+      it.seq = ++seqNo; ids[it.id] = it; its.push(it);
     });
     if (!its.length) return false;
     var extra = Array.isArray(snap.extra) ? snap.extra.filter(function (x) { return isObj(x) && typeof x.key === "string" && typeof x.label === "string"; }) : [];
@@ -2174,11 +2207,11 @@ body.night .logo { z-index: 6; }
       (metas || []).forEach(function (m, i) {
         var it0 = fromMeta(m); if (!it0.id || !it0.name) return;
         // a New Release has to be out already: this year's list also carries films still to come
-        if (key === "new" && m.released && Date.parse(m.released) > Date.now()) return;
+        if (key === "new" && m.released && Date.parse(m.released) > Date.now()) { if (upcoming.length < 40) upcoming.push(it0); return; }
         if (pg.type) it0.type = m.type || pg.type;
         var it = add(it0, key);
         // a wide daily shuffle: the front of the shelf is a different draw from the first hundred or so each day
-        var r = base + Math.floor((i * n + s) * 0.4 + daily(hash(it.id) % 997) * 60) + (gen && homeOf(it) && homeOf(it) !== key ? 40 : 0);
+        var r = base + (i * n + s) * 0.4 + daily(hash(it.id) % 997) * 60 + (gen && homeOf(it) && homeOf(it) !== key ? 40 : 0);
         rankIn(key, it, r); if (r > top) top = r;
       });
     });
@@ -2277,11 +2310,11 @@ body.night .logo { z-index: 6; }
         other ? 220 + (ry - it.year) * 25 + hash(it.id) % 40 : 260 + (it.rk && it.rk[key] !== undefined ? it.rk[key] : 500);
       l.push({ it: it, r: r });
     });
-    return l.sort(function (a, b) { return a.r - b.r; }).map(function (x) { return x.it; });
+    return l.sort(byRank).map(function (x) { return x.it; });
   }
   function eraPrice(ry) { return ry < 1980 ? "$1.50" : ry < 1990 ? "$2.49" : ry < 2000 ? "$2.99" : ry < 2010 ? "$3.49" : "$3.99"; }
   function loadLive() {
-    eraPager = {};
+    eraPager = {}; upcoming = [];
     pager = stockPlan();
     var first = [];
     // the first page of every list, all at once; Classics starts with four of its eight years
@@ -2335,10 +2368,19 @@ body.night .logo { z-index: 6; }
   }
   // re-draw the current aisle without jumping the shelves back to the start
   function refreshShelvesInPlace() {
-    var st = shelfState, list = aisleList(aisle), same = st.key === aisle && list.length >= st.list.length;
-    for (var i = 0; same && i < st.shown; i++) if (list[i] !== st.list[i]) same = false;
+    var st = shelfState, fresh = aisleList(aisle), same = st.key === aisle, has = {};
+    // What's already on the shelf stays exactly where it is, and anything new goes on after it. (Sorting the whole
+    // aisle again here could slide a tape from one shelf to the other, so the row below showed films you'd just passed.)
     if (same) {
-      st.list = list;
+      fresh.forEach(function (it) { has[it.id] = 1; });
+      for (var i = 0; same && i < st.shown; i++) if (!has[st.list[i].id]) same = false;
+      // a shelf that wasn't full yet is simply drawn again
+      if (same && st.shown < shelfChunk(st.faces) * st.nRows && fresh.length > st.shown) same = false;
+    }
+    if (same) {
+      var head = st.list.slice(0, st.shown), inHead = {};
+      head.forEach(function (it) { inHead[it.id] = 1; });
+      st.list = head.concat(fresh.filter(function (it) { return !inHead[it.id]; }));
       if (rowKinds[focus.r] === "shelf" && focus.c >= rows[focus.r].length - 8) growShelves();
       return;
     }
@@ -2426,7 +2468,7 @@ body.night .logo { z-index: 6; }
     if (key === "new" && ry && !onSample) {
       l = items.filter(function (it) { return it.type !== "series" && it.year >= ry - 1 && it.year <= ry && it.aisles.length; });
       var best = function (it) { var b = 1e9; if (it.rk) Object.keys(it.rk).forEach(function (k) { var r = it.rk[k] - (k === "rw" + ry ? 1e6 : 0); if (r < b) b = r; }); return b; };
-      return l.map(function (it) { return { it: it, r: best(it) }; }).sort(function (a, b) { return a.r - b.r; }).map(function (x) { return x.it; });
+      return l.map(function (it) { return { it: it, r: best(it) }; }).sort(byRank).map(function (x) { return x.it; });
     }
     if (ry && !onSample && (key === "tv" || isGenreAisle(key))) return eraAisle(key, ry);
     if (key === "new" && !onSample) { var Y = new Date().getFullYear(); l = l.filter(function (it) { return !it.year || it.year >= Y - 1; }); }
@@ -2434,7 +2476,11 @@ body.night .logo { z-index: 6; }
     if (RANKED[key]) {
       var fresh = key !== "hold" && !rewindYear();
       l = l.map(function (it, i) { return { it: it, r: (it.rk && it.rk[key] !== undefined ? it.rk[key] : 1e7 + i) + (fresh ? staleness(it) : 0) }; })
-        .sort(function (a, b) { return a.r - b.r; }).map(function (x) { return x.it; });
+        .sort(byRank).map(function (x) { return x.it; });
+    }
+    // a list from an add-on keeps the list's own order (Letterboxd's ranking, say), not the order its tapes reached the store
+    else if (key === "staff" || key.indexOf("addon") === 0) {
+      l = l.map(function (it) { return { it: it, r: it.rk && it.rk[key] !== undefined ? it.rk[key] : 1e7 }; }).sort(byRank).map(function (x) { return x.it; });
     }
     return l;
   }
@@ -2917,25 +2963,47 @@ body.night .logo { z-index: 6; }
   }
   // YouTube reports trouble (removed, region-locked, embedding off) through messages; if it does,
   // the corner TV goes back to the still instead of showing an error card
-  var trailerWatch = null;
-  function watchTrailer(frame, id) {
+  var ytFrames = [];
+  // Every trailer goes through here: no controls, no keyboard, no related videos, no annotations, and captions are
+  // switched off as soon as the player answers.
+  function ytHTML(id, o) {
+    var v = encodeURIComponent(id);
+    return '<iframe class="yt" tabindex="-1" title="' + esc(o.title || "Trailer") + '" allow="autoplay; encrypted-media" src="https://www.youtube-nocookie.com/embed/' + v +
+      "?autoplay=1&mute=" + (o.mute ? 1 : 0) + "&controls=0&disablekb=1&fs=0&rel=0&modestbranding=1&playsinline=1&iv_load_policy=3&enablejsapi=1" + (o.loop ? "&loop=1&playlist=" + v : "") + '"></iframe>';
+  }
+  function ytSay(frame, msg) { try { frame.contentWindow.postMessage(JSON.stringify(msg), "*"); } catch (e) {} }
+  function ytQuiet(frame) {
+    ytSay(frame, { event: "command", func: "unloadModule", args: ["captions"] });
+    ytSay(frame, { event: "command", func: "unloadModule", args: ["cc"] });
+    ytSay(frame, { event: "command", func: "setOption", args: ["captions", "track", {}] });
+  }
+  // h: { playing, ended, error }, each optional
+  function ytWatch(frame, h) {
     if (!frame) return;
-    var ok = false;
-    function back() { if (tvCurrent !== id) return; $("tvFrame").innerHTML = ""; $("osdL").textContent = "PLAY ▶"; }
-    trailerWatch = { id: id, frame: frame, fail: function () { if (!ok) back(); }, ok: function () { ok = true; } };
-    frame.addEventListener("load", function () {
-      try { frame.contentWindow.postMessage(JSON.stringify({ event: "listening", id: 1, channel: "widget" }), "*"); } catch (e) {}
-    });
+    ytFrames = ytFrames.filter(function (x) { return document.body.contains(x.frame); });
+    ytFrames.push({ frame: frame, h: h || {}, on: false });
+    frame.addEventListener("load", function () { ytSay(frame, { event: "listening", id: 1, channel: "widget" }); ytQuiet(frame); });
   }
   window.addEventListener("message", function (e) {
-    if (!trailerWatch || !/^https:\/\/www\.youtube(-nocookie)?\.com$/.test(String(e.origin))) return;
-    if (!trailerWatch.frame || e.source !== trailerWatch.frame.contentWindow) return;
+    if (!/^https:\/\/www\.youtube(-nocookie)?\.com$/.test(String(e.origin))) return;
+    var rec = null; ytFrames.forEach(function (x) { if (x.frame.contentWindow === e.source) rec = x; });
+    if (!rec) return;
     var d = e.data; try { d = typeof d === "string" ? JSON.parse(d) : d; } catch (x) { return; }
     if (!d) return;
-    if (d.event === "onError") trailerWatch.fail();
-    else if (d.event === "infoDelivery" && d.info && d.info.playerState === 1) trailerWatch.ok();
-    else if (d.event === "onStateChange" && d.info === 1) trailerWatch.ok();
+    var st = d.event === "onStateChange" ? d.info : d.event === "infoDelivery" && d.info ? d.info.playerState : undefined;
+    if (d.event === "onReady" || d.event === "initialDelivery") ytQuiet(rec.frame);
+    if (d.event === "onError") { if (rec.h.error) rec.h.error(); }
+    else if (st === 1) {
+      ytQuiet(rec.frame);
+      if (!rec.on) { rec.on = true; setTimeout(function () { ytQuiet(rec.frame); }, 1500); }
+      if (rec.h.playing) rec.h.playing();
+    }
+    else if (st === 0 && rec.h.ended) rec.h.ended();
   });
+  function watchTrailer(frame, id) {
+    var ok = false;
+    ytWatch(frame, { playing: function () { ok = true; }, error: function () { if (!ok && tvCurrent === id) { $("tvFrame").innerHTML = ""; $("osdL").textContent = "PLAY ▶"; } } });
+  }
   function tvShow(it) {
     tvCurrent = it.id;
     $("osdL").textContent = "PLAY ▶";
@@ -2959,9 +3027,7 @@ body.night .logo { z-index: 6; }
         if (prefs.trailers && m.trailers.length) {
           trailerTimer = setTimeout(function () {
             if (tvCurrent !== it.id || modal) return;
-            var yt = encodeURIComponent(m.trailers[0]);
-            $("tvFrame").innerHTML = '<iframe title="' + esc("Trailer: " + it.name) + '" allow="autoplay; encrypted-media" src="https://www.youtube-nocookie.com/embed/' + yt +
-              "?autoplay=1&mute=" + (prefs.sound ? 0 : 1) + "&controls=0&rel=0&modestbranding=1&playsinline=1&iv_load_policy=3&enablejsapi=1&loop=1&playlist=" + yt + '"></iframe>';
+            $("tvFrame").innerHTML = ytHTML(m.trailers[0], { mute: !prefs.sound, loop: true, title: "Trailer: " + it.name });
             $("osdL").textContent = "TRAILER ▶"; sfx("degauss");
             watchTrailer($("tvFrame").querySelector("iframe"), it.id);
           }, 2600);
@@ -3371,6 +3437,40 @@ body.night .logo { z-index: 6; }
     if (ac) duckRoom(true);
     modalFocus(true);
   }
+  // Arrows in a panel go where they point: up and down between rows, left and right along one. At the end of a line,
+  // left and right carry on to the next one, so nothing is out of reach.
+  function modalMove(k) {
+    var els = modal.els, cur = els[modal.idx], vert = k === KEY.UP || k === KEY.DOWN, fwd = k === KEY.DOWN || k === KEY.RIGHT, pick = -1;
+    if (cur) {
+      var a = cur.getBoundingClientRect(), cands = [], near = Infinity;
+      els.forEach(function (el, i) {
+        if (i === modal.idx) return;
+        var b = el.getBoundingClientRect(); if (!b.width && !b.height) return;
+        var gap, side, tol = 4;
+        if (vert) {
+          gap = fwd ? b.top - a.bottom : a.top - b.bottom;
+          side = Math.max(0, Math.max(a.left, b.left) - Math.min(a.right, b.right));      // 0 when one is above the other
+        } else {
+          gap = fwd ? b.left - a.right : a.left - b.right;
+          side = Math.max(0, Math.max(a.top, b.top) - Math.min(a.bottom, b.bottom));
+          if (side > 0) return;                                                             // left and right stay on the line
+        }
+        if (gap < -tol) return;
+        gap = Math.max(0, gap);
+        cands.push({ i: i, gap: gap, side: side, mid: vert ? Math.abs(a.left + a.width / 2 - b.left - b.width / 2) : Math.abs(a.top + a.height / 2 - b.top - b.height / 2) });
+        if (gap < near) near = gap;
+      });
+      // the nearest row (or the nearest thing along the line), and on it whatever lines up best
+      var band = near + (vert ? a.height : a.width) * 0.5, best = null;
+      cands.forEach(function (c) {
+        if (c.gap > band) return;
+        if (!best || c.side < best.side || (c.side === best.side && (vert ? c.mid < best.mid : c.gap < best.gap))) best = c;
+      });
+      if (best) pick = best.i;
+    }
+    if (pick === -1 && !vert) { pick = modal.idx + (fwd ? 1 : -1); if (pick < 0 || pick >= els.length) pick = -1; }
+    if (pick !== -1) { modal.idx = pick; modalFocus(); }
+  }
   function modalFocus(quiet) {
     modal.els.forEach(function (e) {
       e.classList.remove("focused");
@@ -3606,12 +3706,14 @@ body.night .logo { z-index: 6; }
   function listRole(key, name) {
     var set = prefs.listRoles || {};
     if (set[key]) return set[key];
-    return /cult|midnight|trash|grindhouse|b-movie|b movie|exploitation|weird|odd|obscure|video nast|so bad|cursed/i.test(name || "") ? "back" : "aisle";
+    // whole words only: "difficult" and "pop culture" are not cult lists
+    return /\b(cult|midnight|trash|grindhouse|b-movies?|b movies?|exploitation|weird|odd|obscure|video nast\w*|so bad|cursed)\b/i.test(name || "") ? "back" : "aisle";
   }
   var listsT = null;
   function listsPanel(idx) {
     var listButtons = catalogChoices.map(function (c, i) {
-      return '<button class="btn" data-m="listrole" data-i="' + i + '"><span class="lab">' + esc(c.name) + '</span><span class="val">' + ROLE_LABEL[c.role] + "</span></button>";
+      var how = c.role === "off" ? "" : c.full ? " · no room for another aisle" : c.fail ? " · didn't answer, will try again" : typeof c.n === "number" ? " · " + c.n + (c.more ? "+" : "") + (c.n === 1 ? " tape" : " tapes") : "";
+      return '<button class="btn" data-m="listrole" data-i="' + i + '"><span class="lab">' + esc(c.name) + '</span><span class="val">' + ROLE_LABEL[c.role] + how + "</span></button>";
     }).join("");
     openModal('<div class="panel lists" role="dialog" aria-label="Clerks and the back room">' +
       clerkHead(catalogChoices.length ? "Each list from your add-ons can be its own aisle, one of our picks, or hidden in the back room. Press OK to change." :
@@ -4143,9 +4245,17 @@ body.night .logo { z-index: 6; }
       installedAddons = addons;
       clearCopyCache();
       var jobs = [], extras = [], staffFound = false;
-      // lists are stocked afresh each time, so a list you've moved or hidden doesn't leave its tapes behind
-      items.forEach(function (it) { it.aisles = it.aisles.filter(function (a) { return a !== "staff" && a.indexOf("addon") !== 0; }); });
-      Object.keys(pager).forEach(function (k) { if (k.indexOf("addon") === 0) delete pager[k]; });
+      // Each list is restocked when it answers and keeps what it had if it doesn't; lists you've moved, hidden or
+      // removed are cleared out once they've all been asked. A list gets 20 seconds and a second try, because a
+      // new Letterboxd list can take a while the first time it's fetched.
+      var wanted = {};
+      function restock(key, metas, type) {
+        items.forEach(function (it) { var i = it.aisles.indexOf(key); if (i !== -1) it.aisles.splice(i, 1); if (it.rk) delete it.rk[key]; });
+        metas.forEach(function (mt, i) { var it = fromMeta(mt); if (!it.id || !it.name) return; it.type = mt.type || type; rankIn(key, add(it, key), i); });
+      }
+      function fetchList(url) {
+        return getJSON(url, 20000).then(null, function () { return new Promise(function (go) { setTimeout(go, 1500); }).then(function () { return getJSON(url, 20000); }); });
+      }
       staffConnected = false;
       var roles = { day: [], night: [], back: [] }, choices = [];
       addons.forEach(function (ad) {
@@ -4163,27 +4273,39 @@ body.night .logo { z-index: 6; }
             if (role === "off") return;
             if (role !== "aisle") {
               // a clerk's list or the back room: stocked, but never shown as an aisle
-              jobs.push(getJSON(base + "/catalog/" + c.type + "/" + encodeURIComponent(c.id) + ".json", 8000).then(function (j) {
-                (j.metas || []).forEach(function (mt) { var it = fromMeta(mt); it.type = mt.type || c.type; var ex = add(it, null); if (!ex.fromList) ex.fromList = nm; roles[role].push(ex); });
-              }, function (e) { diag.addonFail(m.name || "Add-on", "list " + nm, e); }));
+              var ch = choices[choices.length - 1];
+              jobs.push(fetchList(base + "/catalog/" + c.type + "/" + encodeURIComponent(c.id) + ".json").then(function (j) {
+                var ms = (j && j.metas) || []; ch.n = ms.length; ch.fail = false;
+                ms.forEach(function (mt) { var it = fromMeta(mt); if (!it.id || !it.name) return; it.type = mt.type || c.type; var ex = add(it, null); if (!ex.fromList) ex.fromList = nm; roles[role].push(ex); });
+              }, function (e) {
+                ch.fail = true; diag.addonFail(m.name || "Add-on", "list " + nm, e);
+                (roleItems[role] || []).forEach(function (x) { if (x.fromList === nm) roles[role].push(x); });   // keep what it had
+              }));
               return;
             }
-            if (extras.length >= 8) return;
-            key = "addon" + extras.length;
+            if (extras.length >= 24) { choices[choices.length - 1].full = true; return; }
+            // the aisle's name in the store's books stays the same from visit to visit, whatever order the lists come in
+            key = "addon" + hash(ck).toString(36); while (wanted[key]) key += "x";
             var label = c.name || m.name || "Addon";
             extras.push({ key: key, label: label.length > 24 ? label.slice(0, 23) + "…" : label });
           }
+          wanted[key] = 1;
+          var choice = key === "staff" ? null : choices[choices.length - 1];
           var cbase = base + "/catalog/" + c.type + "/" + encodeURIComponent(c.id);
           var pages = (c.extra || []).some(function (e) { return e && e.name === "skip"; }) || (c.extraSupported || []).indexOf("skip") !== -1;
-          jobs.push(getJSON(cbase + ".json", 8000).then(function (j) {
-            var metas = j.metas || [];
-            metas.forEach(function (mt) { var it = fromMeta(mt); it.type = mt.type || c.type; add(it, key); });
+          jobs.push(fetchList(cbase + ".json").then(function (j) {
+            var metas = (j && j.metas) || [];
+            restock(key, metas, c.type);
+            if (choice) { choice.n = metas.length; choice.more = pages && metas.length >= 50; choice.fail = false; }
             if (pages && metas.length) pager[key] = { type: c.type, tail: 1e6, feeds: [{ base: cbase, extras: "", skip: metas.length, start: 0, done: false, pages: 1, fails: 0 }] };
-          }, function (e) { diag.addonFail(m.name || "Add-on", "aisle " + (c.name || c.id), e); }));
+            else delete pager[key];
+          }, function (e) { if (choice) choice.fail = true; diag.addonFail(m.name || "Add-on", "aisle " + (c.name || c.id), e); }));
         });
       });
       extraAisles = extras;
       return Promise.all(jobs).then(function () {
+        items.forEach(function (it) { it.aisles = it.aisles.filter(function (a) { return (a !== "staff" && a.indexOf("addon") !== 0) || wanted[a]; }); });
+        Object.keys(pager).forEach(function (k) { if (k.indexOf("addon") === 0 && !wanted[k]) delete pager[k]; });
         roleItems = roles; catalogChoices = choices;
         if (modal && modal.view === "lists") listsPanel(modal.idx);
         return { addons: addons.length, staff: staffFound };
@@ -4755,8 +4877,9 @@ body.night .logo { z-index: 6; }
       if (m.background) { var img = new Image(); img.onload = function () { if (!current()) return; $("dStill").style.backgroundImage = cssUrl(m.background); card.style.display = "none"; }; img.src = m.background; }
       if (prefs.trailers && !isLight() && m.trailers.length) demoTrailerT = setTimeout(function () {
         if (!current()) return;
-        var yt = encodeURIComponent(m.trailers[0]), hr = new Date().getHours(), hush = !prefs.sound || hr >= 22 || hr < 7;   // no trailer sound late at night
-        $("dFrame").innerHTML = '<iframe title="' + esc("Trailer: " + it.name) + '" allow="autoplay; encrypted-media" src="https://www.youtube-nocookie.com/embed/' + yt + "?autoplay=1&mute=" + (hush ? 1 : 0) + '&controls=0&rel=0&modestbranding=1&playsinline=1&iv_load_policy=3"></iframe>';
+        var hr = new Date().getHours(), hush = !prefs.sound || hr >= 22 || hr < 7;   // no trailer sound late at night
+        $("dFrame").innerHTML = ytHTML(m.trailers[0], { mute: hush, loop: true, title: "Trailer: " + it.name });
+        ytWatch($("dFrame").querySelector("iframe"));
       }, 2500);
     });
     demoT = setTimeout(demoNext, live ? 45000 : 12000);
@@ -5476,72 +5599,236 @@ body.night .logo { z-index: 6; }
     P.lastSave = Date.now();
     P.eng.start();
   }
+  // ---------- loading the tape ----------
+  // Drawn the way the outside of the store is: inked shapes, flat colour with one shadow tone, moving on twos.
+  var T2 = { INK: "#1b151e", CX: 960, HY: 110, Z0: 3000, W: 770, D: 430, yT: 596, yB: 688 };
+  function t2Cassette(title) {   // the cassette lying label-up, 720 x 410 around its middle
+    var I = ' stroke="' + T2.INK + '" stroke-width="5" stroke-linejoin="round"', o = "";
+    o += '<rect x="-352" y="-190" width="720" height="410" rx="24" fill="#120f18" opacity=".45"/>';
+    o += '<rect x="-360" y="-205" width="720" height="410" rx="24" fill="#24212b"' + I + "/>";
+    o += '<path d="M-336,-205 L-60,-205 L-250,205 L-336,205 Q-360,205 -360,181 L-360,-181 Q-360,-205 -336,-205 Z" fill="#2e2a37"/>';
+    o += '<rect x="-330" y="146" width="660" height="38" rx="8" fill="#19171f"' + I.replace('"5"', '"3"') + "/>";
+    for (var i = 0; i < 14; i++) o += '<rect x="' + (-306 + i * 45) + '" y="154" width="22" height="22" rx="3" fill="#2a2732"/>';
+    // the label, handwritten at the store
+    o += '<rect x="-304" y="-182" width="608" height="126" rx="9" fill="#f6eeda"' + I.replace('"5"', '"4"') + "/>";
+    o += '<path d="M-302,-146 L-302,-172 Q-302,-180 -294,-180 L294,-180 Q302,-180 302,-172 L302,-146 Z" fill="#c8352b"/>';
+    o += '<text x="-284" y="-153" font-family="Oswald, Arial Narrow, sans-serif" font-weight="600" font-size="21" letter-spacing="4" fill="#fff6e4">PROPERTY OF ' + esc(prefs.storeName.toUpperCase().slice(0, 30)) + "</text>";
+    o += '<text x="-284" y="-84" font-family="Caprasimo, Cooper Black, Georgia, serif" font-size="46" fill="#1e3d93"' + (title.length > 20 ? ' textLength="560" lengthAdjust="spacingAndGlyphs"' : "") + ">" + esc(title) + "</text>";
+    o += '<path d="M-284,-70 L250,-70" stroke="#c9bfa6" stroke-width="2"/>';
+    // the window and the two reels: all the tape is on the left one, rewound and ready
+    o += '<clipPath id="t2Win"><rect x="-212" y="-30" width="424" height="150" rx="18"/></clipPath>';
+    o += '<rect x="-212" y="-30" width="424" height="150" rx="18" fill="#59627c"' + I.replace('"5"', '"4"') + "/>";
+    o += '<g clip-path="url(#t2Win)"><circle cx="-100" cy="45" r="98" fill="#6b4630"/><circle cx="-100" cy="45" r="98" fill="none" stroke="#4d3122" stroke-width="5"/>' +
+      '<circle cx="-100" cy="45" r="70" fill="none" stroke="#7d553b" stroke-width="3"/><circle cx="112" cy="45" r="46" fill="#6b4630" stroke="#4d3122" stroke-width="5"/>' +
+      '<path d="M-212,-30 L-90,-30 L-170,120 L-212,120 Z" fill="#fff" opacity=".12"/></g>';
+    [-100, 112].forEach(function (cx) {
+      o += '<circle cx="' + cx + '" cy="45" r="30" fill="#f1ead8"' + I.replace('"5"', '"3.5"') + '/><circle cx="' + cx + '" cy="45" r="11" fill="#24212b"/>';
+      for (var k = 0; k < 6; k++) { var a = k * Math.PI / 3; o += '<rect x="-3.5" y="-25" width="7" height="9" fill="#24212b" transform="translate(' + cx + ',45) rotate(' + (k * 60) + ')"/>'; }
+    });
+    [[-338, -183], [338, -183], [-338, 124], [338, 124]].forEach(function (p) { o += '<circle cx="' + p[0] + '" cy="' + p[1] + '" r="7" fill="#15131a" stroke="#3a3644" stroke-width="2"/>'; });
+    return o;
+  }
+  function t2Shot1(title) {
+    var I = ' stroke="' + T2.INK + '" stroke-width="5"', o = '<svg viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice" aria-hidden="true">';
+    o += '<defs><radialGradient id="t2Lamp" cx="62%" cy="42%" r="62%"><stop offset="0" stop-color="#ffd58a" stop-opacity=".42"/><stop offset=".55" stop-color="#ffb060" stop-opacity=".12"/><stop offset="1" stop-color="#1a0f18" stop-opacity=".2"/></radialGradient>' +
+      '<radialGradient id="t2Vig1" cx="55%" cy="46%" r="75%"><stop offset=".5" stop-color="#140a12" stop-opacity="0"/><stop offset="1" stop-color="#140a12" stop-opacity=".6"/></radialGradient></defs>';
+    // the coffee table: boards, a few knots and a ring where someone's mug was
+    o += '<rect width="1920" height="1080" fill="#8a5632"/>';
+    [0, 216, 432, 648, 864].forEach(function (y, i) {
+      o += '<rect x="0" y="' + y + '" width="1920" height="216" fill="' + (i % 2 ? "#93603a" : "#85522f") + '"/><path d="M0,' + y + ' L1920,' + y + '" stroke="#5b3620" stroke-width="5"/>';
+      o += '<path d="M' + (120 + i * 310) + "," + (y + 70) + " q160,-26 340,0 M" + (900 + i * 130) + "," + (y + 150) + ' q220,22 420,-6" fill="none" stroke="#6f4326" stroke-width="3" opacity=".7"/>';
+    });
+    o += '<ellipse cx="1560" cy="250" rx="34" ry="20" fill="#6a3f24"/><ellipse cx="1560" cy="250" rx="16" ry="9" fill="#55301b"/><ellipse cx="250" cy="930" rx="26" ry="15" fill="#6a3f24"/>';
+    o += '<ellipse cx="1650" cy="860" rx="92" ry="88" fill="none" stroke="#6f4326" stroke-width="7" opacity=".55"/>';
+    o += '<rect width="1920" height="1080" fill="url(#t2Lamp)"/>';
+    // the tape, sliding out from under its case
+    o += '<g class="t2-cas1"><g transform="translate(600,540) rotate(93)">' + t2Cassette(title) + "</g></g>";
+    o += '<rect width="1920" height="1080" fill="url(#t2Vig1)"/>';
+    return o + "</svg>";
+  }
+  function t2Shot2() {
+    var K = T2.INK, I = ' stroke="' + K + '" stroke-width="6" stroke-linejoin="round"', I4 = ' stroke="' + K + '" stroke-width="4" stroke-linejoin="round"', o = '<svg viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice" aria-hidden="true">';
+    o += '<defs><linearGradient id="t2Fall" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="currentColor" stop-opacity=".42"/><stop offset="1" stop-color="currentColor" stop-opacity="0"/></linearGradient>' +
+      '<radialGradient id="t2Vig" cx="50%" cy="52%" r="72%"><stop offset=".45" stop-color="#0c0810" stop-opacity="0"/><stop offset="1" stop-color="#0c0810" stop-opacity=".62"/></radialGradient>' +
+      '<clipPath id="t2Slot"><rect x="560" y="592" width="800" height="100"/></clipPath></defs>';
+    // the wall behind the cabinet
+    o += '<rect width="1920" height="1080" fill="#3d3157"/>';
+    for (var s = 0; s < 14; s++) o += '<rect x="' + (s * 148 - 20) + '" y="0" width="58" height="1080" fill="#44375f"/>';
+    // the cabinet: top board, sides, the dark shelf the VCR lives on, a drawer underneath
+    o += '<rect x="228" y="198" width="1464" height="882" fill="#1d1826"/>';
+    o += '<rect x="228" y="198" width="1464" height="150" fill="url(#t2Fall)"/>';
+    o += '<path d="M228,904 L1692,904 L1580,736 L340,736 Z" fill="#9a6238"' + I4 + '/><path d="M228,904 L340,736 L420,736 L330,904 Z" fill="#7a4a2a"/>';
+    o += '<path d="M392,872 L1528,872 L1470,800 L450,800 Z" fill="#17121d" opacity=".55"/>';
+    o += '<rect x="140" y="198" width="90" height="882" fill="#7f4f2d"' + I + '/><rect x="1690" y="198" width="90" height="882" fill="#7f4f2d"' + I + "/>";
+    o += '<rect x="140" y="198" width="34" height="882" fill="#925c36"/><rect x="1690" y="198" width="34" height="882" fill="#925c36"/>';
+    o += '<rect x="228" y="904" width="1464" height="40" fill="#8a5632"' + I4 + '/><rect x="228" y="944" width="1464" height="140" fill="#734527"' + I4 + "/>";
+    o += '<rect x="290" y="976" width="1340" height="120" rx="8" fill="#7f4f2d"' + I4 + '/><ellipse cx="960" cy="1022" rx="46" ry="13" fill="#d9a441"' + I4 + '/><ellipse cx="960" cy="1019" rx="30" ry="6" fill="#f0c666"/>';
+    o += '<rect x="120" y="150" width="1680" height="50" rx="6" fill="#a86a3c"' + I + '/><rect x="126" y="154" width="1668" height="12" fill="#bd7d49"/>';
+    // the bottom of the television sitting on top: a slice of screen, the brand, the speaker
+    o += '<rect x="330" y="-40" width="1260" height="192" rx="20" fill="#2b2833"' + I + '/><rect x="336" y="126" width="1248" height="22" fill="#211e28"/>';
+    o += '<rect class="t2-screen" x="420" y="-60" width="930" height="140" rx="30" fill="currentColor"' + I + '/><path d="M450,62 L1320,62" stroke="#fff" stroke-width="4" opacity=".35"/>';
+    for (var g = 0; g < 7; g++) o += '<rect x="1400" y="' + (-6 + g * 16) + '" width="150" height="7" rx="3" fill="#17141d"/>';
+    o += '<text x="885" y="121" text-anchor="middle" font-family="Oswald, Arial Narrow, sans-serif" font-weight="600" font-size="22" letter-spacing="9" fill="#8f8ca0">VIDEOVISION</text><circle cx="1362" cy="113" r="6" fill="#ff4b3a"/>';
+    // the VCR
+    o += '<g class="t2-vcr" id="t2Vcr">';
+    o += '<rect x="452" y="846" width="84" height="18" rx="4" fill="#15131a"/><rect x="1384" y="846" width="84" height="18" rx="4" fill="#15131a"/>';
+    o += '<path d="M410,560 L1510,560 L1416,483 L504,483 Z" fill="#4c4c5c"' + I + '/><path d="M410,560 L1510,560 L1416,483 L504,483 Z" fill="url(#t2Fall)"/>';
+    for (var v = 0; v < 11; v++) { var vx = 1130 + v * 26; o += '<path d="M' + vx + ",540 L" + (vx - 16) + ',502" stroke="' + K + '" stroke-width="5" stroke-linecap="round"/>'; }
+    o += '<rect x="410" y="560" width="1100" height="290" rx="12" fill="#363642"' + I + "/>";
+    o += '<path d="M422,712 L1498,712 L1498,838 Q1498,844 1492,844 L428,844 Q422,844 422,838 Z" fill="#2a2a34"/><path d="M416,712 L1504,712" stroke="' + K + '" stroke-width="4"/><path d="M424,570 L1496,570" stroke="#585868" stroke-width="5" stroke-linecap="round"/>';
+    o += '<rect x="546" y="580" width="828" height="124" rx="10" fill="#0d0b12"' + I + "/>";
+    o += '<g id="t2Flap"><rect x="560" y="592" width="800" height="100" fill="#25242e"/><path d="M560,604 L1360,604" stroke="#3f3e4c" stroke-width="6"/>' +
+      '<path d="M900,662 L1020,662 M900,674 L1020,674" stroke="#15131a" stroke-width="5" stroke-linecap="round"/></g>';
+    o += '<text x="452" y="774" font-family="Oswald, Arial Narrow, sans-serif" font-weight="600" font-size="31" letter-spacing="10" fill="#cfcde0">VIDEOVISION</text>';
+    o += '<text x="452" y="806" font-family="Oswald, Arial Narrow, sans-serif" font-weight="600" font-size="15" letter-spacing="4" fill="#85839a">HQ · 4 HEAD · HI-FI STEREO</text>';
+    o += '<rect x="800" y="734" width="320" height="84" rx="8" fill="#06140a"' + I4 + '/><text class="t2-vfd" id="t2Vfd" x="960" y="796" text-anchor="middle">--:--</text>';
+    [[1160, 84], [1258, 58], [1330, 58], [1402, 58]].forEach(function (b) { o += '<rect x="' + b[0] + '" y="760" width="' + b[1] + '" height="30" rx="7" fill="#9391b4"' + I4 + '/><rect x="' + (b[0] + 5) + '" y="764" width="' + (b[1] - 10) + '" height="7" rx="3" fill="#b9b7d6"/>'; });
+    o += '<circle class="t2-led" id="t2Led" cx="1478" cy="775" r="9" fill="#3a1010" stroke="' + K + '" stroke-width="3"/>';
+    o += '<g transform="translate(430,596) rotate(-5)"><rect width="104" height="46" rx="5" fill="#f6eeda"' + I4 + '/><text x="52" y="20" text-anchor="middle" font-family="Oswald, Arial Narrow, sans-serif" font-weight="700" font-size="14" letter-spacing="1" fill="#c8352b">BE KIND</text>' +
+      '<text x="52" y="38" text-anchor="middle" font-family="Oswald, Arial Narrow, sans-serif" font-weight="700" font-size="14" letter-spacing="1" fill="#1e3d93">REWIND</text></g>';
+    o += "</g>";
+    o += '<g id="t2Cas"></g>';
+    o += '<rect width="1920" height="1080" fill="url(#t2Vig)"/>';
+    return o + "</svg>";
+  }
+  // where a point of the room lands on screen; z is how far it is in front of the VCR's face (negative: inside it)
+  function t2P(x, y, z) { var k = T2.Z0 / (T2.Z0 - z); return [T2.CX + (x - T2.CX) * k, T2.HY + (y - T2.HY) * k]; }
+  function t2Pts(a) { return a.map(function (p) { return p[0].toFixed(1) + "," + p[1].toFixed(1); }).join(" "); }
+  // the cassette on its way in: its top (label, window, reels) in perspective, and the end facing you with the title on it
+  function t2CasSVG(zn, dy, title) {
+    var K = T2.INK, x0 = T2.CX - T2.W / 2, x1 = T2.CX + T2.W / 2, yT = T2.yT + dy, yB = T2.yB + dy, D = T2.D, o = "";
+    var vmax = Math.max(0, Math.min(1, zn / D));   // how much of its length is still outside the machine
+    function top(u, v) { return t2P(x0 + u * T2.W, yT, zn - Math.min(v, vmax) * D); }
+    function quad(u0, v0, u1, v1, fill, extra) { return '<polygon points="' + t2Pts([top(u0, v0), top(u1, v0), top(u1, v1), top(u0, v1)]) + '" fill="' + fill + '"' + (extra || "") + "/>"; }
+    function reel(u, v, ru, rv, fill, extra) {
+      var p = []; for (var i = 0; i < 18; i++) { var a = i * Math.PI / 9; p.push(top(u + Math.cos(a) * ru, v + Math.sin(a) * rv)); }
+      return '<polygon points="' + t2Pts(p) + '" fill="' + fill + '"' + (extra || "") + "/>";
+    }
+    if (vmax > 0) {
+      o += quad(0, 0, 1, 1, "#24212b", ' stroke="' + K + '" stroke-width="6" stroke-linejoin="round"');
+      o += quad(0, 0, .36, 1, "#2e2a37");
+      if (vmax > .05) o += quad(.06, .05, .94, .34, "#f6eeda", ' stroke="' + K + '" stroke-width="3" stroke-linejoin="round"') + quad(.06, .05, .94, .12, "#c8352b");
+      if (vmax > .44) {
+        o += quad(.2, .44, .8, .86, "#59627c", ' stroke="' + K + '" stroke-width="4" stroke-linejoin="round"');
+        o += reel(.37, .65, .125, .19, "#6b4630", ' stroke="#4d3122" stroke-width="3"') + reel(.37, .65, .04, .06, "#f1ead8", ' stroke="' + K + '" stroke-width="2.5"');
+        o += reel(.645, .65, .06, .09, "#6b4630", ' stroke="#4d3122" stroke-width="3"') + reel(.645, .65, .04, .06, "#f1ead8", ' stroke="' + K + '" stroke-width="2.5"');
+      }
+    }
+    // the end facing you
+    var a = t2P(x0, yT, zn), b = t2P(x1, yB, zn), w = b[0] - a[0], h = b[1] - a[1], k = w / T2.W;
+    var face = '<rect x="' + a[0].toFixed(1) + '" y="' + a[1].toFixed(1) + '" width="' + w.toFixed(1) + '" height="' + h.toFixed(1) + '" rx="' + (5 * k).toFixed(1) + '" fill="#1c1a22" stroke="' + K + '" stroke-width="6" stroke-linejoin="round"/>';
+    var lx = a[0] + 26 * k, ly = a[1] + 15 * k, lw = w - 52 * k, lh = h - 30 * k;
+    face += '<rect x="' + lx.toFixed(1) + '" y="' + ly.toFixed(1) + '" width="' + lw.toFixed(1) + '" height="' + lh.toFixed(1) + '" rx="' + (4 * k).toFixed(1) + '" fill="#f6eeda" stroke="' + K + '" stroke-width="3"/>';
+    face += '<rect x="' + lx.toFixed(1) + '" y="' + ly.toFixed(1) + '" width="' + (64 * k).toFixed(1) + '" height="' + lh.toFixed(1) + '" fill="#c8352b"/>';
+    var fs = lh * .68, tw = lw - 64 * k - 150 * k;
+    face += '<text x="' + (lx + 84 * k).toFixed(1) + '" y="' + (ly + lh * .74).toFixed(1) + '" font-family="Caprasimo, Cooper Black, Georgia, serif" font-size="' + fs.toFixed(1) + '" fill="#1e3d93"' +
+      (title.length * fs * .56 > tw ? ' textLength="' + tw.toFixed(1) + '" lengthAdjust="spacingAndGlyphs"' : "") + ">" + esc(title) + "</text>";
+    for (var i = 0; i < 16; i++) face += '<rect x="' + (lx + lw - (120 - i * 6.6) * k).toFixed(1) + '" y="' + (ly + lh * .2).toFixed(1) + '" width="' + ((i % 3 ? 2.2 : 4) * k).toFixed(1) + '" height="' + (lh * .6).toFixed(1) + '" fill="' + K + '"/>';
+    if (zn < 0) face = '<g clip-path="url(#t2Slot)">' + face + '<rect x="560" y="592" width="800" height="100" fill="#0d0b12" opacity="' + Math.min(.7, -zn / 90).toFixed(2) + '"/></g>';
+    return o + face;
+  }
   function insertTape(next) {
     if (!P) return;
     var intro = $("pIntro"); intro.hidden = false; intro.className = "p-intro";
     var it = P.it, title = it.name + (it.type === "series" ? " " + epLabel(P.vid) : "");
+    if (title.length > 34) title = title.slice(0, 33) + "…";
     var reduce = isCalm() || (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
-    intro.innerHTML =
-      '<div class="ins" id="ins"><div class="scene" id="insScene"><div class="world">' +
-        '<div class="pl cab"></div><div class="pl cab-edge"></div>' +
-        '<div class="vcr3d" id="vcr3d">' +
-          '<div class="pl v-top"></div><div class="pl v-back"></div><div class="pl v-floor"></div><div class="pl v-flap">PUSH</div>' +
-          '<div class="pl v-face v-fb"></div><div class="pl v-face v-fl"></div><div class="pl v-face v-fr"></div><div class="pl v-lip"></div>' +
-          '<div class="pl v-fbot"><span class="brand3">VIDEOVISION<small>HQ · 4 HEAD · HI-FI STEREO</small></span>' +
-            '<span class="vfd" id="vfd">--:--</span><span class="keys"><i class="ej"></i><i></i><i></i><i></i><b id="vled"></b></span></div>' +
-        "</div>" +
-        '<div class="pl sleeve">' + coverHTML(it) + "</div>" +
-        '<div class="ct-move"><div class="ct-rx"><div class="ct-ry"><div class="cas">' +
-          '<div class="cf c-bot"></div><div class="cf c-back"></div><div class="cf c-l"></div><div class="cf c-r"></div>' +
-          '<div class="cf c-top"><div class="c-label"><span class="c-store">PROPERTY OF ' + esc(prefs.storeName.toUpperCase()) + '</span><span class="hand">' + esc(title) + "</span></div>" +
-            '<div class="c-win"><span class="reel l"></span><span class="reel r"></span></div></div>' +
-          '<div class="cf c-front"><div class="c-spine"><span class="stripe"></span><span class="hand">' + esc(title) + '</span><span class="bc"></span></div></div>' +
-        "</div></div></div></div>" +
-      "</div></div></div>";
+    intro.innerHTML = '<div class="ins tape2' + (reduce ? " still" : "") + '" id="ins"><div class="t2-stage" id="insScene">' +
+      '<div class="t2-shot t2-s1">' + t2Shot1(title) + '<div class="t2-sleeve tape" id="t2Sleeve">' + coverHTML(it) + "</div></div>" +
+      '<div class="t2-shot t2-s2" id="t2S2">' + t2Shot2() + "</div></div></div>";
+    loadCover($("t2Sleeve"));
     function fit() {
       var sc = $("insScene"); if (!sc) return;
-      sc.style.transform = "scale(" + Math.min(window.innerWidth / 1000, window.innerHeight / 620) * 0.98 + ")";
+      sc.style.transform = "scale(" + Math.max(window.innerWidth / 1920, window.innerHeight / 1080) + ")";
     }
     fit();
-    var timers = [], done = false;
+    var timers = [], done = false, loop = null, loaded = false;
     function at(ms, fn) { timers.push(setTimeout(function () { if (P && !done) fn(); }, reduce ? Math.min(ms, 300) : ms)); }
     function finish() {
       if (done || !P) return; done = true;
-      timers.forEach(clearTimeout);
+      timers.forEach(clearTimeout); clearInterval(loop);
       P.intro = null; intro.hidden = true; intro.innerHTML = ""; next();
     }
+    function cls(id, c) { var e = $(id); if (e) e.setAttribute("class", c); }
+    // the tape's trip into the machine: up from the bottom of the frame, a beat at the slot, then pushed home
+    function draw(t) {
+      var g = $("t2Cas"), flap = $("t2Flap"); if (!g || loaded) return;
+      var zn, dy = 0, a;
+      if (t < .5) { a = 1 - Math.pow(1 - t / .5, 2); zn = 1500 - 980 * a; dy = 330 * (1 - a); }
+      else if (t < .6) zn = 520;
+      else if (t < .92) { a = (t - .6) / .32; a = a * a * (3 - 2 * a); zn = 520 - 526 * a; }
+      else { a = (t - .92) / .08; zn = -6 - 64 * a; dy = 5 * a; }
+      g.innerHTML = t2CasSVG(zn, dy, title);
+      if (flap) flap.style.display = zn - T2.D < 4 ? "none" : "";
+    }
     P.intro = { skip: finish };
-    at(1650, function () { sfx("slide"); });
-    at(2700, function () {
-      sfx("clack");
-      var v = $("vcr3d"); if (v) v.className = "vcr3d thunk";
-      var vfd = $("vfd"); if (vfd) { vfd.className = "vfd on"; vfd.textContent = "▶ PLAY"; }
-      var led = $("vled"); if (led) led.className = "on";
+    at(220, function () { sfx("shhk"); });
+    at(1250, function () {
+      var ins = $("ins"); if (ins) ins.className = "ins tape2 shot2" + (reduce ? " still" : "");
+      if (reduce) return draw(1);
+      var t0 = Date.now(); draw(0);
+      loop = setInterval(function () { var t = Math.min(1, (Date.now() - t0) / 1500); draw(t); if (t >= 1) clearInterval(loop); }, 83);   // on twos
     });
-    at(3000, function () { whirr(0.7); var vfd = $("vfd"); if (vfd) vfd.textContent = "0:00:00"; });
-    at(3450, function () { var ins = $("ins"); if (ins) ins.className = "ins switching"; });
-    at(3740, function () { var ins = $("ins"); if (ins) ins.className = "ins switching out"; });
+    at(2080, function () { sfx("slide"); });
+    at(2780, function () {
+      sfx("clack");
+      clearInterval(loop); loaded = true;
+      var g = $("t2Cas"), flap = $("t2Flap"); if (g) g.innerHTML = ""; if (flap) flap.style.display = "";
+      cls("t2Vcr", "t2-vcr thunk"); cls("t2Led", "t2-led on"); cls("t2S2", "t2-shot t2-s2 blue");
+      var vfd = $("t2Vfd"); if (vfd) { vfd.setAttribute("class", "t2-vfd on"); vfd.textContent = "▶ PLAY"; }
+    });
+    at(3050, function () { whirr(0.7); var vfd = $("t2Vfd"); if (vfd) vfd.textContent = "0:00:00"; });
+    at(3450, function () { var ins = $("ins"); if (ins) ins.className = "ins tape2 shot2 switching"; });
+    at(3740, function () { var ins = $("ins"); if (ins) ins.className = "ins tape2 shot2 switching out"; });
     at(3950, function () {
       intro.className = "p-intro blue";
       intro.innerHTML = '<div class="tracking"></div><div class="intro-osd"><span>PLAY ▶</span><span>SP</span></div>';
     });
     at(5000, finish);
   }
+  // Coming attractions: a trailer for something people are talking about. Tonight that's the newest of what Letterboxd
+  // is watching this week (through Stremboxd), then films still to come this year, then the New Releases wall.
+  // On Rewind Night it's the big films of the year the store is set to. No trailer plays twice in one sitting.
+  var trailersShown = {}, upcoming = [];
+  function attractionPool() {
+    var ry = rewindYear(), Y = new Date().getFullYear();
+    var ok = function (x) { return x !== P.it && x.id !== P.it.id && x.type !== "series" && !trailersShown[x.id] && /^tt\d+$/.test(x.id); };
+    if (ry && !onSample) {
+      var ek = eraKey(ry);
+      return items.filter(function (x) { return ok(x) && x.year === ry && x.rk && x.rk[ek] !== undefined; }).sort(function (a, b) { return a.rk[ek] - b.rk[ek]; }).slice(0, 30);
+    }
+    var soon = {}; upcoming.forEach(function (x) { soon[x.id] = 1; });
+    var lb = aisleList("staff").filter(function (x) { return ok(x) && x.year >= Y - 1; });
+    // films that are both on Letterboxd's list and not out yet come first, then this year's, then last year's
+    lb = lb.map(function (x, i) { return { it: x, r: (soon[x.id] ? 0 : x.year >= Y ? 100 : 200) + i }; }).sort(function (a, b) { return a.r - b.r; }).map(function (x) { return x.it; }).slice(0, 16);
+    var seen = {}; lb.forEach(function (x) { seen[x.id] = 1; });
+    var rest = upcoming.filter(function (x) { return ok(x) && !seen[x.id]; }).slice(0, 12);
+    if (lb.length + rest.length < 4) rest = rest.concat(aisleList("new").filter(function (x) { return ok(x) && !seen[x.id]; }).slice(0, 12));
+    return lb.concat(rest);
+  }
   function comingAttractions(next) {
     if (!P || !prefs.previews || isLight() || !live || P.start) return next();
-    var pool = items.filter(function (x) { return x !== P.it && x.type !== "series" && (x.aisles.indexOf("new") !== -1 || x.aisles.indexOf("season") !== -1); });
-    var pick = pool.length ? pickOne(pool) : null;
-    if (!pick) return next();
-    getMeta(pick).then(function (m) {
-      if (!P) return;
-      if (!m.trailers.length) return next();
-      var intro = $("pIntro"); intro.hidden = false; intro.className = "p-intro";
-      intro.innerHTML = '<iframe class="intro-frame" tabindex="-1" title="' + esc("Coming attractions: " + pick.name) + '" allow="autoplay; encrypted-media" src="https://www.youtube-nocookie.com/embed/' + encodeURIComponent(m.trailers[0]) +
-        '?autoplay=1&controls=0&rel=0&modestbranding=1&playsinline=1&iv_load_policy=3"></iframe><div class="intro-osd" style="pointer-events:none"><span>COMING ATTRACTIONS</span><span>OK SKIP ▶▶</span></div>';
-      var t = setTimeout(done, 150000), fin = false;
-      function done() { if (fin) return; fin = true; clearTimeout(t); if (!P) return; P.intro = null; intro.hidden = true; intro.innerHTML = ""; next(); }
-      P.intro = { skip: done };
-    });
+    var play = P, pool = attractionPool(), tries = 0, ry = rewindYear();
+    function tryOne() {
+      if (P !== play) return;
+      if (!pool.length || tries++ >= 4) return next();
+      // one of the first few, so it's popular but not the same one every night
+      var pick = pool.splice(Math.floor(Math.random() * Math.min(6, pool.length)), 1)[0];
+      getMeta(pick).then(function (m) {
+        if (P !== play) return;
+        if (!m.trailers.length) return tryOne();
+        trailersShown[pick.id] = 1;
+        var intro = $("pIntro"); intro.hidden = false; intro.className = "p-intro";
+        intro.innerHTML = '<div class="intro-yt">' + ytHTML(m.trailers[0], { title: "Coming attractions: " + pick.name }) +
+          '</div><div class="intro-osd" style="pointer-events:none"><span>COMING ATTRACTIONS' + (ry ? " · " + ry : "") + "</span><span>OK SKIP ▶▶</span></div>";
+        var t = setTimeout(done, 150000), fin = false;
+        function done() { if (fin) return; fin = true; clearTimeout(t); if (P !== play) return; P.intro = null; intro.hidden = true; intro.innerHTML = ""; next(); }
+        // the film starts the moment the trailer ends (or if YouTube won't play it), not after YouTube's end screen
+        ytWatch(intro.querySelector("iframe"), { ended: done, error: done });
+        P.intro = { skip: done };
+      }, tryOne);
+    }
+    tryOne();
   }
   function openCopy(i, startMs) {
     if (!P) return;
@@ -6775,12 +7062,20 @@ body.night .logo { z-index: 6; }
     [[965, 812], [1135, 806], [1475, 810], [440, 690], [1645, 816]].forEach(function (s) { o += Pt(blobD(s[0], s[1], 34, 7, r, 8, .4), "#1a1a22", op(P.snow ? ".05" : ".22")); });
     if (P.wet) o += wetLot(P);
     // the parked cars, seen from behind
-    o += carRear(P, 122, 728, 136, 104, "wagon", "#cbb489");
-    o += carRear(P, 965, 852, 170, 132, "sedan", "#2f4f8d");
-    o += carRear(P, 1792, 858, 208, 192, "pickup", "#8c2b28");
+    var cc = eraCars(rewindYear());
+    o += carRear(P, 122, 728, 136, 104, "wagon", cc[0]);
+    o += carRear(P, 965, 852, 170, 132, "sedan", cc[1]);
+    o += carRear(P, 1792, 858, 208, 192, "pickup", cc[2]);
     o += cart(P, 1568, 846);
     return o;
   }
+  // On Rewind Night the car park is repainted in the colours people drove that decade
+  function eraCars(ry) {
+    return !ry ? ["#cbb489", "#2f4f8d", "#8c2b28"] : ry < 1980 ? ["#b08d3c", "#5d7a3a", "#7a4a2a"] : ry < 1990 ? ["#cdb38a", "#7a1f2b", "#2f3f6d"] :
+      ry < 2000 ? ["#cbb489", "#2f4f8d", "#8c2b28"] : ry < 2010 ? ["#b9bec6", "#27304a", "#8c2b28"] : ["#e8e8e6", "#3c3f46", "#b9bec6"];
+  }
+  // what the reader board says the store rents, by era
+  function eraFormat(ry) { return ry < 1978 ? "8MM & 16MM FOR HIRE" : ry < 1986 ? "VHS & BETA RENTALS" : ry < 1998 ? "BE KIND · REWIND" : ry < 2007 ? "NOW RENTING DVD" : "DVD & BLU-RAY"; }
   function carRear(P, cx, gy, w, h, kind, base) {
     var o = "", L = Lc(P, base), S = Sc(P, base), x0 = cx - w / 2, x1 = cx + w / 2, glass = P.mode === "day" || P.mode === "golden" ? Lc(P, "#3c4a5e") : Sc(P, "#3c4a5e");
     var tire = Sc(P, "#232229"), split = cx + w * (P.lx < 0 ? .16 : -.16);
@@ -7086,7 +7381,7 @@ body.night .logo { z-index: 6; }
     o += '<rect x="532" y="138" width="314" height="174" rx="6" fill="' + face + '"/>';
     if (!lit) o += '<rect x="532" y="138" width="314" height="174" rx="6" fill="' + Sc(P, "#f4eedd") + '" fill-opacity=".35"/>' + Pg([532, 312, 846, 138, 846, 312], Sc(P, "#f4eedd"), op(".25"));
     o += '<path d="M532,168 L532,144 Q532,138 538,138 L840,138 Q846,138 846,144 L846,168 Z" fill="' + band + '"/>';
-    o += '<text x="689" y="159" text-anchor="middle" font-family="' + OSW + '" font-weight="600" font-size="15" letter-spacing="3" fill="#fff8ea" textLength="282" lengthAdjust="spacingAndGlyphs">MOVIES · TV · LATE NIGHT</text>';
+    o += '<text x="689" y="159" text-anchor="middle" font-family="' + OSW + '" font-weight="600" font-size="15" letter-spacing="3" fill="#fff8ea" textLength="282" lengthAdjust="spacingAndGlyphs" id="oBand">MOVIES · TV · LATE NIGHT</text>';
     o += '<text id="oName1" x="689" y="216" text-anchor="middle" font-family="Caprasimo, Cooper Black, Georgia, serif" font-size="31" fill="' + (lit ? "#1e3d93" : Lc(P, "#1e3d93")) + '">FRIDAY NIGHT</text>';
     o += '<text id="oName2" x="689" y="288" text-anchor="middle" font-family="Caprasimo, Cooper Black, Georgia, serif" font-size="62" fill="' + band + '" stroke="' + INK + '" stroke-width="2.2" paint-order="stroke">VIDEO</text>';
     o += Ln(540, 306, 838, 306, lit ? "#e7dcc0" : Sc(P, "#e7dcc0"), 1.4);
@@ -7481,7 +7776,7 @@ body.night .logo { z-index: 6; }
     if (!$("landStage")) { $("landZoom").innerHTML = stageHTML(); outKey = celKey = ""; outReady = false; }
     fitStage();
     paintWxTiles();
-    var lk = mk + "|" + wx;
+    var ry = rewindYear(), lk = mk + "|" + wx + "|" + ry;
     if (outKey !== lk) { outKey = lk; paintBackdrop(P); }
     if (celKey !== lk + shiftNow()) {
       celKey = lk + shiftNow();
@@ -7514,7 +7809,9 @@ body.night .logo { z-index: 6; }
     var nm = top ? top.name.toUpperCase() : "";
     if (nm.length > 22) nm = nm.slice(0, 21) + "…";
     fitText("oMq1", closed ? "SORRY, WE'RE CLOSED" : (nm ? "NEW: " + nm : "NEW THIS WEEK"), 262, 13);
-    fitText("oMq2", closed ? "NIGHT DROP OPEN" : (season ? season.aisle.toUpperCase() : "OPEN TIL MIDNIGHT"), 262, 13);
+    fitText("oMq2", ry ? "REWIND NIGHT · " + ry : closed ? "NIGHT DROP OPEN" : (season ? season.aisle.toUpperCase() : "OPEN TIL MIDNIGHT"), 262, 13);
+    fitText("oMq3", ry ? eraFormat(ry) : "BE KIND · REWIND", 262, 11);
+    var ob = $("oBand"); if (ob) ob.textContent = ry ? "REWIND NIGHT · IT'S " + ry : "MOVIES · TV · LATE NIGHT";
     var on = $("oOpen");
     if (on.getAttribute("data-w") !== (closed ? "c" : "o")) {
       while (on.firstChild) on.removeChild(on.firstChild);
@@ -7529,8 +7826,8 @@ body.night .logo { z-index: 6; }
       on.setAttribute("data-w", closed ? "c" : "o");
     }
     var d = new Date(), h = d.getHours(), m = d.getMinutes(), days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-    $("landClock").textContent = days[d.getDay()] + " " + ((h % 12) || 12) + ":" + (m < 10 ? "0" : "") + m + (h < 12 ? " am" : " pm");
-    $("landPress").innerHTML = (("ontouchstart" in window) && !window.tizen ? "<b>Tap</b>" : "Press <b>OK</b>") + (closed ? " to sneak in" : " to go inside");
+    $("landClock").textContent = ry ? "Sat 8:00 pm · " + ry : days[d.getDay()] + " " + ((h % 12) || 12) + ":" + (m < 10 ? "0" : "") + m + (h < 12 ? " am" : " pm");
+    $("landPress").innerHTML = (("ontouchstart" in window) && !window.tizen ? "<b>Tap</b>" : "Press <b>OK</b>") + (ry ? " to step back into " + ry : closed ? " to sneak in" : " to go inside");
   }
 
   // ---- live weather from Open-Meteo (free, no account) ----
@@ -7951,8 +8248,7 @@ body.night .logo { z-index: 6; }
         }
         e.preventDefault(); return;
       }
-      if (k === KEY.LEFT || k === KEY.UP) { if (modal.idx > 0) { modal.idx--; modalFocus(); } }
-      else if (k === KEY.RIGHT || k === KEY.DOWN) { if (modal.idx < modal.els.length - 1) { modal.idx++; modalFocus(); } }
+      if (k === KEY.LEFT || k === KEY.UP || k === KEY.RIGHT || k === KEY.DOWN) modalMove(k);
       else if (k === KEY.OK) activateModal(modal.els[modal.idx]);
       else if (k === KEY.BACK || k === KEY.ESC || k === KEY.BKSP) dismissModal();
       else return;
